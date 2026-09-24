@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>电磁水表流量点校准计算</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#fff;
+    --text:#1f2329;
+    --sub:#8a9099;
+    --line:#e8eaed;
+    --primary:#1668dc;
+    --primary-press:#0f52b0;
+    --warn:#d4380d;
+    --ok:#1a9c6b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:var(--primary);color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header p{margin:4px 0 0;font-size:12px;opacity:.85}
+  main{max-width:640px;margin:0 auto;padding:12px 12px 0}
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    padding:14px 14px 6px;margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .card h2{
+    margin:0 0 10px;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .row{margin-bottom:12px}
+  .row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  .row label b{color:var(--text);font-weight:500}
+  .input-wrap{position:relative;display:flex;align-items:center}
+  input[type="number"],input[type="text"]{
+    width:100%;height:46px;padding:0 52px 0 12px;
+    font-size:17px;font-weight:600;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+    outline:none;-moz-appearance:textfield;
+  }
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input:focus{border-color:var(--primary);background:#fff}
+  input.invalid{border-color:var(--warn);background:#fff2ef}
+  .unit{
+    position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none;
+  }
+  .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
+  .hint.err{color:var(--warn)}
+  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .quick button{
+    flex:1 1 auto;min-width:64px;height:34px;padding:0 10px;
+    font-size:13px;color:var(--primary);background:#eef4fe;
+    border:1px solid #d6e4fb;border-radius:9px;
+  }
+  .quick button:active{background:#dfeafa}
+  .btns{display:flex;gap:10px;margin:2px 0 14px}
+  .btns button{
+    flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none;
+  }
+  #calc{background:var(--primary);color:#fff}
+  #calc:active{background:var(--primary-press)}
+  #reset{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+  #result{display:none}
+  #result.show{display:block}
+  .result-main{
+    background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+    border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 4px 14px rgba(22,104,220,.25);
+  }
+  .result-main .k{font-size:12px;opacity:.9}
+  .result-main .v{font-size:32px;font-weight:700;letter-spacing:.5px;word-break:break-all;margin:2px 0 0}
+  .result-main .v small{font-size:14px;font-weight:500;margin-left:6px;opacity:.9}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
+  .grid div{background:#fff;padding:10px 12px}
+  .grid .k{font-size:12px;color:var(--sub)}
+  .grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+  .formula{
+    font-size:12px;color:var(--sub);line-height:1.6;
+    background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-top:12px;
+    word-break:break-all;
+  }
+  .formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+  footer{max-width:640px;margin:0 auto;padding:0 14px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<header>
+  <h1>电磁水表流量点校准计算</h1>
+  <p>按零点与误差百分比换算各流量点校正值</p>
+</header>
+
+<main>
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>基本参数</h2>
+      <div class="row">
+        <label for="zero"><b>零点数值</b>（无流量时的原始输出）</label>
+        <div class="input-wrap">
+          <input id="zero" name="zero" type="number" inputmode="decimal" step="any" placeholder="例如 0.02" value="0">
+          <span class="unit">m³/h</span>
+        </div>
+        <div class="hint" id="zero-hint">零点一般取多次静水测量的平均值</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>流量点</h2>
+      <div id="points"></div>
+      <div class="quick">
+        <button type="button" data-act="add">＋ 添加流量点</button>
+        <button type="button" data-act="fill">一键套用误差</button>
+        <button type="button" data-act="clear">清空误差</button>
+      </div>
+      <div class="hint">误差百分比带符号：偏大填正数，偏小填负数。留空表示该项不做校正。</div>
+    </section>
+
+    <div class="btns">
+      <button type="button" id="reset">重置</button>
+      <button type="submit" id="calc">计算校正数值</button>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div id="result-main"></div>
+    <div class="grid" id="grid"></div>
+    <div class="formula" id="formula"></div>
+  </section>
+
+  <footer>
+    校正数值 = 原始数值 + (原始数值 − 零点) ÷ 100 × 误差百分比
+  </footer>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  // 默认流量点按常用校准档位预置，避免用户每次从零开始录入
+  var DEFAULT_POINTS = [
+    {name:'Q1 最小流量', flow:0.1,  error:2},
+    {name:'Q2 分界流量', flow:1,    error:1},
+    {name:'Q3 常用流量', flow:10,   error:0.5}
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var listEl = $('points');
+  var formEl = $('form');
+  var resultEl = $('result');
+  var rows = [];
+
+  function el(tag, cls, text){
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function makeRow(data){
+    var wrap = el('div', 'row');
+    var head = el('label');
+    head.appendChild(el('b', null, '流量点数值'));
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'point-name';
+    nameInput.style.cssText = 'display:inline-block;width:auto;height:auto;padding:0;margin-left:6px;font-size:13px;font-weight:500;color:var(--sub);background:none;border:none';
+    nameInput.placeholder = '名称（可选）';
+    nameInput.value = data.name || '';
+    head.appendChild(nameInput);
+    wrap.appendChild(head);
+
+    var inputs = el('div', 'row-inputs');
+    inputs.style.cssText = 'display:flex;gap:8px';
+
+    var flowWrap = el('div', 'input-wrap');
+    flowWrap.style.flex = '1';
+    var flowInput = document.createElement('input');
+    flowInput.type = 'number'; flowInput.step = 'any'; flowInput.inputMode = 'decimal';
+    flowInput.className = 'flow'; flowInput.placeholder = '原始数值';
+    flowInput.value = data.flow == null ? '' : data.flow;
+    flowWrap.appendChild(flowInput);
+    flowWrap.appendChild(el('span', 'unit', 'm³/h'));
+
+    var errWrap = el('div', 'input-wrap');
+    errWrap.style.flex = '1';
+    var errInput = document.createElement('input');
+    errInput.type = 'number'; errInput.step = 'any'; errInput.inputMode = 'decimal';
+    errInput.className = 'err'; errInput.placeholder = '误差百分比';
+    errInput.value = data.error == null ? '' : data.error;
+    errWrap.appendChild(errInput);
+    errWrap.appendChild(el('span', 'unit', '%'));
+
+    inputs.appendChild(flowWrap);
+    inputs.appendChild(errWrap);
+    wrap.appendChild(inputs);
+
+    var row = { wrap:wrap, flow:flowInput, err:errInput, name:nameInput };
+
+    var del = el('button', 'del', '删除该点');
+    del.type = 'button';
+    del.style.cssText = 'margin-top:8px;height:32px;padding:0 12px;font-size:13px;color:var(--warn);background:#fff2ef;border:1px solid #ffd6cc;border-radius:8px';
+    del.addEventListener('click', function(){
+      var i = rows.indexOf(row);
+      if (i > -1) rows.splice(i, 1);
+      listEl.removeChild(wrap);
+      clearErrors();
+    });
+    wrap.appendChild(del);
+
+    [flowInput, errInput, nameInput].forEach(function(input){
+      input.addEventListener('input', clearErrors);
+    });
+
+    return row;
+  }
+
+  function addRow(data){
+    var row = makeRow(data || {});
+    rows.push(row);
+    listEl.appendChild(row.wrap);
+    return row;
+  }
+
+  function readNumber(input){
+    var raw = String(input.value).trim();
+    if (raw === '') return null;
+    var n = Number(raw);
+    return isFinite(n) ? n : NaN;
+  }
+
+  function markInvalid(input, msg){
+    input.classList.add('invalid');
+    input.focus();
+    return msg;
+  }
+
+  function clearErrors(){
+    Array.prototype.forEach.call(listEl.querySelectorAll('.invalid'), function(n){
+      n.classList.remove('invalid');
+    });
+    var z = $('zero');
+    z.classList.remove('invalid');
+    var zh = $('zero-hint');
+    zh.className = 'hint';
+    zh.textContent = '零点一般取多次静水测量的平均值';
+  }
+
+  // 校正数值 = 原始数值 + (原始数值 − 零点) ÷ 100 × 误差百分比
+  function calibrate(flow, zero, error){
+    return flow + (flow - zero) / 100 * error;
+  }
+
+  // 有效数字按量级取 4 位，避免浮点长尾（如 10.000000000000002）
+  function fmt(n){
+    if (!isFinite(n)) return '—';
+    var fixed = Number(n.toPrecision(10));
+    return String(fixed);
+  }
+
+  function showError(msg){
+    resultEl.classList.remove('show');
+    var zh = $('zero-hint');
+    zh.className = 'hint err';
+    zh.textContent = msg;
+    zh.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function render(items, zero){
+    var main = el('div', 'result-main');
+    if (items.length === 1){
+      main.appendChild(el('div', 'k', items[0].name ? items[0].name + ' · 校正数值' : '校正数值'));
+      var v = el('div', 'v', fmt(items[0].result));
+      v.appendChild(el('small', null, 'm³/h'));
+      main.appendChild(v);
+    } else {
+      main.appendChild(el('div', 'k', '已完成 ' + items.length + ' 个流量点校正'));
+      var results = items.map(function(it){ return it.result; });
+      var v = el('div', 'v', fmt(Math.max.apply(null, results)));
+      v.appendChild(el('small', null, 'm³/h 最大校正值'));
+      main.appendChild(v);
+    }
+    $('result-main').innerHTML = '';
+    $('result-main').appendChild(main);
+
+    var grid = $('grid');
+    grid.innerHTML = '';
+    items.forEach(function(it){
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', (it.name ? it.name + ' · ' : '') + '原始 ' + fmt(it.flow) + ' m³/h'));
+      cell.appendChild(el('div', 'v', fmt(it.result) + ' m³/h'));
+      var delta = it.result - it.flow;
+      var sub = el('div', 'k', '修正量 ' + (delta >= 0 ? '+' : '') + fmt(delta) + ' m³/h · 误差 ' + (it.error >= 0 ? '+' : '') + fmt(it.error) + '%');
+      sub.style.marginTop = '4px';
+      cell.appendChild(sub);
+      grid.appendChild(cell);
+    });
+
+    $('formula').innerHTML = items.map(function(it){
+      return '<div><code>' + fmt(it.result) + ' = ' + fmt(it.flow) + ' + (' + fmt(it.flow) + ' − ' + fmt(zero) + ')/100 × ' + fmt(it.error) + '</code></div>';
+    }).join('');
+
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function collect(){
+    var z = readNumber($('zero'));
+    if (z === null){
+      $('zero').classList.add('invalid');
+      showError('请填写零点数值');
+      $('zero').focus();
+      return null;
+    }
+    if (isNaN(z)){
+      $('zero').classList.add('invalid');
+      showError('零点数值格式不正确');
+      return null;
+    }
+    if (rows.length === 0){
+      showError('请至少添加一个流量点');
+      return null;
+    }
+
+    clearErrors();
+    var items = [];
+    for (var i = 0; i < rows.length; i++){
+      var row = rows[i];
+      var flow = readNumber(row.flow);
+      var err = readNumber(row.err);
+
+      if (flow === null && err === null) continue;
+      if (flow === null){
+        showError('第 ' + (i + 1) + ' 个流量点：请填写原始数值');
+        return markInvalid(row.flow, null) && null;
+      }
+      if (isNaN(flow)){
+        showError('第 ' + (i + 1) + ' 个流量点：原始数值格式不正确');
+        return markInvalid(row.flow, null) && null;
+      }
+      if (err === null){
+        showError('第 ' + (i + 1) + ' 个流量点：请填写误差百分比');
+        return markInvalid(row.err, null) && null;
+      }
+      if (isNaN(err)){
+        showError('第 ' + (i + 1) + ' 个流量点：误差百分比格式不正确');
+        return markInvalid(row.err, null) && null;
+      }
+      if (Math.abs(err) >= 1000){
+        showError('第 ' + (i + 1) + ' 个流量点：误差百分比超出合理范围（±1000%）');
+        return markInvalid(row.err, null) && null;
+      }
+
+      items.push({
+        name: row.name.value.trim(),
+        flow: flow,
+        error: err,
+        result: calibrate(flow, z, err)
+      });
+    }
+
+    if (items.length === 0){
+      showError('请填写至少一个流量点的原始数值与误差');
+      return null;
+    }
+    return { zero: z, items: items };
+  }
+
+  formEl.addEventListener('submit', function(e){
+    e.preventDefault();
+    clearErrors();
+    var data = collect();
+    if (data) render(data.items, data.zero);
+  });
+
+  function resetForm(){
+    rows = [];
+    listEl.innerHTML = '';
+    DEFAULT_POINTS.forEach(addRow);
+    resultEl.classList.remove('show');
+    clearErrors();
+    $('zero').value = '0';
+  }
+
+  $('reset').addEventListener('click', resetForm);
+
+  document.querySelector('.quick').addEventListener('click', function(e){
+    var act = e.target.getAttribute('data-act');
+    if (!act) return;
+    if (act === 'add'){
+      addRow({});
+      rows[rows.length - 1].flow.focus();
+      return;
+    }
+    if (act === 'fill'){
+      var src = rows.map(function(r){ return r.err.value.trim(); })
+                    .filter(function(v){ return v !== ''; })[0];
+      if (src === undefined){
+        showError('请先填写任意一个流量点的误差百分比，再套用');
+        return;
+      }
+      rows.forEach(function(r){ r.err.value = src; });
+      return;
+    }
+    if (act === 'clear'){
+      rows.forEach(function(r){ r.err.value = ''; });
+    }
+  });
+
+  DEFAULT_POINTS.forEach(addRow);
+})();
+</script>
+</body>
+</html>
