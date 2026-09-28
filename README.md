@@ -2,9 +2,12 @@
 
 计量工具 H5 页面集合，零依赖单文件，直接用浏览器打开即可使用。
 
-- `docs/index.html` — 电磁水表流量点校准计算
+- `docs/index.html` — 工具入口页（4 个页面）
+- `docs/calibration.html` — 电磁水表流量点校准计算
 - `docs/gold.html` — 黄金价格换算计算
 - `docs/flow.html` — 瞬时流量与流速换算
+
+共 4 个页面：1 个入口页 + 3 个计算页。入口页列出三个工具，点击即进；三个计算页底部互跳，也可回到入口页。
 
 ## 流量点校准
 
@@ -78,16 +81,18 @@
 
 ## 使用
 
-页面是零依赖的单文件，直接用浏览器打开 `docs/index.html`、`docs/gold.html` 或 `docs/flow.html` 即可，
-也可以通过静态托管发布（如仓库 Pages / 云原生构建）。
+页面是零依赖的单文件，直接用浏览器打开 `docs/index.html` 进入工具入口页，
+再点击进入 `docs/calibration.html`、`docs/gold.html`、`docs/flow.html` 三个计算页；
+也可以直接打开任意计算页，或通过静态托管发布（如仓库 Pages / 云原生构建）。
 
 本地预览：
 
 ```bash
 python3 -m http.server 8899 --directory docs
-# 打开 http://127.0.0.1:8899/index.html
-# 打开 http://127.0.0.1:8899/gold.html
-# 打开 http://127.0.0.1:8899/flow.html
+# 入口页   http://127.0.0.1:8899/index.html
+# 校准页   http://127.0.0.1:8899/calibration.html
+# 黄金页   http://127.0.0.1:8899/gold.html
+# 流量页   http://127.0.0.1:8899/flow.html
 ```
 
 ### 示例
@@ -112,6 +117,7 @@ python3 -m http.server 8899 --directory docs
 
 ## 结构
 
-- `docs/index.html` — 电磁水表流量点校准计算页（HTML + CSS + JS 单文件，无外部依赖）
+- `docs/index.html` — 工具入口页，列三个工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
+- `docs/calibration.html` — 电磁水表流量点校准计算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/gold.html` — 黄金价格换算计算页（HTML + CSS + JS 单文件，除汇率自动获取外无外部依赖）
 - `docs/flow.html` — 瞬时流量与流速换算页（HTML + CSS + JS 单文件，无外部依赖）
