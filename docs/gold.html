@@ -69,6 +69,12 @@
   }
   #fx-fetch:active{background:#f7ecd0}
   #fx-fetch[disabled]{opacity:.6}
+  .tag{
+    font-size:12px;font-weight:500;color:var(--primary);
+    background:#fdf6e3;border:1px solid #f0e0b8;border-radius:999px;
+    padding:1px 8px;white-space:nowrap;flex:0 0 auto;
+  }
+  .tag:empty{display:none}
   .fx-status{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
   .fx-status.loading{color:var(--sub)}
   .fx-status.ok{color:#1a7f37}
@@ -116,7 +122,7 @@
 <body>
 <header>
   <h1>黄金价格换算计算</h1>
-  <p>美元/盎司 ⇄ 人民币/克 双向换算</p>
+  <p>美元/盎司 ⇄ 人民币/克 双向换算（任一栏输入，另一栏自动得出）</p>
 </header>
 
 <main>
@@ -124,11 +130,25 @@
     <section class="card">
       <h2>行情参数</h2>
       <div class="row">
-        <label for="usd"><b>黄金价格</b>（国际金价）</label>
+        <div class="fx-head">
+          <label for="usd"><b>黄金价格</b>（国际金价，美元/盎司）</label>
+          <span class="tag" id="usd-tag">输入源</span>
+        </div>
         <div class="input-wrap">
           <input id="usd" name="usd" type="number" inputmode="decimal" step="any" placeholder="例如 2650" value="2650">
           <span class="unit">美元/盎司</span>
         </div>
+      </div>
+      <div class="row">
+        <div class="fx-head">
+          <label for="cny"><b>黄金价格</b>（国内金价，人民币/克）</label>
+          <span class="tag" id="cny-tag"></span>
+        </div>
+        <div class="input-wrap">
+          <input id="cny" name="cny" type="number" inputmode="decimal" step="any" placeholder="例如 617.7" value="">
+          <span class="unit">元/克</span>
+        </div>
+        <div class="hint">左右任一栏输入，另一栏按当前汇率自动换算</div>
       </div>
       <div class="row">
         <div class="fx-head">
@@ -159,6 +179,7 @@
   <footer>
     人民币/克 = 美元/盎司 × 汇率 ÷ 31.1034768<br>
     美元/盎司 = 人民币/克 × 31.1034768 ÷ 汇率<br>
+
     <a href="./index.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>
   </footer>
 </main>
@@ -169,6 +190,9 @@
 
   // 1 金衡盎司 = 31.1034768 克，央行与上海黄金交易所均采用该值
   var GRAMS_PER_OUNCE = 31.1034768;
+
+  // 用户最后编辑的那一栏为换算基准，另一栏随其自动更新
+  var source = 'usd';
 
   var $ = function(id){ return document.getElementById(id); };
   var formEl = $('form');
@@ -189,7 +213,7 @@
   }
 
   function clearErrors(){
-    ['usd', 'fx'].forEach(function(id){ $(id).classList.remove('invalid'); });
+    ['usd', 'cny', 'fx'].forEach(function(id){ $(id).classList.remove('invalid'); });
     var h = $('fx-hint');
     h.className = 'hint';
     h.textContent = '盎司与克的换算按 1 金衡盎司 = 31.1034768 克';
@@ -228,8 +252,14 @@
     return cny * GRAMS_PER_OUNCE / fx;
   }
 
-  function render(usd, fx){
-    var cny = usdToCny(usd, fx);
+  // 双向换算：source 指明用户最后编辑的是哪一栏，以它为基准算另一栏
+  function convert(source, value, fx){
+    return source === 'usd' ? usdToCny(value, fx) : cnyToUsd(value, fx);
+  }
+
+  function render(source, value, fx){
+    var usd = source === 'usd' ? value : cnyToUsd(value, fx);
+    var cny = source === 'usd' ? usdToCny(value, fx) : value;
 
     var main = el('div', 'result-main');
     main.appendChild(el('div', 'k', '人民币金价'));
@@ -254,25 +284,41 @@
       grid.appendChild(cell);
     });
 
+    var forward = fmt(cny, 2) + ' 元/克 = ' + fmt(usd, 2) + ' 美元/盎司 × ' + fmt(fx, 4) + ' ÷ ' + GRAMS_PER_OUNCE;
+    var backward = fmt(usd, 2) + ' 美元/盎司 = ' + fmt(cny, 2) + ' 元/克 × ' + GRAMS_PER_OUNCE + ' ÷ ' + fmt(fx, 4);
     $('formula').innerHTML =
       '<div class="t">换算过程</div>' +
-      '<div><code>' + fmt(cny, 2) + ' 元/克 = ' + fmt(usd, 2) + ' 美元/盎司 × ' + fmt(fx, 4) + ' ÷ ' + GRAMS_PER_OUNCE + '</code></div>' +
-      '<div style="margin-top:6px">反向核对：<code>' + fmt(cnyToUsd(cny, fx), 2) + ' 美元/盎司 = ' + fmt(cny, 2) + ' 元/克 × ' + GRAMS_PER_OUNCE + ' ÷ ' + fmt(fx, 4) + '</code></div>';
+      '<div><code>' + forward + '</code></div>' +
+      '<div style="margin-top:6px">反向核对：<code>' + backward + '</code></div>';
 
     resultEl.classList.add('show');
     resultEl.scrollIntoView({behavior:'smooth', block:'start'});
   }
 
-  function collect(){
-    var usd = readNumber('usd');
-    var fx = readNumber('fx');
+  // 把另一栏填上换算结果，并标记当前输入源
+  function syncPair(source, value, fx){
+    var other = source === 'usd' ? 'cny' : 'usd';
+    var out = convert(source, value, fx);
+    $(other).value = String(Number(out.toFixed(source === 'usd' ? 2 : 2)));
+    $(other).classList.remove('invalid');
+    markSource(source);
+  }
 
-    if (usd === null){ showError('请填写黄金价格（美元/盎司）', 'usd'); return null; }
-    if (isNaN(usd) || usd <= 0){ showError('黄金价格需为大于 0 的数字', 'usd'); return null; }
+  function markSource(source){
+    $('usd-tag').textContent = source === 'usd' ? '输入源' : '';
+    $('cny-tag').textContent = source === 'cny' ? '输入源' : '';
+  }
+
+  function collect(){
+    var fx = readNumber('fx');
     if (fx === null){ showError('请填写美元兑人民币汇率', 'fx'); return null; }
     if (isNaN(fx) || fx <= 0){ showError('汇率需为大于 0 的数字', 'fx'); return null; }
 
-    return { usd: usd, fx: fx };
+    var value = readNumber(source);
+    if (value === null){ showError('请填写黄金价格', source); return null; }
+    if (isNaN(value) || value <= 0){ showError('黄金价格需为大于 0 的数字', source); return null; }
+
+    return { source: source, value: value, fx: fx };
   }
 
   /* ===== 汇率自动获取 ===== */
@@ -350,10 +396,12 @@
     clearErrors();
     var when = fmtTime(r.date);
     setStatus('已获取 ' + v + ' CNY/USD' + (when ? '（更新于 ' + when + '）' : '') + ' · 来源 ' + r.source, 'ok');
-    // 已有结果时同步刷新，避免拿到新汇率还要手动再点一次
+    // 汇率变了，按当前输入源重算另一栏；已有结果时同步刷新，不用再点换算
+    var value = readNumber(source);
+    if (value !== null && !isNaN(value) && value > 0) syncPair(source, value, r.rate);
     if (resultEl.classList.contains('show')) {
       var data = collect();
-      if (data) render(data.usd, data.fx);
+      if (data) render(data.source, data.value, data.fx);
     }
   }
 
@@ -397,12 +445,15 @@
     e.preventDefault();
     clearErrors();
     var data = collect();
-    if (data) render(data.usd, data.fx);
+    if (data) render(data.source, data.value, data.fx);
   });
 
   function resetForm(){
+    source = 'usd';
     $('usd').value = '2650';
+    $('cny').value = '';
     $('fx').value = '7.25';
+    markSource('usd');
     resultEl.classList.remove('show');
     clearErrors();
     setStatus(STATUS_DEFAULT);
@@ -410,20 +461,25 @@
 
   $('reset').addEventListener('click', resetForm);
 
-  ['usd', 'fx'].forEach(function(id){
+  ['usd', 'cny', 'fx'].forEach(function(id){
     $(id).addEventListener('input', function(){
       clearErrors();
       // 用户手动改过汇率后，之前的自动获取提示已过时
       if (id === 'fx') setStatus(STATUS_DEFAULT);
-    });
-  });
 
-  // 动态换算：参数变化时若已有结果则即时刷新，省去反复点按钮
-  ['usd', 'fx'].forEach(function(id){
-    $(id).addEventListener('input', function(){
+      // 改价格时以该栏为基准；改汇率时沿用当前输入源，两种情况都重算另一栏
+      if (id === 'usd' || id === 'cny'){ source = id; markSource(source); }
+
+      var fx = readNumber('fx');
+      var value = readNumber(source);
+      if (fx !== null && !isNaN(fx) && fx > 0 && value !== null && !isNaN(value) && value > 0){
+        syncPair(source, value, fx);
+      }
+
+      // 已有结果时参数变化即时刷新，省去反复点按钮
       if (!resultEl.classList.contains('show')) return;
       var data = collect();
-      if (data) render(data.usd, data.fx);
+      if (data) render(data.source, data.value, data.fx);
     });
   });
 
