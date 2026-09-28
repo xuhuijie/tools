@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0e7490">
+<title>瞬时流量与流速换算</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#fff;
+    --text:#1f2329;
+    --sub:#8a9099;
+    --line:#e8eaed;
+    --primary:#0e7490;
+    --primary-press:#0b5c73;
+    --warn:#d4380d;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:linear-gradient(135deg,#0e7490,#18a5bd);color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header p{margin:4px 0 0;font-size:12px;opacity:.9}
+  main{max-width:640px;margin:0 auto;padding:12px 12px 0}
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    padding:14px 14px 6px;margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .card h2{
+    margin:0 0 10px;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .row{margin-bottom:12px}
+  .row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  .row label b{color:var(--text);font-weight:500}
+  .input-wrap{position:relative;display:flex;align-items:center}
+  input[type="number"]{
+    width:100%;height:46px;padding:0 76px 0 12px;
+    font-size:17px;font-weight:600;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+    outline:none;-moz-appearance:textfield;
+  }
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input:focus{border-color:var(--primary);background:#fff}
+  input.invalid{border-color:var(--warn);background:#fff2ef}
+  .unit{
+    position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none;
+  }
+  .swap{
+    display:flex;align-items:center;justify-content:center;
+    margin:-4px 0 8px;gap:8px;color:var(--sub);font-size:12px;
+  }
+  .swap::before,.swap::after{content:"";flex:1;height:1px;background:var(--line)}
+  .swap span{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:50%;
+    background:#e6f5f8;border:1px solid #c3e6ed;color:var(--primary);
+  }
+  .swap svg{display:block}
+  .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
+  .hint.err{color:var(--warn)}
+  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .quick button{
+    flex:1 1 auto;min-width:64px;height:34px;padding:0 10px;
+    font-size:13px;color:var(--primary);background:#e6f5f8;
+    border:1px solid #c3e6ed;border-radius:9px;
+  }
+  .quick button:active{background:#d4edf2}
+  .btns{display:flex;gap:10px;margin:2px 0 14px}
+  .btns button{
+    flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none;
+  }
+  #calc{background:var(--primary);color:#fff}
+  #calc:active{background:var(--primary-press)}
+  #reset{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+  #result{display:none}
+  #result.show{display:block}
+  .result-main{
+    background:linear-gradient(135deg,#0e7490,#27b0c8);color:#fff;
+    border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 4px 14px rgba(14,116,144,.25);
+  }
+  .result-main .k{font-size:12px;opacity:.9}
+  .result-main .v{font-size:32px;font-weight:700;letter-spacing:.5px;word-break:break-all;margin:2px 0 0}
+  .result-main .v small{font-size:14px;font-weight:500;margin-left:6px;opacity:.9}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
+  .grid div{background:#fff;padding:10px 12px}
+  .grid .k{font-size:12px;color:var(--sub)}
+  .grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+  .formula{
+    font-size:12px;color:var(--sub);line-height:1.6;
+    background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-top:12px;
+    word-break:break-all;
+  }
+  .formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+  .formula .t{color:var(--text);font-weight:600}
+  footer{max-width:640px;margin:0 auto;padding:0 14px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+  footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>瞬时流量与流速换算</h1>
+  <p>m³/h ↔ m/s 双向换算，按口径与缩进百分比折算</p>
+</header>
+
+<main>
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>流量参数</h2>
+      <div class="row">
+        <label for="flow"><b>瞬时流量</b>（改任一侧，另一侧自动换算）</label>
+        <div class="input-wrap">
+          <input id="flow" name="flow" type="number" inputmode="decimal" step="any" placeholder="例如 100" value="100">
+          <span class="unit">m³/h</span>
+        </div>
+      </div>
+      <div class="swap"><span aria-hidden="true"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5v11M5 2.5 2.5 5M5 2.5 7.5 5"/><path d="M11 13.5v-11M11 13.5 8.5 11M11 13.5 13.5 11"/></svg></span></div>
+      <div class="row">
+        <label for="vel"><b>流速</b></label>
+        <div class="input-wrap">
+          <input id="vel" name="vel" type="number" inputmode="decimal" step="any" placeholder="例如 3.125" value="">
+          <span class="unit">m/s</span>
+        </div>
+      </div>
+      <div class="row">
+        <label for="dn"><b>口径 DN</b>（管段内径）</label>
+        <div class="input-wrap">
+          <input id="dn" name="dn" type="number" inputmode="decimal" step="any" placeholder="例如 80" value="80">
+          <span class="unit">mm</span>
+        </div>
+      </div>
+      <div class="row">
+        <label for="inset"><b>缩进百分比</b>（缩径/缩进量占内径的比例）</label>
+        <div class="input-wrap">
+          <input id="inset" name="inset" type="number" inputmode="decimal" step="any" placeholder="例如 0" value="0">
+          <span class="unit">%</span>
+        </div>
+        <div class="hint" id="inset-hint">按内径均匀缩进计算，等效内径 = 口径 DN × (1 − 缩进百分比 ÷ 100)</div>
+      </div>
+    </section>
+
+    <div class="btns">
+      <button type="button" id="reset">重置</button>
+      <button type="submit" id="calc">换算</button>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div id="result-main"></div>
+    <div class="grid" id="grid"></div>
+    <div class="formula" id="formula"></div>
+  </section>
+
+  <footer>
+    两侧互为输入，改任意一侧即自动换算另一侧<br>
+    流速 = 流量 ÷ 3600 ÷ (π × 等效内径² ÷ 4)<br>
+    等效内径 = 口径 DN × (1 − 缩进百分比 ÷ 100)<br>
+    <a href="./index.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>·<a href="./flow.html">流量流速换算</a>
+  </footer>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  var $ = function(id){ return document.getElementById(id); };
+  var formEl = $('form');
+  var resultEl = $('result');
+
+  // 体积流量按 m³/h、流速按 m/s、内径按 mm 计，故 1 m³/h = 1/3600 m³/s，1 mm = 0.001 m
+  var SECONDS_PER_HOUR = 3600;
+  var MM_PER_M = 1000;
+
+  function el(tag, cls, text){
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function readNumber(id){
+    var raw = String($(id).value).trim();
+    if (raw === '') return null;
+    var n = Number(raw);
+    return isFinite(n) ? n : NaN;
+  }
+
+  var INSET_HINT = '按内径均匀缩进计算，等效内径 = 口径 DN × (1 − 缩进百分比 ÷ 100)';
+
+  function clearErrors(){
+    ['flow', 'vel', 'dn', 'inset'].forEach(function(id){ $(id).classList.remove('invalid'); });
+    var h = $('inset-hint');
+    h.className = 'hint';
+    h.textContent = INSET_HINT;
+  }
+
+  // scroll=false 用于输入过程中的实时提示：反复滚动会把视口拽得乱跳
+  function showError(msg, id, scroll){
+    resultEl.classList.remove('show');
+    if (id) $(id).classList.add('invalid');
+    var h = $('inset-hint');
+    h.className = 'hint err';
+    h.textContent = msg;
+    if (id && scroll !== false) $(id).scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  // 保留指定位小数并去掉长浮点尾巴（如 3.1249999999999996）
+  function fmt(n, digits){
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', {maximumFractionDigits:d});
+  }
+
+  // 缩进后的等效内径（mm）；缩进百分比是内径被削掉的比例
+  function effectiveDiameter(dn, inset){
+    return dn * (1 - inset / 100);
+  }
+
+  // 流通截面积（m²）：内径 mm 先转 m
+  function area(d){
+    var r = d / MM_PER_M / 2;
+    return Math.PI * r * r;
+  }
+
+  // m³/h → m/s
+  function flowToVelocity(flow, d){
+    return flow / SECONDS_PER_HOUR / area(d);
+  }
+
+  // m/s → m³/h
+  function velocityToFlow(velocity, d){
+    return velocity * area(d) * SECONDS_PER_HOUR;
+  }
+
+  function render(flow, vel, d){
+    var main = el('div', 'result-main');
+    main.appendChild(el('div', 'k', '流速'));
+    var v = el('div', 'v', fmt(vel, 4));
+    v.appendChild(el('small', null, 'm/s'));
+    main.appendChild(v);
+    $('result-main').innerHTML = '';
+    $('result-main').appendChild(main);
+
+    var grid = $('grid');
+    grid.innerHTML = '';
+    var cells = [
+      ['瞬时流量', fmt(flow, 3) + ' m³/h'],
+      ['流速', fmt(vel, 4) + ' m/s'],
+      ['口径 DN', fmt($('dn').value === '' ? NaN : readNumber('dn'), 1) + ' mm'],
+      ['等效内径', fmt(d, 2) + ' mm']
+    ];
+    cells.forEach(function(c){
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', c[0]));
+      cell.appendChild(el('div', 'v', c[1]));
+      grid.appendChild(cell);
+    });
+
+    var inset = readNumber('inset') || 0;
+    $('formula').innerHTML =
+      '<div class="t">换算过程</div>' +
+      '<div><code>等效内径 = ' + fmt(readNumber('dn'), 1) + ' mm × (1 − ' + fmt(inset, 3) + ' ÷ 100) = ' + fmt(d, 2) + ' mm</code></div>' +
+      '<div><code>流通截面积 = π × (' + fmt(d, 2) + ' ÷ 1000 ÷ 2)² ≈ ' + fmt(area(d), 6) + ' m²</code></div>' +
+      '<div><code>流速 = ' + fmt(flow, 3) + ' m³/h ÷ 3600 ÷ ' + fmt(area(d), 6) + ' ≈ ' + fmt(vel, 4) + ' m/s</code></div>' +
+      '<div style="margin-top:6px">反向核对：<code>' + fmt(velocityToFlow(vel, d), 3) + ' m³/h = ' + fmt(vel, 4) + ' m/s × ' + fmt(area(d), 6) + ' m² × 3600</code></div>';
+
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // 读一个输入框并要求为正数，非法时高亮该框并给出中文提示
+  function readPositive(id, label){
+    var v = readNumber(id);
+    if (v === null){ showError('请填写' + label, id); return null; }
+    if (isNaN(v) || v <= 0){ showError(label + '需为大于 0 的数字', id); return null; }
+    return v;
+  }
+
+  // 缩进百分比可以是 0（不缩进），但不能为负或达到 100（截面积归零）
+  function readInset(){
+    var v = readNumber('inset');
+    if (v === null){ $('inset').value = '0'; return 0; }
+    if (isNaN(v) || v < 0 || v >= 100){
+      showError('缩进百分比需为 0 到 100 之间的数字（不含 100）', 'inset');
+      return null;
+    }
+    return v;
+  }
+
+  // 双向输入的核心：source 标记用户最后编辑的一侧，另一侧据此算出，
+  // 保证两个框永远自洽。source='flow' 以流量为准，'vel' 以流速为准。
+  function collect(source){
+    var dn = readPositive('dn', '口径 DN');
+    if (dn === null) return null;
+    var inset = readInset();
+    if (inset === null) return null;
+
+    var d = effectiveDiameter(dn, inset);
+    if (!(d > 0)){ showError('缩进后等效内径需大于 0，请检查口径与缩进百分比', 'inset'); return null; }
+
+    var flow, vel;
+    if (source === 'vel'){
+      vel = readPositive('vel', '流速');
+      if (vel === null) return null;
+      flow = velocityToFlow(vel, d);
+    } else {
+      flow = readPositive('flow', '瞬时流量');
+      if (flow === null) return null;
+      vel = flowToVelocity(flow, d);
+    }
+    return { flow: flow, vel: vel, d: d };
+  }
+
+  // 把结果写回「对面」输入框；用户正在编辑的框不动，避免打断输入
+  function syncPair(source, flow, vel){
+    if (source === 'vel') $('flow').value = fmtInput(flow);
+    else $('vel').value = fmtInput(vel);
+  }
+
+  // 写回输入框的数值：保留 4 位小数后去掉尾随零，避免长浮点尾巴
+  function fmtInput(n){
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(4)));
+  }
+
+  var lastSource = 'flow';
+
+  // 按当前源侧重算，同步对面输入框；有结果时一并刷新结果区
+  function recalc(){
+    var data = collect(lastSource);
+    if (!data) return;
+    syncPair(lastSource, data.flow, data.vel);
+    if (resultEl.classList.contains('show')) render(data.flow, data.vel, data.d);
+  }
+
+  formEl.addEventListener('submit', function(e){
+    e.preventDefault();
+    clearErrors();
+    var data = collect(lastSource);
+    if (data) { syncPair(lastSource, data.flow, data.vel); render(data.flow, data.vel, data.d); }
+  });
+
+  function resetForm(){
+    lastSource = 'flow';
+    $('flow').value = '100';
+    $('dn').value = '80';
+    $('inset').value = '0';
+    resultEl.classList.remove('show');
+    clearErrors();
+    var data = collect('flow');
+    if (data) syncPair('flow', data.flow, data.vel);
+  }
+
+  $('reset').addEventListener('click', resetForm);
+
+  // 双向联动：改哪一侧，哪一侧就成为真值，另一侧实时换算出来。
+  // 两个框都只监听自己的 input，不需要「循环同步」的守卫——
+  // 代码里给对面赋值不会触发对面的 input 事件，天然不会来回弹。
+  var SIDE_LABEL = { flow: '瞬时流量（m³/h）', vel: '流速（m/s）' };
+
+  ['flow', 'vel'].forEach(function(side){
+    $(side).addEventListener('input', function(){
+      clearErrors();
+      lastSource = side;
+
+      // 编辑中的框非法（空/≤0）就地提示，别让用户点了「换算」才知道填错
+      var cur = readNumber(side);
+      if (cur === null || isNaN(cur) || cur <= 0) {
+        showError('请输入大于 0 的' + SIDE_LABEL[side], side, false);
+        return;
+      }
+      recalc();
+    });
+  });
+
+  // 口径与缩进只影响换算系数，不改变「谁是源」，因此共用一套处理
+  ['dn', 'inset'].forEach(function(id){
+    $(id).addEventListener('input', function(){
+      clearErrors();
+      recalc();
+    });
+  });
+
+  // 打开页面即按默认参数对齐两侧，用户一眼就能看出「两侧互为输入」
+  resetForm();
+})();
+</script>
+</body>
+</html>
