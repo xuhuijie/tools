@@ -58,6 +58,17 @@
   .unit{
     position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none;
   }
+  .swap{
+    display:flex;align-items:center;justify-content:center;
+    margin:-4px 0 8px;gap:8px;color:var(--sub);font-size:12px;
+  }
+  .swap::before,.swap::after{content:"";flex:1;height:1px;background:var(--line)}
+  .swap span{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:50%;
+    background:#fdf6e3;border:1px solid #f0e0b8;color:var(--primary);
+  }
+  .swap svg{display:block}
   .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
   .hint.err{color:var(--warn)}
   .fx-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
@@ -116,7 +127,7 @@
 <body>
 <header>
   <h1>黄金价格换算计算</h1>
-  <p>美元/盎司 ⇄ 人民币/克 双向换算</p>
+  <p>美元/盎司 ↔ 人民币/克 双向换算</p>
 </header>
 
 <main>
@@ -124,10 +135,18 @@
     <section class="card">
       <h2>行情参数</h2>
       <div class="row">
-        <label for="usd"><b>黄金价格</b>（国际金价）</label>
+        <label for="usd"><b>黄金价格</b>（改任一侧，另一侧自动换算）</label>
         <div class="input-wrap">
           <input id="usd" name="usd" type="number" inputmode="decimal" step="any" placeholder="例如 2650" value="2650">
           <span class="unit">美元/盎司</span>
+        </div>
+      </div>
+      <div class="swap"><span aria-hidden="true"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5v11M5 2.5 2.5 5M5 2.5 7.5 5"/><path d="M11 13.5v-11M11 13.5 8.5 11M11 13.5 13.5 11"/></svg></span></div>
+      <div class="row">
+        <label for="cny"><b>人民币金价</b>（国内金价）</label>
+        <div class="input-wrap">
+          <input id="cny" name="cny" type="number" inputmode="decimal" step="any" placeholder="例如 617.70" value="">
+          <span class="unit">元/克</span>
         </div>
       </div>
       <div class="row">
@@ -157,6 +176,7 @@
   </section>
 
   <footer>
+    两侧互为输入，改任意一侧即自动换算另一侧<br>
     人民币/克 = 美元/盎司 × 汇率 ÷ 31.1034768<br>
     美元/盎司 = 人民币/克 × 31.1034768 ÷ 汇率<br>
     <a href="./index.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>
@@ -189,17 +209,18 @@
   }
 
   function clearErrors(){
-    ['usd', 'fx'].forEach(function(id){ $(id).classList.remove('invalid'); });
+    ['usd', 'cny', 'fx'].forEach(function(id){ $(id).classList.remove('invalid'); });
     var h = $('fx-hint');
     h.className = 'hint';
     h.textContent = '盎司与克的换算按 1 金衡盎司 = 31.1034768 克';
   }
 
-  function showError(msg, id){
+  // scroll=false 用于输入过程中的实时提示：反复滚动会把视口拽得乱跳
+  function showError(msg, id, scroll){
     resultEl.classList.remove('show');
     if (id) $(id).classList.add('invalid');
     setStatus(msg, 'err');
-    $('fx-hint').scrollIntoView({behavior:'smooth', block:'center'});
+    if (id && scroll !== false) $(id).scrollIntoView({behavior:'smooth', block:'center'});
   }
 
   // 状态提示：加载中 / 成功 / 失败，互斥切换，避免提示叠加
@@ -228,9 +249,7 @@
     return cny * GRAMS_PER_OUNCE / fx;
   }
 
-  function render(usd, fx){
-    var cny = usdToCny(usd, fx);
-
+  function render(cny, usd, fx){
     var main = el('div', 'result-main');
     main.appendChild(el('div', 'k', '人民币金价'));
     var v = el('div', 'v', fmt(cny, 2));
@@ -263,16 +282,40 @@
     resultEl.scrollIntoView({behavior:'smooth', block:'start'});
   }
 
-  function collect(){
-    var usd = readNumber('usd');
-    var fx = readNumber('fx');
+  // 读一个输入框并要求为正数，非法时高亮该框并给出中文提示
+  function readPositive(id, label){
+    var v = readNumber(id);
+    if (v === null){ showError('请填写' + label, id); return null; }
+    if (isNaN(v) || v <= 0){ showError(label + '需为大于 0 的数字', id); return null; }
+    return v;
+  }
 
-    if (usd === null){ showError('请填写黄金价格（美元/盎司）', 'usd'); return null; }
-    if (isNaN(usd) || usd <= 0){ showError('黄金价格需为大于 0 的数字', 'usd'); return null; }
-    if (fx === null){ showError('请填写美元兑人民币汇率', 'fx'); return null; }
-    if (isNaN(fx) || fx <= 0){ showError('汇率需为大于 0 的数字', 'fx'); return null; }
+  // 双向输入的核心：source 标记用户最后编辑的一侧，另一侧据此算出，
+  // 保证两个框永远自洽。source='usd' 以美元/盎司为准，'cny' 以人民币/克为准。
+  function collect(source){
+    var usd = readPositive('usd', '黄金价格（美元/盎司）');
+    if (usd === null) return null;
+    var cny = readPositive('cny', '人民币金价（元/克）');
+    if (cny === null) return null;
+    var fx = readPositive('fx', '美元兑人民币汇率');
+    if (fx === null) return null;
 
-    return { usd: usd, fx: fx };
+    if (source === 'cny') usd = cnyToUsd(cny, fx);
+    else cny = usdToCny(usd, fx);
+
+    return { usd: usd, cny: cny, fx: fx };
+  }
+
+  // 把结果写回「对面」输入框；用户正在编辑的框不动，避免打断输入
+  function syncPair(source, usd, cny){
+    if (source === 'usd') $('cny').value = fmtInput(cny);
+    else $('usd').value = fmtInput(usd);
+  }
+
+  // 写回输入框的数值：保留 4 位小数后去掉尾随零，避免长浮点尾巴
+  function fmtInput(n){
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(4)));
   }
 
   /* ===== 汇率自动获取 ===== */
@@ -343,6 +386,25 @@
   var fxBtn = $('fx-fetch');
   var fxBusy = false;
 
+  // 记录用户最后编辑的是哪一侧，汇率变更时据此决定谁是真值
+  var lastSource = 'usd';
+
+  // 按当前源侧重算，同步对面输入框；有结果时一并刷新结果区
+  function recalc(){
+    var fx = readNumber('fx');
+    var src = readNumber(lastSource);
+    if (fx === null || isNaN(fx) || fx <= 0) return;
+    if (src === null || isNaN(src) || src <= 0) return;
+
+    if (lastSource === 'usd') syncPair('usd', src, usdToCny(src, fx));
+    else syncPair('cny', cnyToUsd(src, fx), src);
+
+    if (resultEl.classList.contains('show')) {
+      var data = collect(lastSource);
+      if (data) render(data.cny, data.usd, data.fx);
+    }
+  }
+
   function applyRate(r){
     var v = String(Number(r.rate.toFixed(4)));
     $('fx').value = v;
@@ -350,11 +412,8 @@
     clearErrors();
     var when = fmtTime(r.date);
     setStatus('已获取 ' + v + ' CNY/USD' + (when ? '（更新于 ' + when + '）' : '') + ' · 来源 ' + r.source, 'ok');
-    // 已有结果时同步刷新，避免拿到新汇率还要手动再点一次
-    if (resultEl.classList.contains('show')) {
-      var data = collect();
-      if (data) render(data.usd, data.fx);
-    }
+    // 汇率变了，以当前最后编辑的一侧为准重算，两个框同步刷新
+    recalc();
   }
 
   function autoFetchRate(){
@@ -380,6 +439,9 @@
 
   // 打开页面即自动拉取一次，用户无需操作；失败则保留默认值并提示
   function boot(){
+    // 按默认值先把两个框对齐，用户一眼就能看出「两侧互为输入」
+    recalc();
+
     if (!HAS_FETCH) {
       setStatus('当前环境不支持自动获取，请手动填写汇率', 'err');
       fxBtn.disabled = true;
@@ -396,13 +458,15 @@
   formEl.addEventListener('submit', function(e){
     e.preventDefault();
     clearErrors();
-    var data = collect();
-    if (data) render(data.usd, data.fx);
+    var data = collect(lastSource);
+    if (data) { syncPair(lastSource, data.usd, data.cny); render(data.cny, data.usd, data.fx); }
   });
 
   function resetForm(){
+    lastSource = 'usd';
     $('usd').value = '2650';
     $('fx').value = '7.25';
+    $('cny').value = fmtInput(usdToCny(2650, 7.25));
     resultEl.classList.remove('show');
     clearErrors();
     setStatus(STATUS_DEFAULT);
@@ -410,21 +474,34 @@
 
   $('reset').addEventListener('click', resetForm);
 
-  ['usd', 'fx'].forEach(function(id){
-    $(id).addEventListener('input', function(){
+  // 双向联动：改哪一侧，哪一侧就成为真值，另一侧实时换算出来。
+  // 两个框都只监听自己的 input，不需要「循环同步」的守卫——
+  // 代码里给对面赋值不会触发对面的 input 事件，天然不会来回弹。
+  var SIDE_LABEL = { usd: '黄金价格（美元/盎司）', cny: '人民币金价（元/克）' };
+
+  ['usd', 'cny'].forEach(function(side){
+    $(side).addEventListener('input', function(){
       clearErrors();
-      // 用户手动改过汇率后，之前的自动获取提示已过时
-      if (id === 'fx') setStatus(STATUS_DEFAULT);
+      lastSource = side;
+
+      // 编辑中的框非法（空/≤0）就地提示，别让用户点了「换算」才知道填错
+      var cur = readNumber(side);
+      if (cur === null || isNaN(cur) || cur <= 0) {
+        showError('请输入大于 0 的' + SIDE_LABEL[side], side, false);
+        return;
+      }
+      recalc();
     });
   });
 
-  // 动态换算：参数变化时若已有结果则即时刷新，省去反复点按钮
-  ['usd', 'fx'].forEach(function(id){
-    $(id).addEventListener('input', function(){
-      if (!resultEl.classList.contains('show')) return;
-      var data = collect();
-      if (data) render(data.usd, data.fx);
-    });
+  // 汇率：只影响换算系数，不改变「谁是源」，因此单独处理
+  $('fx').addEventListener('input', function(){
+    clearErrors();
+    setStatus(STATUS_DEFAULT);
+
+    var fx = readNumber('fx');
+    if (fx === null || isNaN(fx) || fx <= 0) { showError('请输入大于 0 的美元兑人民币汇率', 'fx', false); return; }
+    recalc();
   });
 
   boot();
