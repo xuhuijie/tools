@@ -604,18 +604,21 @@
     h2.textContent = '留空时沿用上方「美元兑人民币汇率」；填 1 则价位按美元显示';
   }
 
-  // 价位单位：填了就用填的，留空则跟随上方汇率；1 即按美元显示
+  // 价位单位：填了就用填的，留空则跟随上方汇率；1 即按美元显示。
+  // 回调位由「美元/盎司」区间算出，按汇率折成人民币/克时同样要除以
+  // 1 金衡盎司的克数，与上方换算保持一致，不能只乘汇率。
   function fibUnit(){
     var raw = String($('fib-unit').value).trim();
     if (raw === '') {
       var s = readNumber('fx');
-      if (s !== null && isFinite(s) && s > 0) return { scale: s, cny: true };
-      return { scale: 1, cny: false };
+      if (s !== null && isFinite(s) && s > 0) return { scale: s / GRAMS_PER_OUNCE, cny: true, fx: s };
+      return { scale: 1, cny: false, fx: 1 };
     }
     var u = Number(raw);
     if (!isFinite(u) || u <= 0) return null;
     // 1 表示不做人民币折算，价位按美元/盎司原值显示
-    return { scale: u, cny: u !== 1 };
+    if (u === 1) return { scale: 1, cny: false, fx: 1 };
+    return { scale: u / GRAMS_PER_OUNCE, cny: true, fx: u };
   }
 
   function fibCollect(){
@@ -657,23 +660,29 @@
       var line = el('div', 'v');
       line.textContent = fmt(price * unit.scale, 2) + (unit.cny ? ' 元/克' : ' 美元');
       cell.appendChild(line);
-      if (unit.cny && unit.scale !== 1) {
+      if (unit.cny) {
         cell.appendChild(el('div', 'k', fmt(price, 2) + ' 美元/盎司'));
       }
       grid.appendChild(cell);
     });
 
-    // 代入过程用区间端点写全，便于反查
+    // 代入过程用区间端点写全，便于反查；人民币价位把盎司→克那步也写出来
     var lines = FIB_LEVELS.map(function(lv){
-      return '<div><code>' + lv.label + '：' + fmt(fibPrice(lv, d.high, d.low) * unit.scale, 2) +
-        ' = ' + fmt(d.high, 2) + ' − (' + fmt(d.high, 2) + ' − ' + fmt(d.low, 2) + ') × ' + (lv.permille / 1000) + '</code></div>';
+      var usd = fibPrice(lv, d.high, d.low);
+      var expr = fmt(d.high, 2) + ' − (' + fmt(d.high, 2) + ' − ' + fmt(d.low, 2) + ') × ' + (lv.permille / 1000);
+      var shown = unit.cny
+        ? '[' + expr + '] × ' + fmt(unit.fx, 4) + ' ÷ ' + GRAMS_PER_OUNCE
+        : expr;
+      return '<div><code>' + lv.label + '：' + fmt(usd * unit.scale, 2) + ' = ' + shown + '</code></div>';
     }).join('');
 
     $('fib-formula').innerHTML =
       '<div class="t">回调位 = 波段高点 − (高点 − 低点) × 回调比例</div>' + lines +
       '<div style="margin-top:6px">区间 ' + fmt(d.high, 2) + ' – ' + fmt(d.low, 2) + ' 美元/盎司，' +
-      '共 ' + fmt(d.high - d.low, 2) + ' 美元；按汇率 ' + fmt(unit.scale, 4) + ' 折算成' +
-      (unit.cny ? '元/克' : '美元') + '。</div>' +
+      '共 ' + fmt(d.high - d.low, 2) + ' 美元；' +
+      (unit.cny
+        ? '按汇率 ' + fmt(unit.fx, 4) + ' 折算并除以 ' + GRAMS_PER_OUNCE + '（1 金衡盎司克数）得到元/克。'
+        : '按美元/盎司原值显示。') + '</div>' +
       '<div>回调比例越大，价位越低；0% 即高点，100% 即低点。</div>';
 
     fibResultEl.classList.add('show');
