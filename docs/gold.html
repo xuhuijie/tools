@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#b8860b">
+<title>黄金价格换算计算</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#fff;
+    --text:#1f2329;
+    --sub:#8a9099;
+    --line:#e8eaed;
+    --primary:#b8860b;
+    --primary-press:#96690a;
+    --warn:#d4380d;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:linear-gradient(135deg,#b8860b,#d8a72a);color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header p{margin:4px 0 0;font-size:12px;opacity:.9}
+  main{max-width:640px;margin:0 auto;padding:12px 12px 0}
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    padding:14px 14px 6px;margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .card h2{
+    margin:0 0 10px;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .row{margin-bottom:12px}
+  .row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  .row label b{color:var(--text);font-weight:500}
+  .input-wrap{position:relative;display:flex;align-items:center}
+  input[type="number"]{
+    width:100%;height:46px;padding:0 76px 0 12px;
+    font-size:17px;font-weight:600;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+    outline:none;-moz-appearance:textfield;
+  }
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input:focus{border-color:var(--primary);background:#fff}
+  input.invalid{border-color:var(--warn);background:#fff2ef}
+  .unit{
+    position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none;
+  }
+  .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
+  .hint.err{color:var(--warn)}
+  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .quick button{
+    flex:1 1 auto;min-width:64px;height:34px;padding:0 10px;
+    font-size:13px;color:var(--primary);background:#fdf6e3;
+    border:1px solid #f0e0b8;border-radius:9px;
+  }
+  .quick button:active{background:#f7ecd0}
+  .btns{display:flex;gap:10px;margin:2px 0 14px}
+  .btns button{
+    flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none;
+  }
+  #calc{background:var(--primary);color:#fff}
+  #calc:active{background:var(--primary-press)}
+  #reset{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+  #result{display:none}
+  #result.show{display:block}
+  .result-main{
+    background:linear-gradient(135deg,#b8860b,#e0b23c);color:#fff;
+    border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 4px 14px rgba(184,134,11,.25);
+  }
+  .result-main .k{font-size:12px;opacity:.9}
+  .result-main .v{font-size:32px;font-weight:700;letter-spacing:.5px;word-break:break-all;margin:2px 0 0}
+  .result-main .v small{font-size:14px;font-weight:500;margin-left:6px;opacity:.9}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
+  .grid div{background:#fff;padding:10px 12px}
+  .grid .k{font-size:12px;color:var(--sub)}
+  .grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+  .formula{
+    font-size:12px;color:var(--sub);line-height:1.6;
+    background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-top:12px;
+    word-break:break-all;
+  }
+  .formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+  .formula .t{color:var(--text);font-weight:600}
+  footer{max-width:640px;margin:0 auto;padding:0 14px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+  footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>黄金价格换算计算</h1>
+  <p>美元/盎司 ⇄ 人民币/克 双向换算</p>
+</header>
+
+<main>
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>行情参数</h2>
+      <div class="row">
+        <label for="usd"><b>黄金价格</b>（国际金价）</label>
+        <div class="input-wrap">
+          <input id="usd" name="usd" type="number" inputmode="decimal" step="any" placeholder="例如 2650" value="2650">
+          <span class="unit">美元/盎司</span>
+        </div>
+      </div>
+      <div class="row">
+        <label for="fx"><b>美元兑人民币汇率</b></label>
+        <div class="input-wrap">
+          <input id="fx" name="fx" type="number" inputmode="decimal" step="any" placeholder="例如 7.25" value="7.25">
+          <span class="unit">CNY/USD</span>
+        </div>
+        <div class="hint" id="fx-hint">盎司与克的换算按 1 金衡盎司 = 31.1034768 克</div>
+      </div>
+    </section>
+
+    <div class="btns">
+      <button type="button" id="reset">重置</button>
+      <button type="submit" id="calc">换算</button>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div id="result-main"></div>
+    <div class="grid" id="grid"></div>
+    <div class="formula" id="formula"></div>
+  </section>
+
+  <footer>
+    人民币/克 = 美元/盎司 × 汇率 ÷ 31.1034768<br>
+    美元/盎司 = 人民币/克 × 31.1034768 ÷ 汇率<br>
+    <a href="./index.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>
+  </footer>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  // 1 金衡盎司 = 31.1034768 克，央行与上海黄金交易所均采用该值
+  var GRAMS_PER_OUNCE = 31.1034768;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var formEl = $('form');
+  var resultEl = $('result');
+
+  function el(tag, cls, text){
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function readNumber(id){
+    var raw = String($(id).value).trim();
+    if (raw === '') return null;
+    var n = Number(raw);
+    return isFinite(n) ? n : NaN;
+  }
+
+  function clearErrors(){
+    ['usd', 'fx'].forEach(function(id){ $(id).classList.remove('invalid'); });
+    var h = $('fx-hint');
+    h.className = 'hint';
+    h.textContent = '盎司与克的换算按 1 金衡盎司 = 31.1034768 克';
+  }
+
+  function showError(msg, id){
+    resultEl.classList.remove('show');
+    if (id) $(id).classList.add('invalid');
+    var h = $('fx-hint');
+    h.className = 'hint err';
+    h.textContent = msg;
+    h.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  // 保留 4 位有效数字，避开浮点长尾（如 616.0000000000001）
+  function fmt(n, digits){
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    var v = Number(n.toFixed(d));
+    return v.toLocaleString('zh-CN', {maximumFractionDigits:d});
+  }
+
+  // 美元/盎司 → 人民币/克
+  function usdToCny(usd, fx){
+    return usd * fx / GRAMS_PER_OUNCE;
+  }
+
+  // 人民币/克 → 美元/盎司
+  function cnyToUsd(cny, fx){
+    return cny * GRAMS_PER_OUNCE / fx;
+  }
+
+  function render(usd, fx){
+    var cny = usdToCny(usd, fx);
+
+    var main = el('div', 'result-main');
+    main.appendChild(el('div', 'k', '人民币金价'));
+    var v = el('div', 'v', fmt(cny, 2));
+    v.appendChild(el('small', null, '元/克'));
+    main.appendChild(v);
+    $('result-main').innerHTML = '';
+    $('result-main').appendChild(main);
+
+    var grid = $('grid');
+    grid.innerHTML = '';
+    var cells = [
+      ['美元/盎司', fmt(usd, 2) + ' 美元'],
+      ['汇率', fmt(fx, 4) + ' CNY/USD'],
+      ['人民币/克', fmt(cny, 2) + ' 元'],
+      ['人民币/千克', fmt(cny * 1000, 2) + ' 元']
+    ];
+    cells.forEach(function(c){
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', c[0]));
+      cell.appendChild(el('div', 'v', c[1]));
+      grid.appendChild(cell);
+    });
+
+    $('formula').innerHTML =
+      '<div class="t">换算过程</div>' +
+      '<div><code>' + fmt(cny, 2) + ' 元/克 = ' + fmt(usd, 2) + ' 美元/盎司 × ' + fmt(fx, 4) + ' ÷ ' + GRAMS_PER_OUNCE + '</code></div>' +
+      '<div style="margin-top:6px">反向核对：<code>' + fmt(cnyToUsd(cny, fx), 2) + ' 美元/盎司 = ' + fmt(cny, 2) + ' 元/克 × ' + GRAMS_PER_OUNCE + ' ÷ ' + fmt(fx, 4) + '</code></div>';
+
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function collect(){
+    var usd = readNumber('usd');
+    var fx = readNumber('fx');
+
+    if (usd === null){ showError('请填写黄金价格（美元/盎司）', 'usd'); return null; }
+    if (isNaN(usd) || usd <= 0){ showError('黄金价格需为大于 0 的数字', 'usd'); return null; }
+    if (fx === null){ showError('请填写美元兑人民币汇率', 'fx'); return null; }
+    if (isNaN(fx) || fx <= 0){ showError('汇率需为大于 0 的数字', 'fx'); return null; }
+
+    return { usd: usd, fx: fx };
+  }
+
+  formEl.addEventListener('submit', function(e){
+    e.preventDefault();
+    clearErrors();
+    var data = collect();
+    if (data) render(data.usd, data.fx);
+  });
+
+  function resetForm(){
+    $('usd').value = '2650';
+    $('fx').value = '7.25';
+    resultEl.classList.remove('show');
+    clearErrors();
+  }
+
+  $('reset').addEventListener('click', resetForm);
+
+  ['usd', 'fx'].forEach(function(id){
+    $(id).addEventListener('input', clearErrors);
+  });
+
+  // 动态换算：参数变化时若已有结果则即时刷新，省去反复点按钮
+  ['usd', 'fx'].forEach(function(id){
+    $(id).addEventListener('input', function(){
+      if (!resultEl.classList.contains('show')) return;
+      var data = collect();
+      if (data) render(data.usd, data.fx);
+    });
+  });
+})();
+</script>
+</body>
+</html>
