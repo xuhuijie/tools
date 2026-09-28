@@ -60,6 +60,20 @@
   }
   .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
   .hint.err{color:var(--warn)}
+  .fx-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .fx-head label{margin:0}
+  #fx-fetch{
+    height:30px;padding:0 12px;font-size:13px;font-weight:500;
+    color:var(--primary);background:#fdf6e3;border:1px solid #f0e0b8;border-radius:9px;
+    white-space:nowrap;flex:0 0 auto;
+  }
+  #fx-fetch:active{background:#f7ecd0}
+  #fx-fetch[disabled]{opacity:.6}
+  .fx-status{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
+  .fx-status.loading{color:var(--sub)}
+  .fx-status.ok{color:#1a7f37}
+  .fx-status.err{color:var(--warn)}
+  .fx-status a{color:inherit;text-decoration:underline}
   .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
   .quick button{
     flex:1 1 auto;min-width:64px;height:34px;padding:0 10px;
@@ -117,11 +131,15 @@
         </div>
       </div>
       <div class="row">
-        <label for="fx"><b>美元兑人民币汇率</b></label>
+        <div class="fx-head">
+          <label for="fx"><b>美元兑人民币汇率</b></label>
+          <button type="button" id="fx-fetch">自动获取当前汇率</button>
+        </div>
         <div class="input-wrap">
           <input id="fx" name="fx" type="number" inputmode="decimal" step="any" placeholder="例如 7.25" value="7.25">
           <span class="unit">CNY/USD</span>
         </div>
+        <div class="fx-status" id="fx-status">点「自动获取当前汇率」从网络拉取实时中间价，也可手动填写</div>
         <div class="hint" id="fx-hint">盎司与克的换算按 1 金衡盎司 = 31.1034768 克</div>
       </div>
     </section>
@@ -180,10 +198,16 @@
   function showError(msg, id){
     resultEl.classList.remove('show');
     if (id) $(id).classList.add('invalid');
-    var h = $('fx-hint');
-    h.className = 'hint err';
-    h.textContent = msg;
-    h.scrollIntoView({behavior:'smooth', block:'center'});
+    setStatus(msg, 'err');
+    $('fx-hint').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  // 状态提示：加载中 / 成功 / 失败，互斥切换，避免提示叠加
+  var STATUS_DEFAULT = '点「自动获取当前汇率」从网络拉取实时中间价，也可手动填写';
+  function setStatus(msg, kind){
+    var n = $('fx-status');
+    n.className = 'fx-status' + (kind ? ' ' + kind : '');
+    n.textContent = msg;
   }
 
   // 保留 4 位有效数字，避开浮点长尾（如 616.0000000000001）
@@ -251,6 +275,124 @@
     return { usd: usd, fx: fx };
   }
 
+  /* ===== 汇率自动获取 ===== */
+  // 按顺序尝试多个公开接口，任一成功即用；均为免密钥、支持浏览器跨域(CORS)的服务
+  var FX_SOURCES = [
+    {
+      name: 'exchangerate-api.com',
+      url: 'https://open.er-api.com/v6/latest/USD',
+      parse: function(j){
+        if (!j || j.result !== 'success' || !j.rates || !j.rates.CNY) return null;
+        return { rate: Number(j.rates.CNY), date: j.time_last_update_utc || '' };
+      }
+    },
+    {
+      name: 'frankfurter.dev',
+      url: 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=CNY',
+      parse: function(j){
+        if (!j || !j.rates || !j.rates.CNY) return null;
+        return { rate: Number(j.rates.CNY), date: j.date || '' };
+      }
+    }
+  ];
+
+  var FX_TIMEOUT = 10000;
+
+  // 老浏览器 / 内嵌 webview 可能没有 fetch，直接判定不可用，走手动填写
+  var HAS_FETCH = (typeof fetch === 'function');
+
+  // 带超时的 fetch：外部接口卡住时不能拖死页面
+  function fetchJSON(url){
+    return new Promise(function(resolve, reject){
+      if (!HAS_FETCH) { reject(new Error('fetch-unsupported')); return; }
+      var ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var timer = setTimeout(function(){
+        if (ctrl) ctrl.abort();
+        reject(new Error('timeout'));
+      }, FX_TIMEOUT);
+      fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+        .then(function(res){
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(j){ clearTimeout(timer); resolve(j); })
+        .catch(function(e){ clearTimeout(timer); reject(e); });
+    });
+  }
+
+  function fetchRate(idx){
+    idx = idx || 0;
+    if (idx >= FX_SOURCES.length) return Promise.reject(new Error('all-failed'));
+    var src = FX_SOURCES[idx];
+    return fetchJSON(src.url).then(function(j){
+      var r = src.parse(j);
+      if (!r || !isFinite(r.rate) || r.rate <= 0) throw new Error('bad-payload');
+      r.source = src.name;
+      return r;
+    }).catch(function(){ return fetchRate(idx + 1); });
+  }
+
+  // 把接口返回的 UTC 时间串转成本地「MM-DD HH:mm」
+  function fmtTime(str){
+    var d = new Date(str);
+    if (!str || isNaN(d.getTime())) return '';
+    var p2 = function(n){ return (n < 10 ? '0' : '') + n; };
+    return p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  }
+
+  var fxBtn = $('fx-fetch');
+  var fxBusy = false;
+
+  function applyRate(r){
+    var v = String(Number(r.rate.toFixed(4)));
+    $('fx').value = v;
+    $('fx').classList.remove('invalid');
+    clearErrors();
+    var when = fmtTime(r.date);
+    setStatus('已获取 ' + v + ' CNY/USD' + (when ? '（更新于 ' + when + '）' : '') + ' · 来源 ' + r.source, 'ok');
+    // 已有结果时同步刷新，避免拿到新汇率还要手动再点一次
+    if (resultEl.classList.contains('show')) {
+      var data = collect();
+      if (data) render(data.usd, data.fx);
+    }
+  }
+
+  function autoFetchRate(){
+    if (fxBusy) return;
+    if (!HAS_FETCH) { setStatus('当前环境不支持自动获取，请手动填写汇率', 'err'); return; }
+    fxBusy = true;
+    fxBtn.disabled = true;
+    fxBtn.textContent = '获取中…';
+    setStatus('正在获取当前汇率…', 'loading');
+
+    fetchRate(0).then(function(r){
+      applyRate(r);
+    }).catch(function(){
+      setStatus('自动获取失败，可能是网络受限或接口不可用，请手动填写汇率', 'err');
+    }).then(function(){
+      fxBusy = false;
+      fxBtn.disabled = false;
+      fxBtn.textContent = '自动获取当前汇率';
+    });
+  }
+
+  fxBtn.addEventListener('click', autoFetchRate);
+
+  // 打开页面即自动拉取一次，用户无需操作；失败则保留默认值并提示
+  function boot(){
+    if (!HAS_FETCH) {
+      setStatus('当前环境不支持自动获取，请手动填写汇率', 'err');
+      fxBtn.disabled = true;
+      return;
+    }
+    var connected = (typeof navigator !== 'undefined' && 'onLine' in navigator) ? navigator.onLine : true;
+    if (!connected) {
+      setStatus('当前网络离线，请手动填写汇率', 'err');
+      return;
+    }
+    autoFetchRate();
+  }
+
   formEl.addEventListener('submit', function(e){
     e.preventDefault();
     clearErrors();
@@ -263,12 +405,17 @@
     $('fx').value = '7.25';
     resultEl.classList.remove('show');
     clearErrors();
+    setStatus(STATUS_DEFAULT);
   }
 
   $('reset').addEventListener('click', resetForm);
 
   ['usd', 'fx'].forEach(function(id){
-    $(id).addEventListener('input', clearErrors);
+    $(id).addEventListener('input', function(){
+      clearErrors();
+      // 用户手动改过汇率后，之前的自动获取提示已过时
+      if (id === 'fx') setStatus(STATUS_DEFAULT);
+    });
   });
 
   // 动态换算：参数变化时若已有结果则即时刷新，省去反复点按钮
@@ -279,6 +426,8 @@
       if (data) render(data.usd, data.fx);
     });
   });
+
+  boot();
 })();
 </script>
 </body>
