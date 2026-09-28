@@ -113,7 +113,7 @@
 <body>
 <header>
   <h1>瞬时流量与流速换算</h1>
-  <p>m³/h ↔ m/s 双向换算，按口径与缩进百分比折算</p>
+  <p>m³/h ↔ m/s 双向换算，按口径与缩进折算</p>
 </header>
 
 <main>
@@ -143,12 +143,12 @@
         </div>
       </div>
       <div class="row">
-        <label for="inset"><b>缩进百分比</b>（缩径/缩进量占内径的比例）</label>
+        <label for="inset"><b>缩进</b>（0～99 = 缩进百分比；100 以上按内径 mm 计）</label>
         <div class="input-wrap">
           <input id="inset" name="inset" type="number" inputmode="decimal" step="any" placeholder="例如 0" value="0">
           <span class="unit">%</span>
         </div>
-        <div class="hint" id="inset-hint">按内径均匀缩进计算，等效内径 = 口径 DN × (1 − 缩进百分比 ÷ 100)</div>
+        <div class="hint" id="inset-hint">0～99 按「缩进百分比」计：等效内径 = 口径 DN × (1 − 缩进 ÷ 100)；填 ≥100 按「等效内径 mm」直接使用，如 80 口径缩进 80% 可填 16 或 80</div>
       </div>
     </section>
 
@@ -167,7 +167,7 @@
   <footer>
     两侧互为输入，改任意一侧即自动换算另一侧<br>
     流速 = 流量 ÷ 3600 ÷ (π × 等效内径² ÷ 4)<br>
-    等效内径 = 口径 DN × (1 − 缩进百分比 ÷ 100)<br>
+    缩进 0～99 = 百分比：等效内径 = 口径 DN × (1 − 缩进 ÷ 100)；缩进 ≥100 = 内径 mm<br>
     <a href="./index.html">← 返回工具入口</a>·<a href="./calibration.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>
   </footer>
 </main>
@@ -198,7 +198,7 @@
     return isFinite(n) ? n : NaN;
   }
 
-  var INSET_HINT = '按内径均匀缩进计算，等效内径 = 口径 DN × (1 − 缩进百分比 ÷ 100)';
+  var INSET_HINT = '0～99 按「缩进百分比」计：等效内径 = 口径 DN × (1 − 缩进 ÷ 100)；填 ≥100 按「等效内径 mm」直接使用，如 80 口径缩进 80% 可填 16 或 80';
 
   function clearErrors(){
     ['flow', 'vel', 'dn', 'inset'].forEach(function(id){ $(id).classList.remove('invalid'); });
@@ -224,9 +224,12 @@
     return Number(n.toFixed(d)).toLocaleString('zh-CN', {maximumFractionDigits:d});
   }
 
-  // 缩进后的等效内径（mm）；缩进百分比是内径被削掉的比例
+  // 缩进后的等效内径（mm）。缩进是 0～99 的百分比时，表示内径被削掉的比例；
+  // 缩进 ≥100 时按「等效内径 mm」直接使用（80 口径缩进到 80% = 10mm 内径，直接填 10 亦可）。
+  // 之所以这样兼容，是因为两种填法在现场都常用，且都不产生歧义：
+  // DN80 缩进 80% 等效内径 16mm，填 16 与填 80（口径的 20%）结果一致。
   function effectiveDiameter(dn, inset){
-    return dn * (1 - inset / 100);
+    return inset >= 100 ? inset : dn * (1 - inset / 100);
   }
 
   // 流通截面积（m²）：内径 mm 先转 m
@@ -272,7 +275,9 @@
     var inset = readNumber('inset') || 0;
     $('formula').innerHTML =
       '<div class="t">换算过程</div>' +
-      '<div><code>等效内径 = ' + fmt(readNumber('dn'), 1) + ' mm × (1 − ' + fmt(inset, 3) + ' ÷ 100) = ' + fmt(d, 2) + ' mm</code></div>' +
+      '<div><code>' + (inset >= 100
+        ? '等效内径 = ' + fmt(d, 2) + ' mm（缩进 ' + fmt(inset, 3) + ' ≥ 100，按等效内径直接采用）'
+        : '等效内径 = ' + fmt(readNumber('dn'), 1) + ' mm × (1 − ' + fmt(inset, 3) + ' ÷ 100) = ' + fmt(d, 2) + ' mm') + '</code></div>' +
       '<div><code>流通截面积 = π × (' + fmt(d, 2) + ' ÷ 1000 ÷ 2)² ≈ ' + fmt(area(d), 6) + ' m²</code></div>' +
       '<div><code>流速 = ' + fmt(flow, 3) + ' m³/h ÷ 3600 ÷ ' + fmt(area(d), 6) + ' ≈ ' + fmt(vel, 4) + ' m/s</code></div>' +
       '<div style="margin-top:6px">反向核对：<code>' + fmt(velocityToFlow(vel, d), 3) + ' m³/h = ' + fmt(vel, 4) + ' m/s × ' + fmt(area(d), 6) + ' m² × 3600</code></div>';
@@ -289,12 +294,13 @@
     return v;
   }
 
-  // 缩进百分比可以是 0（不缩进），但不能为负或达到 100（截面积归零）
+  // 缩进支持两种填法：0～99 为缩进百分比（内径被削掉的比例），
+  // ≥100 为等效内径（mm）。都不能为负。
   function readInset(){
     var v = readNumber('inset');
     if (v === null){ $('inset').value = '0'; return 0; }
-    if (isNaN(v) || v < 0 || v >= 100){
-      showError('缩进百分比需为 0 到 100 之间的数字（不含 100）', 'inset');
+    if (isNaN(v) || v < 0){
+      showError('缩进需为不小于 0 的数字：0～99 按百分比，≥100 按等效内径 mm', 'inset');
       return null;
     }
     return v;
@@ -309,7 +315,7 @@
     if (inset === null) return null;
 
     var d = effectiveDiameter(dn, inset);
-    if (!(d > 0)){ showError('缩进后等效内径需大于 0，请检查口径与缩进百分比', 'inset'); return null; }
+    if (!(d > 0)){ showError('等效内径需大于 0，请检查口径与缩进', 'inset'); return null; }
 
     var flow, vel;
     if (source === 'vel'){
