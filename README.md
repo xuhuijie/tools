@@ -17,6 +17,14 @@
 - `docs/dev.html` — 开发工具（JSON 与 SQL 格式化、文本对比、JWT 解析）
 - `docs/geometry.html` — 几何与电子计算（面积体积、三角函数、电阻网络）
 - `docs/finance.html` — 个税与健康计算（工资个税、年终奖、BMI 体脂、基础代谢）
+- `docs/security.html` — 加密与令牌（RC4 / Rabbit 流加密、JWT 签名校验、RSA PEM 结构解析）
+- `docs/station.html` — 站长工具（HTTP 状态码、User-Agent 分析、robots.txt 生成、公共 DNS）
+- `docs/text.html` — 文字与文本（排版、全半角、去重、字数统计、大小写、同义词）
+- `docs/health.html` — 健康计算（eGFR、胎儿体重、预产期、BMI 与内衣尺码）
+- `docs/life.html` — 生活计算（延迟退休、税金换算、劳务报酬、国债、养老金、放假安排）
+- `docs/geo.html` — 经纬度与坐标系（度分秒、WGS84/GCJ-02/BD-09、距离与方位）
+- `docs/fun.html` — 互动小工具（舒尔特方格、反应速度、CPS 手速、计数器）
+- `docs/info.html` — 信息查询（身份证解析、百家姓、尺码对照）
 
 
 ## 流量点校准
@@ -232,10 +240,10 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 ## 工具目录与通用工具
 
 参考 [metools.info](https://www.metools.info/) 整理，`docs/tools.html` 收录该站全部 **142 个工具**，
-分站长 / 开发 / 学习 / 生活 / 小工具五类。每条给出官方入口，其中 **77 条**本仓库有等效实现，
+分站长 / 开发 / 学习 / 生活 / 小工具五类。每条给出官方入口，其中 **114 条**本仓库有等效实现，
 标「本地」可直接跳转，断网也能用。
 
-本地实现按主题合并为 12 个页面，参数与结果都附代入过程便于复核：
+本地实现按主题合并为 21 个页面，参数与结果都附代入过程便于复核：
 
 | 页面 | 覆盖的工具 |
 | --- | --- |
@@ -251,6 +259,14 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 | `dev.html` | JSON 格式化（容忍注释与尾逗号）、SQL 格式化与压缩（字符串字面量受保护）、文本对比（LCS，按行/词/字符，可忽略空格大小写空行）、JWT 解析 |
 | `geometry.html` | 正方形/矩形/平行四边形/梯形面积周长、正方体/长方体/圆柱/圆锥表面积体积、sin/cos/tan 与反三角函数（支持 `3/4` 分式）、串并联/分压/分流 |
 | `finance.html` | 工资个税（累计预扣等效税率表、专项附加七项、三险一金可估可填）、年终奖（单独计税与并入对比、跳档避坑提醒）、BMI 与海军法体脂率、Mifflin-St Jeor 基础代谢与 TDEE |
+| `security.html` | RC4 流加密（加密/解密同一运算）、Rabbit 流加密（严格按 RFC 4503，附录 A 六组向量全过）、JWT 签名校验（HS* 用 HMAC 常数时间比对）、RSA PEM 结构判读（PKCS#1/PKCS#8/SPKI） |
+| `station.html` | HTTP 状态码速查（1xx~5xx 共 66 条，可搜索可复制）、User-Agent 分析（浏览器/内核/系统/设备/厂商）、robots.txt 生成器（限目录、Sitemap、抓取间隔、15 个爬虫开关）、公共与运营商 DNS 清单（30 条，可搜可复制） |
+| `text.html` | 一键排版（行首缩进 + 段间空行）、全半角互转、行去重（可忽略首尾空格）、字数统计（汉字/字母/数字/标点/行数/词数/字节）、大小写五种模式、同义词替换（38 组常见词，正反向） |
+| `health.html` | eGFR 肾功能（CKD-EPI 2009，含 CKD 1~5 分期）、胎儿体重（Hadlock 公式，HC≈BPD×π）、预产期（内格勒法则，按月经周期校正）、BMI 与标准体重、女士内衣尺码 |
+| `life.html` | 渐进式延迟退休（按 2024 年决定附表，男/女干部/女工人三档）、含税与不含税金额四项互算、劳务报酬预扣税（2025 税率表）、国债与存款利息（单利）、养老金测算（基础+个人账户+增发，含计发月数）、2025/2026 放假安排与调休查询 |
+| `geo.html` | 十进制度 ↔ 度分秒、WGS84 / GCJ-02 / BD-09 三种坐标系互转（逆向用迭代逼近）、两点大圆距离与方位角（Haversine） |
+| `fun.html` | 舒尔特方格（5×5 ~ 7×7，计时与错误次数）、反应速度测试（抢点判犯规）、CPS 点击手速（10 秒）、计数器（可设步长、目标、记一笔） |
+| `info.html` | 身份证解析（GB 11643 校验位、出生日期、性别、籍贯省级）、百家姓排名（含复姓识别）、衣服与鞋子尺码对照 |
 
 要点：
 
@@ -258,10 +274,18 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 - **与已有页面的分工**：CRC / 累加和 / 异或这三类清单项指向本仓库已有的 `checksum.html`，
   它按通信协议给预设、宽度与大小端、校验字节，比 `hash.html` 更贴实际组帧；
   `hash.html` 则偏向文件与文本摘要（MD5、SHA、HMAC、Adler-32）
-- **依赖外部服务的条目只给链接**：图片压缩、二维码生成识别、SSL 证书校验、端口扫描、短链、
-  敏感词检测等需要服务端或第三方库，与「零依赖单文件」冲突，故不本地复刻
-- **计时类不受后台节流影响**：`clock.html` 的秒表与计时器以 `performance.now()` 差值推算，
+- **依赖外部服务或第三方库的条目只给链接**：图片压缩、二维码生成识别、SSL 证书校验、端口扫描、
+  短链、敏感词检测、网页源码查看、在线 Markdown/HTML 编辑器、地图拾取这些要么要服务端渲染、
+  要么要引入库（如 QR 编解码、证书 ASN.1 全套、DOM 沙箱），与「零依赖单文件」定位冲突，故只放官方入口。
+  142 条里 114 条已本地实现，余下 28 条都属于这一类
+- **计时类不受后台节流影响**：`clock.html`、`fun.html` 的秒表与计时器以 `performance.now()` 差值推算，
   不靠 tick 累加；页面切到后台被浏览器降频后回来，显示的仍是准确耗时
+- **密码学只做已验证的部分**：`security.html` 的 Rabbit 严格照 RFC 4503 实现，附录 A 的 6 组向量
+  （含 3 组非零 IV）逐条通过；JWT 的 HS* 用 WebCrypto 的 HMAC 常数时间比对，RS*/ES* 不假装能本地验签而是明确告知；
+  RSA 只做 PEM 结构解析，不本地生成大素数——JS 的随机源与 Miller-Rabin 性能都不可控
+- **测算类写明口径与误差**：eGFR、胎儿体重、养老金都是估算，页面上标了公式出处、不适用人群与误差范围；
+  延迟退休按 2024 年决定的附表推算，特殊工种与病退另按专门规定
+- **不联网的查表类**：HTTP 状态码、公共 DNS、放假安排、百家姓都是内置数据，打开即用
 - **个税口径写明按估算**：工资走累计预扣预缴，本页用按月等效税率表估算并标注；
   年终奖单独计税的「多发 1 元到手反降」跳档区间会主动提醒
 - 本地页与 metools 的计算口径若有差异，以本地页说明为准
@@ -275,7 +299,7 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 
 ```bash
 node tools/check_algos.mjs
-# 245 通过, 0 失败
+# 416 通过, 0 失败
 ```
 
 覆盖的向量：
@@ -293,6 +317,16 @@ node tools/check_algos.mjs
 - 文本对比覆盖替换/新增/删除/忽略空格/忽略大小写/忽略空行/字符级，以及同类操作合并
 - 个税分档边界（3000、12000、25000 整点不跳档）、年终奖 36000 → 36001 的跳档反转、
   并入综合所得的边际税额、BMI 四档分界、Mifflin-St Jeor 男女 BMR 定值
+- RC4 对维基与 RFC 示例（`Key`/`Plaintext` → `BBF316E8D940AF0AD3`）
+- Rabbit 对 RFC 4503 附录 A 的全部 6 组向量（3 组无 IV、3 组非零 IV），`g` 函数与 BigInt 参考实现对拍
+- 全半角互转、行去重、字数分类统计、五种大小写模式、同义词替换命中
+- 用户代理解析（Edge/Chrome/Safari、Blink 内核、Windows 10 映射、iOS 版本下划线转点、三星机型）
+- 健康类：CKD-EPI 男女两个肌酐分支、CKD 1~5 分期边界、Hadlock 指数展开、预产期按周期校正、
+  BMI 四档、罩杯按 2.5cm 分档
+- 生活类：退休的 1965-01/05、1978 后上限、劳务报酬 800/4000/50000 三个门槛、
+  国债单利、养老金 139/170/195/216 计发月数、2026 与 2025 的调休补班日
+- 坐标系：度分秒进位回卷、WGS→GCJ→WGS 往返 1e-6 度、BD→GCJ 往返米级、北京→上海 1067 km、四方位角
+- 身份证校验位按 GB 11643 实算、非法月份与日期拒绝、百家姓前三名、鞋码就近取档
 
 ## 文件 / 文本 MD5 校验
 
@@ -342,6 +376,18 @@ python3 -m http.server 8899 --directory docs
 # 校验页   http://127.0.0.1:8899/checksum.html
 # 通用工具 http://127.0.0.1:8899/base.html（同理 base/hash/cipher/number/color/random/net/date）
 #          http://127.0.0.1:8899/hash.html
+# 时钟页   http://127.0.0.1:8899/clock.html
+# 开发页   http://127.0.0.1:8899/dev.html
+# 几何页   http://127.0.0.1:8899/geometry.html
+# 财税页   http://127.0.0.1:8899/finance.html
+# 加密页   http://127.0.0.1:8899/security.html
+# 站长页   http://127.0.0.1:8899/station.html
+# 文字页   http://127.0.0.1:8899/text.html
+# 健康页   http://127.0.0.1:8899/health.html
+# 生活页   http://127.0.0.1:8899/life.html
+# 经纬页   http://127.0.0.1:8899/geo.html
+# 互动页   http://127.0.0.1:8899/fun.html
+# 信息页   http://127.0.0.1:8899/info.html
 # MD5 页   http://127.0.0.1:8899/md5.html
 ```
 
@@ -376,7 +422,7 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 
 - `docs/index.html` — 工具入口页，列计量工具与通用工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
 - `docs/tools.html` — 工具目录页（HTML + CSS + 少量 JS 单文件，用于搜索与筛选）
-- `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（12 页共用，避免各写一份）
+- `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（20 页共用，避免各写一份）
 - `tools/gen_catalog.py` — 从 metools.info 抓取工具清单，产出 `tools/catalog.json`
 - `tools/gen_tools_page.py` — 由 catalog 与本地映射渲染出 `docs/tools.html`
 - `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验
@@ -391,3 +437,11 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `docs/dev.html` — 开发工具页（JSON / SQL 格式化、文本对比、JWT 解析，依赖 `app.css` / `app.js`）
 - `docs/geometry.html` — 几何与电子计算页（依赖 `app.css` / `app.js`）
 - `docs/finance.html` — 个税与健康计算页（依赖 `app.css` / `app.js`）
+- `docs/security.html` — 加密与令牌页（RC4 / Rabbit / JWT 签名校验 / RSA PEM，依赖 `app.css` / `app.js`）
+- `docs/station.html` — 站长工具页（状态码 / UA / robots / DNS，依赖 `app.css` / `app.js`）
+- `docs/text.html` — 文字与文本页（依赖 `app.css` / `app.js`）
+- `docs/health.html` — 健康计算页（依赖 `app.css` / `app.js`）
+- `docs/life.html` — 生活计算页（依赖 `app.css` / `app.js`）
+- `docs/geo.html` — 经纬度与坐标系页（依赖 `app.css` / `app.js`）
+- `docs/fun.html` — 互动小工具页（依赖 `app.css` / `app.js`）
+- `docs/info.html` — 信息查询页（依赖 `app.css` / `app.js`）

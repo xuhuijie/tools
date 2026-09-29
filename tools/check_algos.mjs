@@ -478,5 +478,292 @@ const enc = (s) => new TextEncoder().encode(s);
   near(M.tdeeCalc(1648.75, 1.55), 1648.75 * 1.55, 1e-6, '财税 TDEE 活动系数');
 }
 
+// ---------- security.js ----------
+{
+  const M = loadModule('security.js',
+    'rc4,hex,unhex,rabbitEncrypt,rabbitG,splitJwt,safeEqual,parsePem,add32'.split(','));
+  eq(M.hex(M.rc4(enc('Key'), enc('Plaintext'))), 'BBF316E8D940AF0AD3', 'RC4 Key/Plaintext（维基示例）');
+  eq(M.hex(M.rc4(enc('Wiki'), enc('pedia'))), '1021BF0420', 'RC4 Wiki/pedia');
+  eq(M.hex(M.rc4(enc('Secret'), enc('Attack at dawn'))), '45A01F645FC35B383552544B9BF5', 'RC4 Secret/Attack at dawn');
+  // Rabbit 对 RFC 4503 附录 A 的向量（无 IV / 全 0 IV）
+  const zero16 = new Uint8Array(16), zero8 = new Uint8Array(8);
+  eq(M.hex(M.rabbitEncrypt(zero16, null, zero16)), 'B15754F036A5D6ECF56B45261C4AF702', 'Rabbit RFC A.1 密钥全 0');
+  eq(M.hex(M.rabbitEncrypt(M.unhex('912813292E3D36FE3BFC62F1DC51C3AC'), null, zero16)),
+    '3D2DF3C83EF627A1E97FC38487E2519C', 'Rabbit RFC A.1 密钥 91 28 …');
+  eq(M.hex(M.rabbitEncrypt(M.unhex('8395741587E0C733E9E9AB01C09B0043'), null, zero16)),
+    '0CB10DCDA041CDAC32EB5CFD02D0609B', 'Rabbit RFC A.1 密钥 83 95 …');
+  eq(M.hex(M.rabbitEncrypt(zero16, zero8, zero16)), 'C6A7275EF85495D87CCD5D376705B7ED', 'Rabbit RFC A.2 IV 全 0');
+  // g 与 BigInt 参考实现对拍
+  for (const [u, v] of [[0x12345678, 0x9ABCDEF0], [0x4D34D34D, 0], [0xFFFFFFFF, 0xFFFFFFFF], [1, 2]]) {
+    const s = ((u >>> 0) + (v >>> 0)) >>> 0;
+    const big = BigInt(s) * BigInt(s);
+    want = Number((big & BigInt(0xFFFFFFFF)) ^ (big >> 32n)) >>> 0;
+    eq(M.rabbitG(u, v), want, 'Rabbit g(' + u.toString(16) + ',' + v.toString(16) + ')');
+  }
+  var want;
+  eq(M.safeEqual('abc', 'abc'), true, '安全比较：相同');
+  eq(M.safeEqual('abc', 'abd'), false, '安全比较：不同');
+  eq(M.safeEqual('abc', 'ab'), false, '安全比较：长度不同');
+  const j = M.splitJwt('eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.sig');
+  eq(j.header.alg, 'HS256', 'JWT 头部解析');
+  eq(j.payload.sub, '123', 'JWT 载荷解析');
+  eq(!!M.splitJwt('abc').err, true, 'JWT 单段报错');
+  const pem = M.parsePem('-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\n-----END PUBLIC KEY-----');
+  eq(pem.kind, 'SPKI 公钥', 'PEM 类型判定');
+  eq(!!M.parsePem('not a pem').err, true, 'PEM 非法输入报错');
+}
+
+// ---------- station.js ----------
+{
+  const M = loadModule('station.js',
+    'analyzeUa,buildRobots,HTTP,versionOf'.split(','));
+  const ua1 = M.analyzeUa('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0');
+  eq(ua1.browser, 'Edge', 'UA 识别 Edge');
+  eq(ua1.engine, 'Blink', 'UA 识别 Blink 内核');
+  eq(ua1.os, 'Windows', 'UA 识别 Windows');
+  eq(ua1.osVer, '10 / 11', 'UA Windows 10.0 版本映射');
+  eq(ua1.device, '桌面', 'UA 桌面设备');
+  const ua2 = M.analyzeUa('Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1');
+  eq(ua2.browser, 'Safari', 'UA 识别 Safari');
+  eq(ua2.os, 'iOS', 'UA 识别 iOS');
+  eq(ua2.osVer, '17.2', 'UA iOS 版本下划线转点');
+  eq(ua2.device, '手机', 'UA 手机设备');
+  const ua3 = M.analyzeUa('Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36');
+  eq(ua3.os, 'Android', 'UA 识别 Android');
+  eq(ua3.device, '手机', 'UA Android Mobile 判手机');
+  eq(ua3.brand, '三星', 'UA 识别三星');
+  eq(M.analyzeUa(''), null, 'UA 空串返回 null');
+  eq(M.versionOf('curl/8.4.0', 'curl/'), '8.4.0', 'UA 版本提取');
+  // 状态码表完整性
+  eq(M.HTTP.length, 5, 'HTTP 分五大类');
+  const all = M.HTTP.reduce((acc, g) => acc.concat(g[2]), []);
+  eq(all.some((r) => r[0] === 404), true, '含 404');
+  eq(all.some((r) => r[0] === 429), true, '含 429');
+  eq(all.length >= 60, true, '状态码条目数 ≥ 60');
+}
+
+// ---------- text.js ----------
+{
+  const M = loadModule('text.js',
+    'toHalf,toFull,typeset,trimEnd,trimEach,dropBlank,countText,dedup,changeCase,replaceSynonyms'.split(','));
+  eq(M.toHalf('ＡＢＣ１２３'), 'ABC123', '全角转半角');
+  eq(M.toFull('ABC123'), 'ＡＢＣ１２３', '半角转全角');
+  eq(M.toHalf('　a　b'), ' a b', '全角空格转半角');
+  eq(M.toFull('a b'), 'ａ　ｂ', '半角空格转全角');
+  eq(M.trimEnd('a  \nb\t'), 'a\nb', '去行尾空格');
+  eq(M.trimEach('  a  \n  b '), 'a\nb', '去首尾空格');
+  eq(M.dropBlank('a\n\n\nb\n'), 'a\nb', '删除空行');
+  eq(M.typeset('第一段\n第二段'), '\u3000\u3000第一段\n\n\u3000\u3000第二段', '一键排版缩进与空行');
+  const c = Object.fromEntries(M.countText('你好abc 123！\n第二行'));
+  eq(c['汉字'], 5, '统计汉字');
+  eq(c['英文字母'], 3, '统计字母');
+  eq(c['数字'], 3, '统计数字');
+  eq(c['行数'], 2, '统计行数');
+  eq(c['UTF-8 字节'], enc('你好abc 123！\n第二行').length, '统计 UTF-8 字节');
+  const d = M.dedup('a\nb\na\nc\nb', false);
+  eq(d.text, 'a\nb\nc', '整行去重');
+  eq(d.removed, 2, '去重计数');
+  const d2 = M.dedup('a\n a \nb', true);
+  eq(d2.text, 'a\nb', '忽略首尾空格去重');
+  eq(M.changeCase('hello WORLD', 'upper'), 'HELLO WORLD', '全部大写');
+  eq(M.changeCase('hello WORLD', 'lower'), 'hello world', '全部小写');
+  eq(M.changeCase('hello world', 'title'), 'Hello World', '词首大写');
+  eq(M.changeCase('hello. world. next', 'sentence'), 'Hello. World. Next', '句首大写');
+  eq(M.changeCase('aBc', 'toggle'), 'AbC', '切换大小写');
+  const syn = M.replaceSynonyms('我们需要提高效率', 'fwd');
+  eq(syn.text.indexOf('提升') >= 0, true, '同义词正向替换');
+  eq(syn.hits.length >= 1, true, '同义词命中计数');
+}
+
+// ---------- health.js ----------
+{
+  const M = loadModule('health.js',
+    'egfr,ckdStage,fetalWeight,dueDate,bmiCalc,braSize,fmtDate'.split(','));
+  const near = (a, b, t, label) => eq(Math.abs(Number(a) - Number(b)) <= (t == null ? 1e-6 : t), true, label + ` (${a} vs ${b})`);
+  // CKD-EPI 2009：男 50 岁、Scr 1.0 mg/dL（88.4 μmol/L）
+  //   141 × (1.0/0.9)^-0.411 × 0.993^50
+  const e1 = M.egfr(50, 88.4, 'm');
+  near(e1.scr, 1.0, 1e-9, '健康 Scr 折 mg/dL');
+  // Scr 1.0 > 0.9，所以指数取 -1.209 分支
+  near(e1.value, 141 * Math.pow(1.0 / 0.9, -1.209) * Math.pow(0.993, 50), 1e-6, 'eGFR 男 50 岁');
+  // 小于等于阈值时走另一分支
+  near(M.egfr(50, 70, 'm').value, 141 * Math.pow((70 / 88.4) / 0.9, -0.411) * Math.pow(0.993, 50), 1e-6, 'eGFR 男 50 岁低肌酐分支');
+  // 女 60 岁、Scr 0.7 mg/dL（61.88 μmol/L）：144 × 1 × 0.993^60
+  const e2 = M.egfr(60, 61.88, 'f');
+  near(e2.value, 144 * Math.pow(0.993, 60), 1e-6, 'eGFR 女 60 岁临界值');
+  eq(M.egfr(-1, 88.4, 'm').err != null, true, 'eGFR 负年龄报错');
+  eq(M.ckdStage(95)[0], '1 期', 'CKD 1 期');
+  eq(M.ckdStage(75)[0], '2 期', 'CKD 2 期');
+  eq(M.ckdStage(45)[0], '3 期', 'CKD 3 期');
+  eq(M.ckdStage(20)[0], '4 期', 'CKD 4 期');
+  eq(M.ckdStage(10)[0], '5 期', 'CKD 5 期');
+  // Hadlock：HC ≈ BPD×π
+  const f = M.fetalWeight(8.5, 30, 6.5);
+  const hc = 8.5 * Math.PI;
+  near(f.grams, Math.pow(10, 1.3596 + 0.0064 * hc + 0.0424 * 30 + 0.174 * 6.5 - 0.00335 * 30 * 6.5), 1e-6, '胎儿体重 Hadlock');
+  eq(M.fetalWeight(0, 30, 6.5).err != null, true, '胎儿体重非法参数报错');
+  // 预产期：末次月经 2025-01-01、周期 28 → 2025-10-08（+280 天）
+  const dd = M.dueDate('2025-01-01', 28);
+  eq(M.fmtDate(dd.due), '2025-10-08', '预产期 280 天');
+  const dd2 = M.dueDate('2025-01-01', 35);
+  eq(M.fmtDate(dd2.due), '2025-10-15', '预产期按周期校正 +7 天');
+  eq(M.dueDate('', 28).err != null, true, '预产期缺日期报错');
+  const b = M.bmiCalc(175, 70);
+  near(b.bmi, 70 / 1.75 / 1.75, 1e-9, 'BMI 公式');
+  eq(b.cat[0], '正常', 'BMI 22.86 判正常');
+  near(b.standard, 70, 1e-9, '标准体重 = 身高 − 105');
+  eq(M.bmiCalc(170, 50).cat[0], '偏瘦', 'BMI 偏瘦');
+  eq(M.bmiCalc(170, 72).cat[0], '超重', 'BMI 超重');
+  eq(M.bmiCalc(170, 90).cat[0], '肥胖', 'BMI 肥胖');
+  // 内衣尺码：下围 75、上围 88 → 差 13 → B 杯，码 75B
+  const br = M.braSize(75, 88);
+  eq(br.cup, 'B', '罩杯 13cm 判 B');
+  eq(br.code, '75B', '文胸码 75B');
+  eq(M.braSize(88, 80).err != null, true, '上围小于下围报错');
+  eq(M.braSize(75, 85).cup, 'A', '罩杯 10cm 判 A');
+}
+
+// ---------- life.js ----------
+{
+  const M = loadModule('life.js',
+    'RETIRE_KINDS,retireAge,laborTax,taxRate,netFromGross,grossFromNet,fromTax,bondInterest,pension,pensionMonths,holidayOf'.split(','));
+  const near = (a, b, t, label) => eq(Math.abs(Number(a) - Number(b)) <= (t == null ? 1e-6 : t), true, label + ` (${a} vs ${b})`);
+  // 退休：1965-01 出生不延迟（男 60 岁）；1978-01 出生已到上限 63 岁
+  const r1 = M.retireAge('m', 1965, 1);
+  eq(r1.delayMonths, 0, '退休 1965-01 男不延迟');
+  eq(r1.years, 60, '退休 男 60 岁');
+  const r2 = M.retireAge('m', 1980, 1);
+  eq(r2.years, 63, '退休 1980-01 男达上限 63');
+  eq(r2.months, 0, '退休 上限值整岁');
+  const r3 = M.retireAge('fWorker', 1980, 1);
+  eq(r3.years, 55, '退休 女工人达上限 55');
+  const r4 = M.retireAge('fCadre', 1980, 1);
+  eq(r4.years, 58, '退休 女干部达上限 58');
+  const r5 = M.retireAge('m', 1965, 5);
+  eq(r5.delayMonths, 1, '退休 每 4 个月延 1 个月');
+  eq(r5.months, 1, '退休 延迟体现为月');
+  // 劳务报酬
+  const l1 = M.laborTax(800);
+  eq(l1.tax, 0, '劳务 800 免征');
+  eq(l1.exempt, true, '劳务 800 标记免征');
+  near(M.laborTax(2000).taxable, 1200, 1e-9, '劳务 2000 减 800');
+  near(M.laborTax(2000).tax, 1200 * 0.2, 1e-9, '劳务 2000 税额');
+  near(M.laborTax(20000).taxable, 16000, 1e-9, '劳务 20000 减 20%');
+  near(M.laborTax(20000).tax, 16000 * 0.2, 1e-9, '劳务 20000 税额');
+  const l2 = M.laborTax(100000);
+  near(l2.taxable, 80000, 1e-9, '劳务 100000 应纳税所得额');
+  near(l2.tax, 80000 * 0.4 - 7000, 1e-9, '劳务 100000 落 40% 档');
+  eq(M.laborTax(-1).err != null, true, '劳务 负值报错');
+  // 税金换算
+  near(M.taxRate(11300, 10000).tax, 1300, 1e-9, '税率换算 税额');
+  near(M.taxRate(11300, 10000).rate, 13, 1e-9, '税率换算 13%');
+  near(M.netFromGross(11300, 13).net, 10000, 1e-9, '含税→不含税');
+  near(M.grossFromNet(10000, 13).gross, 11300, 1e-9, '不含税→含税');
+  near(M.fromTax(1300, 13).net, 10000, 1e-9, '税额反推不含税');
+  eq(M.netFromGross(-1, 13).err != null, true, '税金 负金额报错');
+  // 国债
+  const b1 = M.bondInterest(100000, 3, 1.63);
+  near(b1.yearly, 1630, 1e-9, '国债年利息 10 万 1.63%');
+  near(b1.total, 4890, 1e-9, '国债 3 年总利息');
+  near(b1.sum, 104890, 1e-9, '国债本息合计');
+  // 养老金：社平 12000、增长 5%、35→60 岁、账户 20 万、缴 20 年、指数 100%
+  const p = M.pension({ avg: 12000, growth: 5, age: 35, retireAge: 60, acct: 200000, years: 20, index: 100 });
+  near(p.avgAtRetire, 12000 * Math.pow(1.05, 25), 1e-6, '养老金 退休时社平');
+  near(p.base, p.avgAtRetire * (1 + 1) / 2 * 20 * 0.01, 1e-6, '养老金 基础养老金');
+  near(p.personal, 200000 / 139, 1e-9, '养老金 个人账户（139 月）');
+  near(p.extra, p.avgAtRetire * 1 * 20 * 0.001, 1e-9, '养老金 增发部分');
+  eq(M.pensionMonths(60), 139, '计发月数 60 岁 139');
+  eq(M.pensionMonths(55), 170, '计发月数 55 岁 170');
+  eq(M.pensionMonths(50), 195, '计发月数 50 岁 195');
+  eq(M.pensionMonths(45), 216, '计发月数 45 岁 216');
+  eq(M.pension({ avg: 12000, growth: 5, age: 65, retireAge: 60, acct: 1, years: 1, index: 100 }).err != null, true, '养老金 退休年龄小于当前报错');
+  // 放假安排
+  eq(M.holidayOf(2026, '2026-01-02').type, 'holiday', '2026 元旦假期内');
+  eq(M.holidayOf(2026, '2026-01-04').type, 'makeup', '2026-01-04 调休上班');
+  eq(M.holidayOf(2026, '2026-03-01').type, 'normal', '2026-03-01 正常日');
+  eq(M.holidayOf(2026, '2026-02-15').span[0], '春节', '2026 春节');
+  eq(M.holidayOf(2025, '2025-10-08').type, 'holiday', '2025 国庆中秋末日');
+}
+
+// ---------- geo.js ----------
+{
+  const M = loadModule('geo.js',
+    'ddToDms,dmsToDd,wgs2gcj,gcj2wgs,gcj2bd,bd2gcj,haversine,bearing,dirName,outOfChina'.split(','));
+  const near = (a, b, t, label) => eq(Math.abs(Number(a) - Number(b)) <= (t == null ? 1e-6 : t), true, label + ` (${a} vs ${b})`);
+  const dm = M.ddToDms(39.9087);
+  eq(dm.d, 39, 'DMS 度数');
+  eq(dm.m, 54, 'DMS 分数');
+  near(dm.s, 31.32, 0.01, 'DMS 秒数');
+  const dm2 = M.ddToDms(-116.3975);
+  eq(dm2.neg, true, 'DMS 负值标记');
+  near(M.dmsToDd(39, 54, 31.32, 1), 39.9087, 1e-6, 'DMS → DD');
+  near(M.dmsToDd(39, 54, 31.32, -1), -39.9087, 1e-6, 'DMS → DD 南纬');
+  eq(M.outOfChina(39.9, 116.4), false, '北京在境内');
+  eq(M.outOfChina(48.8, 2.3), true, '巴黎在境外');
+  const g = M.wgs2gcj(39.9087, 116.3975);
+  eq(Math.abs(g[0] - 39.9087) > 1e-6, true, 'WGS→GCJ 有偏移');
+  eq(Math.abs(g[0] - 39.9087) < 0.01, true, 'WGS→GCJ 偏移在合理范围');
+  // 往返一致性
+  const back = M.gcj2wgs(g[0], g[1]);
+  near(back[0], 39.9087, 1e-6, 'GCJ→WGS 往返纬度');
+  near(back[1], 116.3975, 1e-6, 'GCJ→WGS 往返经度');
+  const bd = M.gcj2bd(g[0], g[1]);
+  const backGcj = M.bd2gcj(bd[0], bd[1]);
+  // BD-09 的逆向公式是百度的近似式，往返误差在米级，不能按 1e-6 度卡
+  near(backGcj[0], g[0], 1e-4, 'BD→GCJ 往返纬度');
+  near(backGcj[1], g[1], 1e-4, 'BD→GCJ 往返经度');
+  // 北京 → 上海约 1067 km
+  const dist = M.haversine(39.9087, 116.3975, 31.2304, 121.4737);
+  near(dist / 1000, 1067, 5, '北京到上海大圆距离');
+  near(M.haversine(0, 0, 0, 1), 111195, 100, '赤道 1 度约 111 km');
+  // 正北：同经度向北，方位角 0
+  near(M.bearing(0, 0, 1, 0), 0, 1e-6, '正北方位角 0');
+  near(M.bearing(0, 0, 0, 1), 90, 1e-6, '正东方位角 90');
+  eq(M.dirName(0), '正北', '方位名 正北');
+  eq(M.dirName(90), '正东', '方位名 正东');
+  eq(M.dirName(270), '正西', '方位名 正西');
+  eq(M.dirName(359), '正北', '方位名 近北回绕');
+}
+
+// ---------- info.js ----------
+{
+  const M = loadModule('info.js',
+    'idCheckCode,parseId,surnameRank,nearest,shoes,SHOE_EU,BAIJIAXING,COMPOUND'.split(','));
+  const near = (a, b, t, label) => eq(Math.abs(Number(a) - Number(b)) <= (t == null ? 1e-6 : t), true, label + ` (${a} vs ${b})`);
+  // 校验位按 GB 11643：权重 7 9 10 5 8 4 2 1 6 3 7 9 10 5 8 4 2，模 11 映射 1 0 X 9 8 7 6 5 4 3 2
+  eq(M.idCheckCode('11010119900307751'), '2', '身份证校验位计算');
+  const good = '11010119900307751' + M.idCheckCode('11010119900307751');
+  const id = M.parseId(good);
+  eq(id.valid, true, '身份证校验通过');
+  eq(id.gender, '男', '身份证性别（顺序码 751 为奇数）');
+  eq(id.province, '北京市', '身份证籍贯省级');
+  eq(id.birth.getFullYear(), 1990, '身份证出生年');
+  eq(id.birth.getMonth(), 2, '身份证出生月（0 基）');
+  eq(M.parseId('11010119900307').err != null, true, '身份证位数不符报错');
+  const bad = M.parseId('11010119901307751X');
+  eq(bad.err != null, true, '身份证非法月份报错');
+  eq(M.parseId('11010119900231751X').err != null, true, '身份证非法日期报错');
+  // 校验位错误的号码仍能解析，但 valid 为 false
+  eq(M.parseId('110101199003077519').valid, false, '身份证校验位错误 valid=false');
+  // 百家姓
+  eq(M.surnameRank('赵').rank, 1, '百家姓 赵 第 1');
+  eq(M.surnameRank('钱').rank, 2, '百家姓 钱 第 2');
+  eq(M.surnameRank('孙').rank, 3, '百家姓 孙 第 3');
+  eq(M.surnameRank('李').rank, 4, '百家姓 李 第 4');
+  eq(M.surnameRank('欧阳').compound, true, '复姓标记');
+  eq(M.surnameRank('欧阳').rank, null, '复姓不参与单姓排名');
+  eq(M.surnameRank('张').rank > 0, true, '张 在表内');
+  eq(M.surnameRank('').err != null, true, '空姓氏报错');
+  eq(M.surnameRank('张王').rank, M.surnameRank('张').rank, '多字输入取首字');
+  eq(M.BAIJIAXING.length >= 100, true, '百家姓收录 ≥100');
+  // 尺码
+  const f = M.nearest([[155, 80, 'XS'], [160, 84, 'S'], [165, 88, 'M']], 162, 85, '女装');
+  eq(f.size, 'S', '女装 162/85 取 S');
+  eq(M.shoes(230, '女鞋').size, '36 码', '脚长 230 → 36 码');
+  eq(M.shoes(233, '女鞋').size, '37 码', '脚长 233 就近取 235 → 37 码');
+  eq(M.shoes(275, '男鞋').size, '45 码', '脚长 275 → 45 码');
+}
+
+
 console.log('\n' + passed + ' 通过, ' + failed + ' 失败');
 process.exit(failed ? 1 : 0);
