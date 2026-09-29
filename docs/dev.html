@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>开发工具</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:190px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .diff{font:12px/1.7 ui-monospace,Menlo,Consolas,monospace;background:#f7f8fa;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin-bottom:12px;max-height:340px;overflow:auto;white-space:pre}
+  .diff .ln{display:flex;gap:8px}
+  .diff .no{flex:0 0 34px;text-align:right;color:#b6bcc4;user-select:none}
+  .diff .tx{flex:1;white-space:pre-wrap;word-break:break-all}
+  .diff .add{background:#e7f8f1}
+  .diff .add .tx{color:#0a7a5f}
+  .diff .del{background:#fdeeea}
+  .diff .del .tx{color:#b03010;text-decoration:line-through}
+  .diff .same{color:#8a9099}
+  .jwt{display:flex;flex-direction:column;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .jwt div{background:#fff;padding:10px 12px;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+  .jwt .k{color:var(--sub);font-size:11px;margin-bottom:3px;display:block}
+  .jwt .p1{color:#c0392b}
+  .jwt .p2{color:#8e44ad}
+  .jwt .p3{color:#1e7fbf}
+  .jwt .dot{color:#b6bcc4}
+  .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .stat div{background:#fff;padding:10px 12px;text-align:center}
+  .stat b{display:block;font-size:20px;font-weight:700;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .stat b.g{color:var(--ok)}.stat b.r{color:var(--warn)}
+  .stat span{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>开发工具</h1>
+  <p>JSON / SQL 格式化 · 文本对比 · JWT 解析</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button data-tab="json" class="on">JSON 格式化</button>
+    <button data-tab="sql">SQL 格式化</button>
+    <button data-tab="diff">文本对比</button>
+    <button data-tab="jwt">JWT 解析</button>
+  </div>
+
+  <!-- JSON -->
+  <section id="panel-json">
+    <section class="card">
+      <h2>输入 JSON</h2>
+      <textarea class="area" id="json-in" placeholder='{"name":"计量","list":[1,2,3],"nest":{"a":true}}'></textarea>
+      <p class="hint" id="json-hint">支持自动识别 JSON / JSON5 风格的尾逗号与注释（解析前会剔除）。</p>
+    </section>
+    <div class="row">
+      <label>缩进</label>
+      <div class="chips" id="json-indent">
+        <button data-ind="2" class="on">2 空格</button>
+        <button data-ind="4">4 空格</button>
+        <button data-ind="0">压缩成一行</button>
+        <button data-ind="tab">Tab</button>
+      </div>
+    </div>
+    <div class="btns"><button type="button" class="ghost" id="json-min">压缩</button><button type="button" class="primary" id="json-run">格式化</button></div>
+    <section class="card">
+      <h2>结果<span class="stat" style="margin-top:10px">
+        <div><b id="js-size-in">0</b><span>输入字节</span></div>
+        <div><b id="js-size-out">0</b><span>输出字节</span></div>
+        <div><b id="js-depth">0</b><span>嵌套层数</span></div>
+      </span></h2>
+      <textarea class="area" id="json-out" readonly></textarea>
+      <div class="btns three" style="margin-top:12px"><button type="button" class="ghost" id="json-copy">复制结果</button><button type="button" class="ghost" id="json-to-js">转 JS 对象</button></div>
+    </section>
+    <p class="hint" id="json-err"></p>
+  </section>
+
+  <!-- SQL -->
+  <section id="panel-sql" hidden>
+    <section class="card">
+      <h2>输入 SQL</h2>
+      <textarea class="area" id="sql-in" placeholder="select id,name from users where age>18 and city='北京' order by id desc;"></textarea>
+    </section>
+    <div class="row">
+      <label>关键字大小写</label>
+      <div class="chips" id="sql-case">
+        <button data-case="upper" class="on">大写</button>
+        <button data-case="lower">小写</button>
+        <button data-case="keep">保持原样</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>每个字段/条件</label>
+      <div class="chips" id="sql-break">
+        <button data-break="0" class="on">不换行</button>
+        <button data-break="1">换行</button>
+      </div>
+    </div>
+    <div class="btns"><button type="button" class="ghost" id="sql-min">压缩</button><button type="button" class="primary" id="sql-run">格式化</button></div>
+    <section class="card">
+      <h2>结果</h2>
+      <textarea class="area" id="sql-out" readonly></textarea>
+      <div class="btns three" style="margin-top:12px"><button type="button" class="ghost" id="sql-copy">复制结果</button></div>
+    </section>
+    <p class="hint" id="sql-err"></p>
+  </section>
+
+  <!-- 文本对比 -->
+  <section id="panel-diff" hidden>
+    <section class="card">
+      <h2>原文</h2>
+      <textarea class="area" id="diff-a"></textarea>
+    </section>
+    <section class="card">
+      <h2>新文</h2>
+      <textarea class="area" id="diff-b"></textarea>
+    </section>
+    <div class="row">
+      <label>对比方式</label>
+      <div class="chips" id="diff-mode">
+        <button data-mode="line" class="on">按行</button>
+        <button data-mode="word">按词</button>
+        <button data-mode="char">按字符</button>
+      </div>
+    </div>
+    <div class="chips" id="diff-opt">
+      <button data-opt="trim" class="on">忽略行首尾空格</button>
+      <button data-opt="case">忽略大小写</button>
+      <button data-opt="blank" class="on">忽略空行</button>
+    </div>
+    <div class="btns"><button type="button" class="ghost" id="diff-swap">左右互换</button><button type="button" class="primary" id="diff-run">对比</button></div>
+    <section class="card">
+      <h2>差异</h2>
+      <div class="stat">
+        <div><b class="g" id="d-add">0</b><span>新增</span></div>
+        <div><b class="r" id="d-del">0</b><span>删除</span></div>
+        <div><b id="d-same">0</b><span>相同</span></div>
+      </div>
+      <div class="diff" id="diff-out"></div>
+      <p class="hint">对比基于最长公共子序列（LCS）。删除行标红并加删除线，新增行标绿。</p>
+    </section>
+  </section>
+
+  <!-- JWT -->
+  <section id="panel-jwt" hidden>
+    <section class="card">
+      <h2>输入 JWT</h2>
+      <textarea class="area" id="jwt-in" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSJ9.xxx"></textarea>
+      <p class="hint">只在本地拆解 Base64URL 载荷，不做签名校验（验签需密钥，本页不联网）。</p>
+    </section>
+    <div class="btns"><button type="button" class="ghost" id="jwt-clear">清空</button><button type="button" class="primary" id="jwt-run">解析</button></div>
+    <section class="card">
+      <h2>结构</h2>
+      <div class="jwt" id="jwt-parts"></div>
+      <div class="grid" id="jwt-grid"></div>
+      <div class="out" id="jwt-out"></div>
+    </section>
+  </section>
+
+  <footer>
+    全部在浏览器本地计算，不上传任何内容<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./dev.js"></script>
+</body>
+</html>

@@ -13,6 +13,10 @@
   编码解码、古典密码、哈希校验、数字与单位
 - `docs/color.html`、`docs/random.html`、`docs/net.html`、`docs/date.html` —
   颜色转换、随机生成、网络计算、日期与时间
+- `docs/clock.html` — 在线时钟（时钟 / 秒表 / 计时器 / 倒计时 / 世界时间）
+- `docs/dev.html` — 开发工具（JSON 与 SQL 格式化、文本对比、JWT 解析）
+- `docs/geometry.html` — 几何与电子计算（面积体积、三角函数、电阻网络）
+- `docs/finance.html` — 个税与健康计算（工资个税、年终奖、BMI 体脂、基础代谢）
 
 
 ## 流量点校准
@@ -228,10 +232,10 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 ## 工具目录与通用工具
 
 参考 [metools.info](https://www.metools.info/) 整理，`docs/tools.html` 收录该站全部 **142 个工具**，
-分站长 / 开发 / 学习 / 生活 / 小工具五类。每条给出官方入口，其中 **47 条**本仓库有等效实现，
+分站长 / 开发 / 学习 / 生活 / 小工具五类。每条给出官方入口，其中 **77 条**本仓库有等效实现，
 标「本地」可直接跳转，断网也能用。
 
-本地实现按主题合并为 8 个页面，参数与结果都附代入过程便于复核：
+本地实现按主题合并为 12 个页面，参数与结果都附代入过程便于复核：
 
 | 页面 | 覆盖的工具 |
 | --- | --- |
@@ -243,6 +247,10 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 | `random.html` | 密码生成、随机数、随机点名、MAC 地址（随机源为 `crypto.getRandomValues`） |
 | `net.html` | IPv4 子网划分、MAC 地址解析 |
 | `date.html` | 年龄计算、日期间隔、ISO 周号、时间戳互转 |
+| `clock.html` | 在线毫秒时钟（24/12 小时制、配色可记忆）、秒表（计次、最快最慢标色）、计时器（圆环进度、到点震动与通知）、倒计时、17 个城市世界时间 |
+| `dev.html` | JSON 格式化（容忍注释与尾逗号）、SQL 格式化与压缩（字符串字面量受保护）、文本对比（LCS，按行/词/字符，可忽略空格大小写空行）、JWT 解析 |
+| `geometry.html` | 正方形/矩形/平行四边形/梯形面积周长、正方体/长方体/圆柱/圆锥表面积体积、sin/cos/tan 与反三角函数（支持 `3/4` 分式）、串并联/分压/分流 |
+| `finance.html` | 工资个税（累计预扣等效税率表、专项附加七项、三险一金可估可填）、年终奖（单独计税与并入对比、跳档避坑提醒）、BMI 与海军法体脂率、Mifflin-St Jeor 基础代谢与 TDEE |
 
 要点：
 
@@ -252,6 +260,10 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
   `hash.html` 则偏向文件与文本摘要（MD5、SHA、HMAC、Adler-32）
 - **依赖外部服务的条目只给链接**：图片压缩、二维码生成识别、SSL 证书校验、端口扫描、短链、
   敏感词检测等需要服务端或第三方库，与「零依赖单文件」冲突，故不本地复刻
+- **计时类不受后台节流影响**：`clock.html` 的秒表与计时器以 `performance.now()` 差值推算，
+  不靠 tick 累加；页面切到后台被浏览器降频后回来，显示的仍是准确耗时
+- **个税口径写明按估算**：工资走累计预扣预缴，本页用按月等效税率表估算并标注；
+  年终奖单独计税的「多发 1 元到手反降」跳档区间会主动提醒
 - 本地页与 metools 的计算口径若有差异，以本地页说明为准
 - `docs/tools.html` 由 `tools/gen_tools_page.py` 生成，数据在 `tools/catalog.json`（一次性抓取结果），
   本地映射在 `tools/local_pages.json`；改完映射重跑脚本即可
@@ -263,7 +275,7 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 
 ```bash
 node tools/check_algos.mjs
-# 105 通过, 0 失败
+# 245 通过, 0 失败
 ```
 
 覆盖的向量：
@@ -275,6 +287,12 @@ node tools/check_algos.mjs
 - HMAC-SHA1/256/512 与 Node `crypto` 对照
 - 日期对 ISO 8601 周号边界（如 2021-01-01 属 2020 年第 53 周）
 - 子网掩码连续性、MAC 单播/组播位、WCAG 黑白对比度 21:1
+- 时区换算与 Node `Intl` 对照：东京 +9、伦敦夏令时 +1、纽约夏令时 −4、印度 +5:30、UTC 0
+- 几何公式对照解析解：3-4-5 直角三角形的对角线/母线、圆柱圆锥的表面积体积、串联分压与并联分流
+- SQL 关键字大小写与换行、字符串字面量（含关键字与空格）不被误伤；JSON 的注释与尾逗号宽容解析
+- 文本对比覆盖替换/新增/删除/忽略空格/忽略大小写/忽略空行/字符级，以及同类操作合并
+- 个税分档边界（3000、12000、25000 整点不跳档）、年终奖 36000 → 36001 的跳档反转、
+  并入综合所得的边际税额、BMI 四档分界、Mifflin-St Jeor 男女 BMR 定值
 
 ## 文件 / 文本 MD5 校验
 
@@ -358,7 +376,7 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 
 - `docs/index.html` — 工具入口页，列计量工具与通用工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
 - `docs/tools.html` — 工具目录页（HTML + CSS + 少量 JS 单文件，用于搜索与筛选）
-- `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（八页共用，避免各写一份）
+- `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（12 页共用，避免各写一份）
 - `tools/gen_catalog.py` — 从 metools.info 抓取工具清单，产出 `tools/catalog.json`
 - `tools/gen_tools_page.py` — 由 catalog 与本地映射渲染出 `docs/tools.html`
 - `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验
@@ -369,3 +387,7 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `docs/md5.html` — 文件 / 文本 MD5 校验页（HTML + CSS + JS 单文件，SHA 系列调用浏览器原生 crypto，无外部依赖）
 - `docs/base.html` / `cipher.html` / `hash.html` / `number.html` / `color.html` / `random.html` / `net.html` / `date.html`
   — 通用工具页（HTML + CSS + JS，依赖同目录的 `app.css` / `app.js`，无其它外部依赖）
+- `docs/clock.html` — 在线时钟页（时钟、秒表、计时器、倒计时、世界时间，依赖 `app.css` / `app.js`）
+- `docs/dev.html` — 开发工具页（JSON / SQL 格式化、文本对比、JWT 解析，依赖 `app.css` / `app.js`）
+- `docs/geometry.html` — 几何与电子计算页（依赖 `app.css` / `app.js`）
+- `docs/finance.html` — 个税与健康计算页（依赖 `app.css` / `app.js`）
