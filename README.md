@@ -6,7 +6,8 @@
 - `docs/calibration.html` — 电磁水表流量点校准计算
 - `docs/gold.html` — 黄金价格换算与斐波那契回调计算
 - `docs/flow.html` — 瞬时流量与流速换算
-- `docs/checksum.html` — 校验和计算（CRC / 累加和 / 异或 / MD5）
+- `docs/checksum.html` — 校验和计算（CRC / 累加和 / 异或）
+- `docs/md5.html` — 文件 / 文本 MD5 校验（含 SHA 系列，文件分块流式计算）
 - `docs/tools.html` — 工具目录（metools.info 全站 142 个工具清单）
 - `docs/base.html`、`docs/cipher.html`、`docs/hash.html`、`docs/number.html` —
   编码解码、古典密码、哈希校验、数字与单位
@@ -108,45 +109,86 @@
 
 ## 校验和计算
 
-输入一段字节，一次算出 CRC、累加和、异或校验与 MD5，省得在几个网页之间来回切：
+输入一段字节，一次算出 CRC、累加和、异或校验，省得在几个网页之间来回切：
 
 - **两种输入方式**：十六进制 HEX 与字符串 UTF-8。
   HEX 忽略空格、逗号、分号、冒号与换行，支持 `0x` 前缀，例如 `01 03 00 00 00 0A`；
   文本模式按 UTF-8 取字节，中文一个字通常 3 字节，需与设备侧编码一致
-- 四项可勾选：CRC 校验、累加和、异或校验、MD5，算哪项勾哪项
+- 三项可勾选：CRC 校验、累加和、异或校验，算哪项勾哪项
 - 每组结果都给出十六进制、十进制与**校验字节**，并带一键复制
 
 ### CRC 校验
 
-内置 22 个常用 CRC 预设（宽度 / 多项式 / 初值 / 输入输出反转 / 结果异或）：
+内置 60 个 CRC 预设（宽度 / 多项式 / 初值 / 输入输出反转 / 结果异或），覆盖 CRC-5 到 CRC-64；
+下拉按位宽分组，页面上还有关键字搜索，算法名与常见别名都能命中：
 
-| 预设 | 参数（poly / init / xorout） | 常见场景 |
-| --- | --- | --- |
-| CRC-8 | 0x07 / 0x00 / 0x00 | 基础 CRC-8（SMBus 参数族） |
-| CRC-8/MAXIM | 0x31 / 0x00 / 0x00 | Dallas/Maxim 单总线、温感、iButton |
-| CRC-8/SAE-J1850 | 0x1D / 0xFF / 0xFF | 汽车总线 SAE J1850 |
-| CRC-8/ROHC | 0x07 / 0xFF / 0x00 | ROHC 头压缩 |
-| CRC-16/IBM | 0x8005 / 0x0000 / 0x0000 | 又称 CRC-16/ARC、CRC-16/LHA |
-| CRC-16/MODBUS | 0x8005 / 0xFFFF / 0x0000 | Modbus RTU（默认预设） |
-| CRC-16/USB | 0x8005 / 0xFFFF / 0xFFFF | USB 传输 |
-| CRC-16/MAXIM | 0x8005 / 0x0000 / 0xFFFF | Maxim 单总线 |
-| CRC-16/CCITT-FALSE | 0x1021 / 0xFFFF / 0x0000 | 最常被叫做「CCITT」 |
-| CRC-16/XMODEM | 0x1021 / 0x0000 / 0x0000 | 又称 ZMODEM、ACORN |
-| CRC-16/X25 | 0x1021 / 0xFFFF / 0xFFFF | X.25、HDLC |
-| CRC-16/KERMIT | 0x1021 / 0x0000 / 0x0000 | 又称 CRC-16/BLUETOOTH |
-| CRC-16/DNP | 0x3D65 / 0x0000 / 0xFFFF | 工业网络 DNP3 |
-| CRC-16/DECT | 0x0589 / 0x0000 / 0x0001 | DECT 无线 |
-| CRC-16/T10-DIF | 0x8BB7 / 0x0000 / 0x0000 | SCSI DIF |
-| CRC-16/EN-13757 | 0x3D65 / 0x0000 / 0xFFFF | EN 13757 抄表总线 |
-| CRC-32 | 0x04C11DB7 / 0xFFFFFFFF / 0xFFFFFFFF | ZIP、Gzip、PNG、以太网 |
-| CRC-32/BZIP2 | 0x04C11DB7 / 0xFFFFFFFF / 0xFFFFFFFF | bzip2 |
-| CRC-32/MPEG-2 | 0x04C11DB7 / 0xFFFFFFFF / 0x00000000 | MPEG-2 传输流 |
-| CRC-32/POSIX | 0x04C11DB7 / 0x00000000 / 0xFFFFFFFF | 又称 CRC-32/CKSUM |
-| CRC-32/JAMCRC | 0x04C11DB7 / 0xFFFFFFFF / 0x00000000 | 与 CRC-32 按位取反 |
-| CRC-32/XFER | 0x000000AF / 0x00000000 / 0x00000000 | XFER |
+| 预设 | 宽度 | 参数（poly / init / xorout） | 别名 / 场景 |
+| --- | --- | --- | --- |
+| CRC-8 | 8 | 0x07 / 0x00 / 0x00 | CRC-8/SMBUS |
+| CRC-8/MAXIM | 8 | 0x31 / 0x00 / 0x00 | Dallas/Maxim 单总线、温感 |
+| CRC-8/SAE-J1850 | 8 | 0x1D / 0xFF / 0xFF | 汽车总线 SAE J1850 |
+| CRC-8/ROHC | 8 | 0x07 / 0xFF / 0x00 | ROHC 头压缩 |
+| CRC-16/IBM | 16 | 0x8005 / 0x0000 / 0x0000 | CRC-16/ARC、CRC-16/LHA |
+| CRC-16/MODBUS | 16 | 0x8005 / 0xFFFF / 0x0000 | Modbus RTU（默认预设） |
+| CRC-16/USB | 16 | 0x8005 / 0xFFFF / 0xFFFF | USB 传输 |
+| CRC-16/MAXIM | 16 | 0x8005 / 0x0000 / 0xFFFF | Maxim 单总线 |
+| CRC-16/CCITT-FALSE | 16 | 0x1021 / 0xFFFF / 0x0000 | 最常被叫做「CCITT」 |
+| CRC-16/XMODEM | 16 | 0x1021 / 0x0000 / 0x0000 | ZMODEM、ACORN |
+| CRC-16/X25 | 16 | 0x1021 / 0xFFFF / 0xFFFF | X.25、HDLC |
+| CRC-16/KERMIT | 16 | 0x1021 / 0x0000 / 0x0000 | CRC-16/BLUETOOTH |
+| CRC-16/DNP | 16 | 0x3D65 / 0x0000 / 0xFFFF | DNP3、工业网络 |
+| CRC-16/DECT | 16 | 0x0589 / 0x0000 / 0x0001 | DECT 无线 |
+| CRC-16/T10-DIF | 16 | 0x8BB7 / 0x0000 / 0x0000 | SCSI DIF |
+| CRC-16/EN-13757 | 16 | 0x3D65 / 0x0000 / 0xFFFF | EN 13757、M-Bus 抄表总线 |
+| CRC-32 | 32 | 0x04C11DB7 / 0xFFFFFFFF / 0xFFFFFFFF | ZIP、Gzip、PNG、以太网 |
+| CRC-32/BZIP2 | 32 | 0x04C11DB7 / 0xFFFFFFFF / 0xFFFFFFFF | bzip2 |
+| CRC-32/MPEG-2 | 32 | 0x04C11DB7 / 0xFFFFFFFF / 0x00000000 | MPEG-2 传输流 |
+| CRC-32/POSIX | 32 | 0x04C11DB7 / 0x00000000 / 0xFFFFFFFF | CRC-32/CKSUM、cksum |
+| CRC-32/JAMCRC | 32 | 0x04C11DB7 / 0xFFFFFFFF / 0x00000000 | 与 CRC-32 按位取反 |
+| CRC-32/XFER | 32 | 0x000000AF / 0x00000000 / 0x00000000 | XFER |
+| CRC-5/USB | 5 | 0x05 / 0x1F / 0x1F | USB 令牌 |
+| CRC-6/DARC | 6 | 0x19 / 0x00 / 0x00 | DARC |
+| CRC-7/ROHC | 7 | 0x4F / 0x7F / 0x00 | ROHC 7 位 |
+| CRC-10 | 10 | 0x233 / 0x000 / 0x000 | ATM、CRC-10/ATM |
+| CRC-10/CDMA2000 | 10 | 0x3D9 / 0x3FF / 0x000 | CDMA2000 |
+| CRC-11 | 11 | 0x385 / 0x01A / 0x000 | FlexRay 11 位 |
+| CRC-12/UMTS | 12 | 0x80F / 0x000 / 0x000 | UMTS、CRC-12/3GPP |
+| CRC-12/CDMA2000 | 12 | 0xF13 / 0xFFF / 0x000 | CDMA2000 |
+| CRC-12/DECT | 12 | 0x80F / 0x000 / 0x000 | DECT 12 位 |
+| CRC-13/BBC | 13 | 0x1CF5 / 0x0000 / 0x0000 | BBC |
+| CRC-14/DARC | 14 | 0x0805 / 0x0000 / 0x0000 | DARC |
+| CRC-15 | 15 | 0x4599 / 0x0000 / 0x0000 | CRC-15/CAN、CAN 总线 |
+| CRC-15/MPT1327 | 15 | 0x6815 / 0x0000 / 0x0001 | MPT1327 |
+| CRC-16/RIELLO | 16 | 0x1021 / 0xB2AA / 0x0000 | Riello 设备 |
+| CRC-16/TELEDISK | 16 | 0xA097 / 0x0000 / 0x0000 | Teledisk |
+| CRC-16/IBM-SDLC | 16 | 0x1021 / 0xFFFF / 0xFFFF | CRC-16/ISO-HDLC、V-41-MSB |
+| CRC-24/OPENPGP | 24 | 0x864CFB / 0xB704CE / 0x000000 | OpenPGP、Radix-64 |
+| CRC-24/BLE | 24 | 0x00065B / 0x555555 / 0x000000 | BLE |
+| CRC-24/FLEXRAY-A | 24 | 0x5D6DCB / 0xFEDCBA / 0x000000 | FlexRay A |
+| CRC-24/FLEXRAY-B | 24 | 0x5D6DCB / 0xABCDEF / 0x000000 | FlexRay B |
+| CRC-24/LTE-A | 24 | 0x864CFB / 0x000000 / 0x000000 | LTE-A |
+| CRC-24/LTE-B | 24 | 0x800063 / 0x000000 / 0x000000 | LTE-B |
+| CRC-24/OS-9 | 24 | 0x800063 / 0xFFFFFF / 0xFFFFFF | OS-9 |
+| CRC-30/CDMA | 30 | 0x2030B9C7 / 0x3FFFFFFF / 0x3FFFFFFF | CDMA |
+| CRC-31/PHILIPS | 31 | 0x04C11DB7 / 0x7FFFFFFF / 0x7FFFFFFF | Philips |
+| CRC-32/AUTOSAR | 32 | 0xF4ACFB13 / 0xFFFFFFFF / 0xFFFFFFFF | AUTOSAR |
+| CRC-32/CD-ROM-EDC | 32 | 0x8001801B / 0x00000000 / 0x00000000 | CD-ROM EDC |
+| CRC-32/MEF | 32 | 0x741B8CD7 / 0xFFFFFFFF / 0x00000000 | MEF |
+| CRC-32/AIXM | 32 | 0x814141AB / 0x00000000 / 0x00000000 | AIXM |
+| CRC-32/BASE91-D | 32 | 0xA833982B / 0xFFFFFFFF / 0xFFFFFFFF | BASE91-D |
+| CRC-32/ISCSI | 32 | 0x1EDC6F41 / 0xFFFFFFFF / 0xFFFFFFFF | iSCSI、CRC-32C(Castagnoli) |
+| CRC-64/ECMA-182 | 64 | 0x42F0E1EBA9EA3693 / 0x0000000000000000 / 0x0000000000000000 | ECMA-182 |
+| CRC-64/WE | 64 | 0x42F0E1EBA9EA3693 / 0xFFFFFFFFFFFFFFFF / 0xFFFFFFFFFFFFFFFF | CRC-64/WE |
+| CRC-64/XZ | 64 | 0x42F0E1EBA9EA3693 / 0xFFFFFFFFFFFFFFFF / 0xFFFFFFFFFFFFFFFF | XZ 容器 |
+| CRC-64/GO-ISO | 64 | 0x000000000000001B / 0xFFFFFFFFFFFFFFFF / 0xFFFFFFFFFFFFFFFF | GO-ISO |
+| CRC-64/MS | 64 | 0x259C84CBA6426349 / 0xFFFFFFFFFFFFFFFF / 0x0000000000000000 | CRC-64/MS |
+| CRC-64/REDIS | 64 | 0xAD93D23594C935A9 / 0x0000000000000000 / 0x0000000000000000 | Redis |
+| CRC-40/GSM | 40 | 0x0004820009 / 0x0000000000 / 0xFFFFFFFFFF | GSM |
 
 - 多项式一律按**正常（非反转）形式**书写，反射方向由算法的输入反转参数自动决定
-- 采用反射（右移）算法，结果与常见校验工具一致；选中预设后下方会列出完整参数，便于对参数表
+- 反射参数走右移、正序参数走逐位左移，结果与常见校验工具一致；
+  40 / 64 位参数超出 JS 双精度整数范围，改用 BigInt 计算，避免高位被截断
+- 选中预设后下方会列出完整参数与官方标准校验值（对 `123456789`），便于当场对参数表
 - **校验字节**是现场最需要的东西：按该 CRC 的字节序给出低位在前 / 高位在前，
   Modbus 这类「CRC 低字节先发」的协议直接照着发即可
 
@@ -169,15 +211,10 @@
 - 宽度可选 8 / 16 / 32 位，同样支持大端 / 小端输出
 - 8 位单字节 XOR 是最常见用法，多用于简单帧校验
 
-### MD5
-
-- 按输入字节算 128 位摘要，同时给出小写与大写，可一键复制
-- 页面自带实现，不依赖网络；与 `md5sum`、`hashlib` 结果一致
-
 ### 核验
 
-- CRC 覆盖 22 个预设，与 `crcmod` 参考实现、`zlib.crc32` 及官方「123456789」标准校验值逐一对齐
-- MD5 与 `hashlib` / `md5sum` 结果一致，含空串、中文等多组用例
+- CRC 覆盖全部 60 个预设，与 `crcmod` 参考实现、`zlib.crc32` 及官方「123456789」标准校验值逐一对齐
+- 累加和、异或校验与逐字节手算核对，含空输入、多字节、大端 / 小端输出等用例
 
 ### 示例
 
@@ -187,7 +224,6 @@ Modbus 读保持寄存器帧 `01 03 00 00 00 0A`：
 CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 累加和 8 位    = 0x0E
 异或 8 位      = 0x08
-MD5           = 5710ae9583f6605b5ed51aaecf2165c4
 ```
 ## 工具目录与通用工具
 
@@ -240,6 +276,32 @@ node tools/check_algos.mjs
 - 日期对 ISO 8601 周号边界（如 2021-01-01 属 2020 年第 53 周）
 - 子网掩码连续性、MAC 单播/组播位、WCAG 黑白对比度 21:1
 
+## 文件 / 文本 MD5 校验
+
+`docs/md5.html` 单独一页专门算摘要，文本和文件都能算：
+
+- **三种输入**：文本（UTF-8）、十六进制 HEX、文件上传
+- **文件支持多选与拖拽**，逐个给出摘要；文件不离开本机，全程在浏览器里算
+- **流式分块计算**：文件按 4 MB 分块读取，MD5 逐块累加，大文件不会一次性读进内存
+- **单文件上限 50 MB**：超过上限的文件直接拦下、不参与计算，列表里标成「超出大小上限，未计算」，
+  其余文件照常算，不会因为一个超限文件让整批失败
+- 算法多选：MD5 / SHA-1 / SHA-256 / SHA-512，勾几个出几个
+
+MD5 是页内实现（浏览器原生 `crypto.subtle` 不支持 MD5），
+SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环境；
+本地用 `file://` 直接打开时 SHA 会提示「当前环境不支持」，MD5 不受影响。
+
+### 为什么文件要分块
+
+一次 `file.arrayBuffer()` 读 50 MB，在中低端手机上很容易触发内存抖动甚至崩页。
+分块读入后逐块喂给 MD5 状态机，页面的内存占用与文件大小无关，只与块大小有关。
+
+### 核验
+
+- MD5 与 `md5sum` / `hashlib` / `node:crypto` 在空文件、`abc`、中文、5 MB 随机数据上逐一对齐
+- 随机切分成不同大小的块与整块一次算，结果一致（验证状态机可续算）
+- SHA-1 / SHA-256 / SHA-512 与系统 `sha1sum` / `sha256sum` / `sha512sum` 一致
+
 ## 使用
 
 页面是零依赖的单文件，直接用浏览器打开 `docs/index.html` 进入工具入口页，
@@ -247,7 +309,8 @@ node tools/check_algos.mjs
 或通过静态托管发布（如仓库 Pages / 云原生构建）。
 
 通用工具页共用 `docs/app.css` 与 `docs/app.js`，是本次为减少重复而抽出的一份公共样式与工具函数
-（取元素、格式化、复制、页签）。其余五个计算页仍是各自独立的单文件，不受影响。
+（取元素、格式化、复制、页签）。其余计算页（`calibration` / `gold` / `flow` / `checksum` / `md5`）
+仍是各自独立的单文件，不受影响。
 
 本地预览：
 
@@ -261,6 +324,7 @@ python3 -m http.server 8899 --directory docs
 # 校验页   http://127.0.0.1:8899/checksum.html
 # 通用工具 http://127.0.0.1:8899/base.html（同理 base/hash/cipher/number/color/random/net/date）
 #          http://127.0.0.1:8899/hash.html
+# MD5 页   http://127.0.0.1:8899/md5.html
 ```
 
 ### 示例
@@ -287,6 +351,7 @@ python3 -m http.server 8899 --directory docs
 
 ```
 CRC-16/MODBUS = 0xCDC5，校验字节 C5 CD（低字节先发）
+CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 ```
 
 ## 结构
@@ -301,5 +366,6 @@ CRC-16/MODBUS = 0xCDC5，校验字节 C5 CD（低字节先发）
 - `docs/gold.html` — 黄金价格换算与斐波那契回调计算页（HTML + CSS + JS 单文件，除汇率自动获取外无外部依赖）
 - `docs/flow.html` — 瞬时流量与流速换算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/checksum.html` — 校验和计算页（HTML + CSS + JS 单文件，无外部依赖）
+- `docs/md5.html` — 文件 / 文本 MD5 校验页（HTML + CSS + JS 单文件，SHA 系列调用浏览器原生 crypto，无外部依赖）
 - `docs/base.html` / `cipher.html` / `hash.html` / `number.html` / `color.html` / `random.html` / `net.html` / `date.html`
   — 通用工具页（HTML + CSS + JS，依赖同目录的 `app.css` / `app.js`，无其它外部依赖）

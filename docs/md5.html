@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#6d28d9">
+<title>文件 / 文本 MD5 校验</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#fff;
+    --text:#1f2329;
+    --sub:#8a9099;
+    --line:#e8eaed;
+    --primary:#6d28d9;
+    --primary-press:#5b21b6;
+    --warn:#d4380d;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header p{margin:4px 0 0;font-size:12px;opacity:.9}
+  main{max-width:640px;margin:0 auto;padding:12px 12px 0}
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    padding:14px 14px 6px;margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .card h2{
+    margin:0 0 10px;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .row{margin-bottom:12px}
+  .row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  .row label b{color:var(--text);font-weight:500}
+  textarea{
+    width:100%;min-height:104px;padding:10px 12px;
+    font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+    outline:none;resize:vertical;
+  }
+  textarea:focus{border-color:var(--primary);background:#fff}
+  textarea.invalid{border-color:var(--warn);background:#fff2ef}
+  .seg{display:flex;background:#f2f3f5;border-radius:10px;padding:3px;margin-bottom:12px}
+  .seg button{
+    flex:1;height:34px;font-size:13px;font-weight:500;color:var(--sub);
+    background:none;border:none;border-radius:8px;
+  }
+  .seg button.on{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
+  .hint.err{color:var(--warn)}
+  .inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
+  .inline input[type=search]{
+    flex:1;min-width:0;height:34px;padding:0 10px;font-size:13px;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:9px;outline:none;
+  }
+  .inline input[type=search]:focus{border-color:var(--primary);background:#fff}
+  .inline select{
+    height:34px;padding:0 26px 0 10px;font-size:13px;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:9px;outline:none;
+    -webkit-appearance:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,#8a9099 50%),linear-gradient(135deg,#8a9099 50%,transparent 50%);
+    background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+  }
+  .checks{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:2px}
+  .checks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text)}
+  .checks input{width:16px;height:16px;accent-color:var(--primary)}
+  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .quick button{
+    flex:1 1 auto;min-width:64px;height:34px;padding:0 10px;
+    font-size:13px;color:var(--primary);background:#f3eefe;
+    border:1px solid #ddd0fb;border-radius:9px;
+  }
+  .quick button:active{background:#e9dfff}
+  .btns{display:flex;gap:10px;margin:2px 0 14px}
+  .btns button{
+    flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none;
+  }
+  #calc{background:var(--primary);color:#fff}
+  #calc:active{background:var(--primary-press)}
+  #reset{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+  #result{display:none}
+  #result.show{display:block}
+  .result-main{
+    background:linear-gradient(135deg,#6d28d9,#9a6cf3);color:#fff;
+    border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 4px 14px rgba(109,40,217,.25);
+  }
+  .result-main .k{font-size:12px;opacity:.9}
+  .result-main .v{font-size:30px;font-weight:700;letter-spacing:.5px;word-break:break-all;margin:2px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .group{margin-bottom:12px}
+  .group>h3{
+    margin:0 0 6px;font-size:12px;font-weight:600;color:var(--sub);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .group>h3 span{font-weight:400;color:#a9aeb6}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
+  .grid div{background:#fff;padding:10px 12px}
+  .grid .k{font-size:12px;color:var(--sub)}
+  .grid .k em{font-style:normal;color:#b9bec6}
+  .grid .v{font-size:15px;font-weight:600;margin-top:2px;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .grid .v small{font-size:11px;font-weight:400;color:var(--sub);margin-left:4px;font-family:inherit}
+  .copy{
+    margin-top:6px;height:26px;padding:0 8px;font-size:12px;color:var(--primary);
+    background:#f3eefe;border:1px solid #ddd0fb;border-radius:7px;
+  }
+  .copy:active{background:#e9dfff}
+  footer{max-width:640px;margin:0 auto;padding:0 14px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+  footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+</style>
+
+<style>
+  .drop{
+    display:block;border:1.5px dashed #c9b6f7;border-radius:12px;
+    background:#faf7ff;padding:18px 14px;text-align:center;cursor:pointer;
+    transition:background .15s,border-color .15s;
+  }
+  .drop:active,.drop.over{background:#f1e9ff;border-color:var(--primary)}
+  .drop b{display:block;font-size:14px;color:var(--primary);font-weight:600}
+  .drop span{display:block;font-size:12px;color:var(--sub);margin-top:4px;line-height:1.5}
+  .drop input{display:none}
+  .file-meta{
+    display:flex;align-items:center;gap:10px;margin-top:10px;
+    padding:10px 12px;background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  }
+  .file-meta .n{flex:1;min-width:0;font-size:13px;word-break:break-all}
+  .file-meta .n small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
+  .bar{height:6px;background:#eceef2;border-radius:4px;overflow:hidden;margin-top:10px}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6d28d9,#9a6cf3);transition:width .15s}
+  .digest{
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;font-weight:600;
+    word-break:break-all;line-height:1.5;
+  }
+  .limit{font-size:12px;color:var(--sub)}
+  .limit b{color:var(--text)}
+</style>
+</head>
+<body>
+<header>
+  <h1>MD5 校验</h1>
+  <p>文本与文件 MD5 摘要，文件流式计算不占内存</p>
+</header>
+
+<main>
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>输入方式</h2>
+      <div class="seg" id="mode">
+        <button type="button" data-mode="text" class="on">文本 / 字符串</button>
+        <button type="button" data-mode="hex">十六进制 HEX</button>
+        <button type="button" data-mode="file">文件</button>
+      </div>
+
+      <div class="row" id="text-row">
+        <label for="data" id="data-label"><b>文本</b>（按 UTF-8 编码取字节）</label>
+        <textarea id="data" name="data" spellcheck="false" placeholder="输入要算 MD5 的文本"></textarea>
+        <div class="hint" id="data-hint">按 UTF-8 编码取字节，中文一个字通常 3 字节，与校验对端保持一致。</div>
+      </div>
+
+      <div class="row" id="file-row" hidden>
+        <label><b>选择文件</b>（拖拽到下方区域或点击选择）</label>
+        <label class="drop" id="drop">
+          <input type="file" id="file" multiple>
+          <b>点击选择文件 / 拖拽到此处</b>
+          <span>支持多选，逐个给出 MD5；文件不离开本机，全程在浏览器内计算</span>
+        </label>
+        <div class="hint limit">
+          单文件上限 <b id="limit-text">—</b>；超过上限会被拦下，不参与计算。
+        </div>
+        <div id="file-list"></div>
+      </div>
+
+      <div class="row" id="algo-row">
+        <label><b>算法</b>（可选，多选时逐个列出）</label>
+        <div class="checks">
+          <label><input type="checkbox" id="algo-md5" checked>MD5</label>
+          <label><input type="checkbox" id="algo-sha1" checked>SHA-1</label>
+          <label><input type="checkbox" id="algo-sha256" checked>SHA-256</label>
+          <label><input type="checkbox" id="algo-sha512">SHA-512</label>
+        </div>
+        <div class="hint" id="algo-hint">SHA 系列用浏览器原生 crypto.subtle 计算，MD5 为页内实现（原生不支持 MD5）。</div>
+      </div>
+    </section>
+
+    <div class="btns">
+      <button type="button" id="reset">重置</button>
+      <button type="submit" id="calc">计算摘要</button>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div id="result-main"></div>
+    <div id="groups"></div>
+  </section>
+
+  <footer>
+    文件按分块流式计算，大文件不会一次性读进内存<br>
+    MD5 为页内实现，SHA 系列走浏览器原生 crypto.subtle<br>
+    <a href="./index.html">← 返回工具入口</a>·<a href="./calibration.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>·<a href="./flow.html">流量换算</a>·<a href="./checksum.html">校验和计算</a>
+  </footer>
+</main>
+<script>
+(function(){
+  'use strict';
+
+  // 单文件上限：50 MB。超过就不读，直接提示，避免页面被大文件拖死。
+  var FILE_LIMIT = 50 * 1024 * 1024;
+  var CHUNK = 4 * 1024 * 1024; // 4 MB 一块，兼顾吞吐与内存
+
+  var $ = function(id){ return document.getElementById(id); };
+  var formEl = $('form');
+  var resultEl = $('result');
+  var dataEl = $('data');
+
+  function el(tag, cls, text){
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function fmtSize(n){
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    if (n < 1024 * 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + ' MB';
+    return (n / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+  }
+
+  // ---------- MD5：流式实现，状态可跨分块保存 ----------
+
+  var MD5_S = [7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,
+               5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,
+               4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,
+               6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  var MD5_K = (function(){
+    var k = [], i;
+    for (i = 0; i < 64; i++) k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296);
+    return k;
+  })();
+
+  function add32(a, b){ return (a + b) >>> 0; }
+  function rotl(x, c){ return ((x << c) | (x >>> (32 - c))) >>> 0; }
+
+  function md5Init(){
+    return { a: 0x67452301, b: 0xefcdab89, c: 0x98badcfe, d: 0x10325476, buf: [], len: 0 };
+  }
+
+  function md5Block(st, bytes, off){
+    var m = new Array(16), i;
+    for (i = 0; i < 16; i++){
+      m[i] = (bytes[off + i * 4]) | (bytes[off + i * 4 + 1] << 8) |
+             (bytes[off + i * 4 + 2] << 16) | (bytes[off + i * 4 + 3] << 24);
+    }
+    var a = st.a, b = st.b, c = st.c, d = st.d;
+    for (i = 0; i < 64; i++){
+      var f, g;
+      if (i < 16){ f = (b & c) | (~b & d); g = i; }
+      else if (i < 32){ f = (d & b) | (~d & c); g = (5 * i + 1) % 16; }
+      else if (i < 48){ f = b ^ c ^ d; g = (3 * i + 5) % 16; }
+      else { f = c ^ (b | ~d); g = (7 * i) % 16; }
+      f = add32(add32(f, a), add32(MD5_K[i], m[g]));
+      a = d; d = c; c = b;
+      b = add32(b, rotl(f, MD5_S[i]));
+    }
+    st.a = add32(st.a, a); st.b = add32(st.b, b);
+    st.c = add32(st.c, c); st.d = add32(st.d, d);
+  }
+
+  function md5Update(st, chunk){
+    var data = st.buf.length ? st.buf.concat(Array.prototype.slice.call(chunk))
+                             : Array.prototype.slice.call(chunk);
+    var off = 0;
+    while (off + 64 <= data.length){ md5Block(st, data, off); off += 64; }
+    st.buf = data.slice(off);
+    st.len += chunk.length;
+    return st;
+  }
+
+  function md5Finish(st){
+    var bytes = st.buf.slice();
+    var bitLen = st.len * 8;
+    bytes.push(0x80);
+    while (bytes.length % 64 !== 56) bytes.push(0);
+    // 64 位小端长度；本页单文件上限 50 MB，高 32 位必为 0
+    var lo = bitLen >>> 0, hi = Math.floor(bitLen / 4294967296) >>> 0;
+    [lo, hi].forEach(function(w){
+      for (var j = 0; j < 4; j++) bytes.push((w >>> (j * 8)) & 0xff);
+    });
+    var st2 = { a: st.a, b: st.b, c: st.c, d: st.d };
+    for (var off = 0; off < bytes.length; off += 64) md5Block(st2, bytes, off);
+    var word = function(w){
+      var s = '';
+      for (var j = 0; j < 4; j++) s += ((w >>> (j * 8)) & 0xff).toString(16).padStart(2, '0');
+      return s;
+    };
+    return word(st2.a) + word(st2.b) + word(st2.c) + word(st2.d);
+  }
+
+  // ---------- 摘要算法分派 ----------
+
+  var ALGOS = [
+    { id: 'algo-md5', key: 'md5', label: 'MD5', subtles: null },
+    { id: 'algo-sha1', key: 'sha1', label: 'SHA-1', subtles: 'SHA-1' },
+    { id: 'algo-sha256', key: 'sha256', label: 'SHA-256', subtles: 'SHA-256' },
+    { id: 'algo-sha512', key: 'sha512', label: 'SHA-512', subtles: 'SHA-512' }
+  ];
+
+  function selectedAlgos(){
+    return ALGOS.filter(function(a){ return $(a.id).checked; });
+  }
+
+  // ---------- 文本 / HEX 输入 ----------
+
+  function parseHex(str){
+    var s = str.replace(/0[xX]/g, '').replace(/[\s,;:]+/g, '');
+    if (s === '') return { ok: true, bytes: [] };
+    if (/[^0-9a-fA-F]/.test(s)) return { ok: false, msg: 'HEX 里含有非十六进制字符，只允许 0-9 A-F 与空格、逗号、换行、0x 前缀。' };
+    if (s.length % 2 !== 0) return { ok: false, msg: '十六进制位数需为偶数（每两个字符一个字节），当前为 ' + s.length + ' 位。' };
+    var bytes = [];
+    for (var i = 0; i < s.length; i += 2) bytes.push(parseInt(s.substr(i, 2), 16));
+    return { ok: true, bytes: bytes };
+  }
+
+  function parseText(str){
+    if (typeof TextEncoder === 'undefined') return { ok: false, msg: '当前浏览器不支持 UTF-8 编码，请改用 HEX 模式。' };
+    return { ok: true, bytes: Array.prototype.slice.call(new TextEncoder().encode(str)) };
+  }
+
+  var mode = 'text';
+
+  function readBytes(){
+    return mode === 'hex' ? parseHex(dataEl.value) : parseText(dataEl.value);
+  }
+
+  // ---------- 结果渲染 ----------
+
+  function cell(k, v, extra, copyText){
+    var node = el('div');
+    var kk = el('div', 'k');
+    kk.appendChild(document.createTextNode(k));
+    if (extra) kk.appendChild(el('em', null, ' ' + extra));
+    node.appendChild(kk);
+    var vv = el('div', 'v');
+    vv.appendChild(document.createTextNode(v));
+    node.appendChild(vv);
+    if (copyText != null){
+      var btn = el('button', 'copy', '复制');
+      btn.type = 'button';
+      btn.addEventListener('click', function(){ copy(copyText, btn); });
+      node.appendChild(btn);
+    }
+    return node;
+  }
+
+  function copy(text, btn){
+    var done = function(){ var old = btn.textContent; btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = old; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e){ /* 剪贴板不可用时静默跳过 */ }
+    document.body.removeChild(ta);
+  }
+
+  function group(title, note, cells){
+    var box = el('div', 'group');
+    var h = el('h3');
+    h.appendChild(document.createTextNode(title));
+    h.appendChild(el('span', null, note));
+    box.appendChild(h);
+    var grid = el('div', 'grid');
+    cells.forEach(function(c){ grid.appendChild(c); });
+    box.appendChild(grid);
+    return box;
+  }
+
+  function showResult(name, note, values, summary){
+    var main = el('div', 'result-main');
+    main.appendChild(el('div', 'k', name + ' · ' + values[0].label));
+    var v = el('div', 'v', values[0].digest);
+    v.style.fontSize = '15px';
+    main.appendChild(v);
+    $('result-main').innerHTML = '';
+    $('result-main').appendChild(main);
+
+    var host = $('groups');
+    host.innerHTML = '';
+    values.forEach(function(a){
+      host.appendChild(group(a.label, a.bits, [
+        cell('摘要（小写）', a.digest, null, a.digest),
+        cell('摘要（大写）', a.digest.toUpperCase(), null, a.digest.toUpperCase())
+      ]));
+    });
+    host.insertBefore(group('输入统计', note, summary), host.firstChild);
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // ---------- 计算：文本 / HEX ----------
+
+  function digestText(bytes, algos){
+    var st = md5Init();
+    md5Update(st, bytes);
+    return algos.map(function(a){
+      return { label: a.label, digest: a.key === 'md5' ? md5Finish(st) : null, algo: a };
+    });
+  }
+
+  // SHA 系列走原生 crypto.subtle，需要一次性拿到完整字节
+  function subtleDigest(algo, bytes){
+    return crypto.subtle.digest(algo, new Uint8Array(bytes)).then(function(buf){
+      return Array.prototype.map.call(new Uint8Array(buf), function(b){
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+    });
+  }
+
+  function computeText(bytes, algos){
+    var md5v = null;
+    if (algos.some(function(a){ return a.key === 'md5'; })){
+      var st = md5Init();
+      md5Update(st, bytes);
+      md5v = md5Finish(st);
+    }
+    var jobs = algos.map(function(a){
+      if (a.key === 'md5'){
+        return Promise.resolve({ label: a.label, digest: md5v, bits: '128 位散列' });
+      }
+      if (!crypto.subtle){
+        return Promise.resolve({ label: a.label, digest: '（当前环境不支持，需 https 或 localhost）', bits: '' });
+      }
+      return subtleDigest(a.subtles, bytes).then(function(d){
+        return { label: a.label, digest: d, bits: bitsLabel(a.key) };
+      });
+    });
+    return Promise.all(jobs);
+  }
+
+  function bitsLabel(key){
+    return { md5: '128 位散列', sha1: '160 位散列', sha256: '256 位散列', sha512: '512 位散列' }[key];
+  }
+
+  // ---------- 计算：文件（分块流式） ----------
+
+  function hashFile(file, algos, onProgress){
+    var st = md5Init();
+    var needMd5 = algos.some(function(a){ return a.key === 'md5'; });
+    // crypto.subtle 不能流式喂数据，SHA 用分块读入后一次性提交；
+    // 50 MB 上限下内存可控，MD5 则真正逐块累加。
+    var chunks = [];
+    var offset = 0;
+
+    function step(){
+      if (offset >= file.size){
+        // 先把拼好的整块取出来，再清理 chunks；
+        // 否则多文件并发时 SHA 会读到已经被清空/被别的文件写过的缓冲。
+        var total = chunks.reduce(function(n, c){ return n + c.length; }, 0);
+        var all = new Uint8Array(total), p = 0;
+        chunks.forEach(function(c){ all.set(c, p); p += c.length; });
+        chunks = [];
+        var digest = md5Finish(st);
+        var tasks = algos.map(function(a){
+          if (a.key === 'md5'){
+            return Promise.resolve({ label: a.label, digest: needMd5 ? digest : '', bits: '128 位散列' });
+          }
+          if (!crypto.subtle){
+            return Promise.resolve({ label: a.label, digest: '（当前环境不支持，需 https 或 localhost）', bits: '' });
+          }
+          return subtleDigest(a.subtles, all).then(function(d){
+            return { label: a.label, digest: d, bits: bitsLabel(a.key) };
+          });
+        });
+        return Promise.all(tasks);
+      }
+      var end = Math.min(offset + CHUNK, file.size);
+      var slice = file.slice(offset, end);
+      return slice.arrayBuffer().then(function(buf){
+        var bytes = new Uint8Array(buf);
+        if (needMd5) md5Update(st, bytes);
+        var needChunks = algos.some(function(a){ return a.key !== 'md5'; });
+        if (needChunks) chunks.push(bytes);
+        offset = end;
+        if (onProgress) onProgress(offset / file.size);
+        return step();
+      });
+    }
+    return step();
+  }
+
+  // ---------- 文件列表 ----------
+
+  var queue = [];
+
+  function renderQueue(){
+    var host = $('file-list');
+    host.innerHTML = '';
+    if (!queue.length) return;
+    var box = el('div');
+    box.style.marginTop = '10px';
+    queue.forEach(function(item, i){
+      var row = el('div', 'file-meta');
+      var n = el('div', 'n');
+      n.appendChild(document.createTextNode(item.file.name));
+      var meta = el('small');
+      var st = item.status === 'done' ? '已计算'
+             : item.status === 'over' ? '超出大小上限，未计算'
+             : item.status === 'running' ? '计算中…' : '待计算';
+      meta.textContent = fmtSize(item.file.size) + ' · ' + st;
+      n.appendChild(meta);
+      row.appendChild(n);
+      if (item.digests){
+        var d = el('div', 'digest');
+        d.style.fontSize = '12px';
+        d.textContent = item.digests.map(function(a){ return a.label + ' ' + a.digest; }).join('　');
+        row.appendChild(d);
+      }
+      var del = el('button', 'copy', '移除');
+      del.type = 'button';
+      del.addEventListener('click', function(){ queue.splice(i, 1); renderQueue(); });
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+    host.appendChild(box);
+  }
+
+  function addFiles(files){
+    Array.prototype.forEach.call(files, function(f){
+      var over = f.size > FILE_LIMIT;
+      queue.push({ file: f, status: over ? 'over' : 'idle', digests: null });
+    });
+    renderQueue();
+  }
+
+  // ---------- 交互 ----------
+
+  function clearErrors(){
+    dataEl.classList.remove('invalid');
+    var h = $('data-hint');
+    h.className = 'hint';
+    h.textContent = mode === 'hex'
+      ? 'HEX 忽略空格、逗号、换行与 0x 前缀；逐字节需为 00～FF。'
+      : '按 UTF-8 编码取字节，中文一个字通常 3 字节，与校验对端保持一致。';
+  }
+
+  function showError(msg){
+    resultEl.classList.remove('show');
+    if (mode !== 'file'){
+      dataEl.classList.add('invalid');
+      var h = $('data-hint');
+      h.className = 'hint err';
+      h.textContent = msg;
+      dataEl.scrollIntoView({behavior:'smooth', block:'center'});
+    } else {
+      var box = $('file-list');
+      var tip = el('div', 'hint err', msg);
+      box.insertBefore(tip, box.firstChild);
+    }
+  }
+
+  function switchMode(next){
+    mode = next;
+    Array.prototype.forEach.call($('mode').querySelectorAll('button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-mode') === next);
+    });
+    $('text-row').hidden = next === 'file';
+    $('file-row').hidden = next !== 'file';
+    $('data-label').innerHTML = next === 'hex'
+      ? '<b>十六进制字节</b>（空格、逗号、换行、0x 均可分隔）'
+      : '<b>文本</b>（按 UTF-8 编码取字节）';
+    dataEl.placeholder = next === 'hex' ? '例如 68656c6c6f' : '输入要算 MD5 的文本';
+    clearErrors();
+    resultEl.classList.remove('show');
+  }
+
+  $('mode').addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('button') : null;
+    if (btn && btn.getAttribute('data-mode')) switchMode(btn.getAttribute('data-mode'));
+  });
+
+  $('limit-text').textContent = fmtSize(FILE_LIMIT);
+
+  var drop = $('drop');
+  ['dragenter', 'dragover'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function(e){
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+  $('file').addEventListener('change', function(){ addFiles(this.files); this.value = ''; });
+
+  dataEl.addEventListener('input', function(){ clearErrors(); resultEl.classList.remove('show'); });
+
+  formEl.addEventListener('submit', function(e){
+    e.preventDefault();
+    clearErrors();
+    var algos = selectedAlgos();
+    if (!algos.length){ showError('请至少勾选一种算法。'); return; }
+
+    if (mode === 'file'){
+      var pending = queue.filter(function(it){ return it.status !== 'over'; });
+      if (!queue.length){ showError('请先选择要计算的文件。'); return; }
+      if (!pending.length){ showError('所选文件都超过了 ' + fmtSize(FILE_LIMIT) + ' 上限，无法计算。'); return; }
+      var done = 0;
+      pending.forEach(function(item){
+        item.status = 'running';
+        renderQueue();
+        hashFile(item.file, algos, null).then(function(res){
+          item.digests = res;
+          item.status = 'done';
+          renderQueue();
+          done++;
+          if (done === pending.length){
+            var first = pending[0];
+            showResult(first.file.name, '文件 · 分块流式计算', first.digests, [
+              cell('文件大小', fmtSize(first.file.size)),
+              cell('分块大小', fmtSize(CHUNK)),
+              cell('单文件上限', fmtSize(FILE_LIMIT)),
+              cell('文件数', String(pending.length))
+            ]);
+          }
+        });
+      });
+      return;
+    }
+
+    var parsed = readBytes();
+    if (!parsed.ok){ showError(parsed.msg); return; }
+    if (parsed.bytes.length === 0){ showError('请先填写要计算的内容。'); return; }
+    computeText(parsed.bytes, algos).then(function(values){
+      showResult(mode === 'hex' ? 'HEX 输入' : '文本输入',
+        mode === 'hex' ? 'HEX 模式' : 'UTF-8 文本模式',
+        values, [
+          cell('字节数', String(parsed.bytes.length) + ' 字节'),
+          cell('数据（HEX）', parsed.bytes.map(function(b){ return b.toString(16).toUpperCase().padStart(2, '0'); }).join(' ') || '—')
+        ]);
+    });
+  });
+
+  $('reset').addEventListener('click', function(){
+    dataEl.value = '';
+    queue = [];
+    renderQueue();
+    $('algo-md5').checked = true;
+    $('algo-sha1').checked = true;
+    $('algo-sha256').checked = true;
+    $('algo-sha512').checked = false;
+    switchMode('text');
+    dataEl.focus();
+  });
+
+  switchMode('text');
+  renderQueue();
+})();
+</script>
+</body>
+</html>

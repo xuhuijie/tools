@@ -58,6 +58,7 @@
   .entry.net .badge{background:linear-gradient(135deg,#b45309,#e08b2e)}
   .entry.date .badge{background:linear-gradient(135deg,#1d4ed8,#5b8def)}
   .entry.random .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
+  .entry.md5 .badge{background:linear-gradient(135deg,#b02a6b,#e0559a)}
   .entry-body{flex:1;min-width:0}
   .entry-body .t{display:block;font-size:15px;font-weight:600}
   .entry-body .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
@@ -109,6 +110,15 @@
       <span class="entry-body">
         <span class="t">校验和计算</span>
         <span class="d">CRC / 累加和 / 异或 / MD5，一次算全并给出校验字节</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry md5" href="./md5.html">
+      <span class="badge">MD5</span>
+      <span class="entry-body">
+        <span class="t">文件 / 文本 MD5 校验</span>
+        <span class="d">上传文件或输入文本算 MD5，文件分块流式计算，附 SHA 系列</span>
       </span>
       <span class="arrow">›</span>
     </a>
