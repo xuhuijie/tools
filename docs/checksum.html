@@ -143,7 +143,7 @@
         <div class="hint" id="data-hint">按字节解析：忽略空格、逗号、换行与 0x 前缀；逐字节需为 00～FF。</div>
       </div>
 
-      <div class="row" id="crc-row" hidden>
+      <div class="row" id="crc-row">
         <label for="preset"><b>CRC 预设</b>（按协议/别名选择，共 <span id="preset-count"></span> 种）</label>
         <div class="inline">
           <input type="search" id="preset-search" placeholder="搜索算法名 / 别名，如 ARC、CCITT、Modbus、64" autocomplete="off">
@@ -155,7 +155,7 @@
         <div class="hint" id="preset-params"></div>
       </div>
 
-      <div class="row" id="sum-row" hidden>
+      <div class="row" id="sum-row">
         <label><b>累加和校验</b>（宽度与大小端）</label>
         <div class="inline">
           <select id="sumWidth">
@@ -170,7 +170,7 @@
         </div>
       </div>
 
-      <div class="row" id="xor-row" hidden>
+      <div class="row" id="xor-row">
         <label><b>异或校验</b>（宽度与大小端）</label>
         <div class="inline">
           <select id="xorWidth">
@@ -653,6 +653,13 @@
     if (btn && btn.getAttribute('data-mode')) switchMode(btn.getAttribute('data-mode'));
   });
 
+  // 计算项勾选情况 → 对应输入区的显隐（未勾选就没有配置的意义）
+  function syncOptionRow(){
+    $('crc-row').hidden = !$('chk-crc').checked;
+    $('sum-row').hidden = !$('chk-sum').checked;
+    $('xor-row').hidden = !$('chk-xor').checked;
+  }
+
   $('preset').addEventListener('change', syncPresetNote);
 
   // 关键字过滤：命中算法名、别名说明或宽度数字
@@ -706,6 +713,11 @@
 
   fillPreset();
   $('preset-count').textContent = String(presets.length);
+  // 勾选状态决定对应输入区是否显示，初始三者均为选中，故三块都可见
+  Array.prototype.forEach.call(document.querySelectorAll('#chk-crc,#chk-sum,#chk-xor'), function(chk){
+    chk.addEventListener('change', syncOptionRow);
+  });
+  syncOptionRow();
   switchMode('hex');
 })();
 </script>
