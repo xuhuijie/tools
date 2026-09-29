@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#6d28d9">
+<title>校验和计算</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#fff;
+    --text:#1f2329;
+    --sub:#8a9099;
+    --line:#e8eaed;
+    --primary:#6d28d9;
+    --primary-press:#5b21b6;
+    --warn:#d4380d;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header p{margin:4px 0 0;font-size:12px;opacity:.9}
+  main{max-width:640px;margin:0 auto;padding:12px 12px 0}
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    padding:14px 14px 6px;margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+  }
+  .card h2{
+    margin:0 0 10px;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .row{margin-bottom:12px}
+  .row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  .row label b{color:var(--text);font-weight:500}
+  textarea{
+    width:100%;min-height:104px;padding:10px 12px;
+    font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+    outline:none;resize:vertical;
+  }
+  textarea:focus{border-color:var(--primary);background:#fff}
+  textarea.invalid{border-color:var(--warn);background:#fff2ef}
+  .seg{display:flex;background:#f2f3f5;border-radius:10px;padding:3px;margin-bottom:12px}
+  .seg button{
+    flex:1;height:34px;font-size:13px;font-weight:500;color:var(--sub);
+    background:none;border:none;border-radius:8px;
+  }
+  .seg button.on{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45}
+  .hint.err{color:var(--warn)}
+  .inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
+  .inline select{
+    height:34px;padding:0 26px 0 10px;font-size:13px;color:var(--text);
+    background:#f7f8fa;border:1px solid var(--line);border-radius:9px;outline:none;
+    -webkit-appearance:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,#8a9099 50%),linear-gradient(135deg,#8a9099 50%,transparent 50%);
+    background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+  }
+  .checks{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:2px}
+  .checks label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text)}
+  .checks input{width:16px;height:16px;accent-color:var(--primary)}
+  .quick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .quick button{
+    flex:1 1 auto;min-width:64px;height:34px;padding:0 10px;
+    font-size:13px;color:var(--primary);background:#f3eefe;
+    border:1px solid #ddd0fb;border-radius:9px;
+  }
+  .quick button:active{background:#e9dfff}
+  .btns{display:flex;gap:10px;margin:2px 0 14px}
+  .btns button{
+    flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none;
+  }
+  #calc{background:var(--primary);color:#fff}
+  #calc:active{background:var(--primary-press)}
+  #reset{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+  #result{display:none}
+  #result.show{display:block}
+  .result-main{
+    background:linear-gradient(135deg,#6d28d9,#9a6cf3);color:#fff;
+    border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 4px 14px rgba(109,40,217,.25);
+  }
+  .result-main .k{font-size:12px;opacity:.9}
+  .result-main .v{font-size:30px;font-weight:700;letter-spacing:.5px;word-break:break-all;margin:2px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .group{margin-bottom:12px}
+  .group>h3{
+    margin:0 0 6px;font-size:12px;font-weight:600;color:var(--sub);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .group>h3 span{font-weight:400;color:#a9aeb6}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
+  .grid div{background:#fff;padding:10px 12px}
+  .grid .k{font-size:12px;color:var(--sub)}
+  .grid .k em{font-style:normal;color:#b9bec6}
+  .grid .v{font-size:15px;font-weight:600;margin-top:2px;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .grid .v small{font-size:11px;font-weight:400;color:var(--sub);margin-left:4px;font-family:inherit}
+  .copy{
+    margin-top:6px;height:26px;padding:0 8px;font-size:12px;color:var(--primary);
+    background:#f3eefe;border:1px solid #ddd0fb;border-radius:7px;
+  }
+  .copy:active{background:#e9dfff}
+  footer{max-width:640px;margin:0 auto;padding:0 14px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+  footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>校验和计算</h1>
+  <p>CRC / 累加和 / 异或 / MD5 一次算全</p>
+</header>
+
+<main>
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>输入数据</h2>
+      <div class="seg" id="mode">
+        <button type="button" data-mode="hex" class="on">十六进制 HEX</button>
+        <button type="button" data-mode="text">字符串 UTF-8</button>
+      </div>
+
+      <div class="row">
+        <label for="data" id="data-label"><b>十六进制字节</b>（空格、逗号、换行、0x 均可分隔）</label>
+        <textarea id="data" name="data" spellcheck="false" placeholder="例如 01 03 00 00 00 0A"></textarea>
+        <div class="hint" id="data-hint">按字节解析：忽略空格、逗号、换行与 0x 前缀；逐字节需为 00～FF。</div>
+      </div>
+
+      <div class="row" id="crc-row" hidden>
+        <label for="preset"><b>CRC 预设</b>（按协议选择）</label>
+        <div class="inline">
+          <select id="preset"></select>
+          <span id="preset-note"></span>
+        </div>
+        <div class="hint" id="preset-params"></div>
+      </div>
+
+      <div class="row" id="sum-row" hidden>
+        <label><b>累加和校验</b>（宽度与大小端）</label>
+        <div class="inline">
+          <select id="sumWidth">
+            <option value="8">8 位（取低 8 位）</option>
+            <option value="16">16 位</option>
+            <option value="32">32 位</option>
+          </select>
+          <select id="sumEndian">
+            <option value="be">大端（高位在前）</option>
+            <option value="le">小端（低位在前）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" id="xor-row" hidden>
+        <label><b>异或校验</b>（宽度与大小端）</label>
+        <div class="inline">
+          <select id="xorWidth">
+            <option value="8">8 位（单字节 XOR）</option>
+            <option value="16">16 位</option>
+            <option value="32">32 位</option>
+          </select>
+          <select id="xorEndian">
+            <option value="be">大端（高位在前）</option>
+            <option value="le">小端（低位在前）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <label><b>计算项</b>（可多选）</label>
+        <div class="checks">
+          <label><input type="checkbox" id="chk-crc" checked>CRC 校验</label>
+          <label><input type="checkbox" id="chk-sum" checked>累加和</label>
+          <label><input type="checkbox" id="chk-xor" checked>异或校验</label>
+          <label><input type="checkbox" id="chk-md5" checked>MD5</label>
+        </div>
+      </div>
+    </section>
+
+    <div class="btns">
+      <button type="button" id="reset">重置</button>
+      <button type="submit" id="calc">计算校验和</button>
+    </div>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <div id="result-main"></div>
+    <div id="groups"></div>
+  </section>
+
+  <footer>
+    CRC 采用反射算法（右移，多项式反转），结果格式与常见工具一致<br>
+    累加和 = 各字节无符号求和后取低位；异或 = 各字节逐位异或<br>
+    <a href="./index.html">← 返回工具入口</a>·<a href="./calibration.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>·<a href="./flow.html">流量换算</a>
+  </footer>
+</main>
+
+<script>
+(function(){
+  'use strict';
+
+  var $ = function(id){ return document.getElementById(id); };
+  var formEl = $('form');
+  var resultEl = $('result');
+  var dataEl = $('data');
+
+  function el(tag, cls, text){
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function hex(n, width){
+    var s = n.toString(16).toUpperCase();
+    while (s.length < width * 2) s = '0' + s;
+    return s;
+  }
+
+  // 按宽度输出「高位在前/低位在前」的字节串
+  function beBytes(n, width){
+    var out = [];
+    for (var i = width - 1; i >= 0; i--) out.push(hex((n >>> (i * 8)) & 0xff, 1));
+    return out.join(' ');
+  }
+  function leBytes(n, width){
+    return beBytes(n, width).split(' ').reverse().join(' ');
+  }
+  function bytesOf(n, width, endian){
+    return endian === 'le' ? leBytes(n, width) : beBytes(n, width);
+  }
+
+  // ---------- 输入解析：HEX 与 UTF-8 文本二选一 ----------
+
+  function parseHex(str){
+    var bad = { ok: false, msg: 'HEX 里含有非十六进制字符，只允许 0-9 A-F 与空格、逗号、换行、0x 前缀。' };
+    var s = str.replace(/0[xX]/g, '').replace(/[\s,;:]+/g, '');
+    if (s === '') return { ok: true, bytes: [] };
+    if (/[^0-9a-fA-F]/.test(s)) return bad;
+    if (s.length % 2 !== 0) return { ok: false, msg: '十六进制位数需为偶数（每两个字符一个字节），当前为 ' + s.length + ' 位。' };
+    var bytes = [];
+    for (var i = 0; i < s.length; i += 2) bytes.push(parseInt(s.substr(i, 2), 16));
+    return { ok: true, bytes: bytes };
+  }
+
+  function parseText(str){
+    if (typeof TextEncoder === 'undefined') return { ok: false, msg: '当前浏览器不支持 UTF-8 编码，请改用 HEX 模式。' };
+    return { ok: true, bytes: Array.prototype.slice.call(new TextEncoder().encode(str)) };
+  }
+
+  var mode = 'hex';
+
+  function readBytes(){
+    return mode === 'hex' ? parseHex(dataEl.value) : parseText(dataEl.value);
+  }
+
+  // ---------- 全量 CRC 表（width/poly/init/refin/refout/xorout）----------
+  // poly 一律写成正常（非反转）形式，反射方向由算法按 refin 自动反转
+
+  var CRC_TABLE = [
+    ['CRC-8',              8,  '0x07',        '0x00',       false, false, '0x00',  '基础 CRC-8（SMBus 参数族）'],
+    ['CRC-8/MAXIM',        8,  '0x31',        '0x00',       true,  true,  '0x00',  'Dallas/Maxim 单总线，温感、iButton'],
+    ['CRC-8/SAE-J1850',    8,  '0x1D',        '0xFF',       false, false, '0xFF',  '汽车总线 SAE J1850'],
+    ['CRC-8/ROHC',         8,  '0x07',        '0xFF',       true,  true,  '0x00',  'ROHC 头压缩'],
+    ['CRC-16/IBM',         16, '0x8005',      '0x0000',     true,  true,  '0x0000', '又称 CRC-16/ARC、CRC-16/LHA'],
+    ['CRC-16/MODBUS',      16, '0x8005',      '0xFFFF',     true,  true,  '0x0000', 'Modbus RTU 常用'],
+    ['CRC-16/USB',         16, '0x8005',      '0xFFFF',     true,  true,  '0xFFFF', 'USB 传输'],
+    ['CRC-16/MAXIM',       16, '0x8005',      '0x0000',     true,  true,  '0xFFFF', 'Maxim 单总线'],
+    ['CRC-16/CCITT-FALSE', 16, '0x1021',      '0xFFFF',     false, false, '0x0000', '最常被叫做“CCITT”'],
+    ['CRC-16/XMODEM',      16, '0x1021',      '0x0000',     false, false, '0x0000', '又称 ZMODEM、ACORN'],
+    ['CRC-16/X25',         16, '0x1021',      '0xFFFF',     true,  true,  '0xFFFF', 'X.25、HDLC'],
+    ['CRC-16/KERMIT',      16, '0x1021',      '0x0000',     true,  true,  '0x0000', '又称 CRC-16/BLUETOOTH'],
+    ['CRC-16/DNP',         16, '0x3D65',      '0x0000',     true,  true,  '0xFFFF', '工业网络 DNP3'],
+    ['CRC-16/DECT',        16, '0x0589',      '0x0000',     false, false, '0x0001', 'DECT 无线'],
+    ['CRC-16/T10-DIF',     16, '0x8BB7',      '0x0000',     false, false, '0x0000', 'SCSI DIF'],
+    ['CRC-16/EN-13757',    16, '0x3D65',      '0x0000',     false, false, '0xFFFF', 'EN 13757 抄表总线'],
+    ['CRC-32',             32, '0x04C11DB7',  '0xFFFFFFFF', true,  true,  '0xFFFFFFFF', 'ZIP、Gzip、PNG、以太网'],
+    ['CRC-32/BZIP2',       32, '0x04C11DB7',  '0xFFFFFFFF', false, false, '0xFFFFFFFF', 'bzip2'],
+    ['CRC-32/MPEG-2',      32, '0x04C11DB7',  '0xFFFFFFFF', false, false, '0x00000000', 'MPEG-2 传输流'],
+    ['CRC-32/POSIX',       32, '0x04C11DB7',  '0x00000000', false, false, '0xFFFFFFFF', '又称 CRC-32/CKSUM'],
+    ['CRC-32/JAMCRC',      32, '0x04C11DB7',  '0xFFFFFFFF', true,  true,  '0x00000000', '与 CRC-32 按位取反'],
+    ['CRC-32/XFER',        32, '0x000000AF',  '0x00000000', false, false, '0x00000000', 'XFER']
+  ];
+
+  function parsePoly(str){
+    if (str.indexOf('0x') === 0) return parseInt(str.slice(2), 16);
+    return parseInt(str, 10);
+  }
+
+  var presets = CRC_TABLE.map(function(p){
+    return {
+      name: p[0], width: p[1], poly: parsePoly(p[2]), init: parsePoly(p[3]),
+      refin: p[4], refout: p[5], xorout: parsePoly(p[6]), desc: p[7]
+    };
+  });
+
+  // ---------- CRC 核心：按需构建查表，反射与正向两条路径 ----------
+
+  var tableCache = {};
+
+  function crcTable(p){
+    var key = p.width + '|' + p.poly + '|' + p.refin;
+    if (tableCache[key]) return tableCache[key];
+    var mask = p.width === 32 ? 0xFFFFFFFF : (1 << p.width) - 1;
+    var top = 1 << (p.width - 1);
+    var tbl = new Array(256);
+    if (p.refin){
+      // 反射算法：多项式反转，从最高位右移出来
+      var rpoly = reflect(p.poly, p.width);
+      for (var n = 0; n < 256; n++){
+        var c = n;
+        for (var k = 0; k < 8; k++) c = (c & 1) ? ((c >>> 1) ^ rpoly) : (c >>> 1);
+        tbl[n] = c >>> 0;
+      }
+    } else {
+      for (var m = 0; m < 256; m++){
+        var d = m << (p.width - 8);
+        for (var j = 0; j < 8; j++) d = (d & top) ? ((mul2(d, p.width) ^ p.poly) & mask) : mul2(d, p.width);
+        tbl[m] = d >>> 0;
+      }
+    }
+    tableCache[key] = tbl;
+    return tbl;
+  }
+
+  // 有限宽循环左移一位
+  function mul2(v, width){
+    var mask = width === 32 ? 0xFFFFFFFF : (1 << width) - 1;
+    return ((v << 1) & mask) >>> 0;
+  }
+
+  function reflect(v, width){
+    var r = 0;
+    for (var i = 0; i < width; i++){
+      if (v & (1 << i)) r |= 1 << (width - 1 - i);
+    }
+    return r >>> 0;
+  }
+
+  function crcCompute(bytes, p){
+    var mask = p.width === 32 ? 0xFFFFFFFF : (1 << p.width) - 1;
+    var tbl = crcTable(p);
+    var crc = p.refin ? reflect(p.init, p.width) : (p.init & mask);
+
+    for (var i = 0; i < bytes.length; i++){
+      var b = bytes[i];
+      if (p.refin){
+        var idx = (crc ^ b) & 0xff;
+        crc = ((crc >>> 8) ^ tbl[idx]) >>> 0;
+      } else {
+        var idx2 = ((crc >>> (p.width - 8)) ^ b) & 0xff;
+        crc = (((crc << 8) & mask) ^ tbl[idx2]) >>> 0;
+      }
+    }
+
+    if (p.refout && !p.refin) crc = reflect(crc, p.width);
+    else if (!p.refout && p.refin) crc = reflect(crc, p.width);
+
+    return (crc ^ p.xorout) >>> 0;
+  }
+
+  // ---------- MD5：零依赖实现，按 UTF-8 字节流计算 ----------
+
+  var MD5_S = [7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,
+               5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,
+               4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,
+               6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  var MD5_K = (function(){
+    var k = [], i;
+    for (i = 0; i < 64; i++) k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296);
+    return k;
+  })();
+
+  function add32(a, b){ return (a + b) >>> 0; }
+  function rotl(x, c){ return ((x << c) | (x >>> (32 - c))) >>> 0; }
+
+  function md5(bytes){
+    var len = bytes.length;
+    var bitLen = len * 8;
+    // 补位到 64 字节整数倍，末尾 8 字节写长度（小端）
+    var withPad = new Array((((len + 8) >> 6) + 1) * 64);
+    var i;
+    for (i = 0; i < len; i++) withPad[i] = bytes[i] & 0xff;
+    withPad[len] = 0x80;
+    for (i = len + 1; i < withPad.length - 8; i++) withPad[i] = 0;
+    // 长度按 64 位小端写入，低 32 位足够本页输入量级
+    var lo = bitLen >>> 0, hi = Math.floor(bitLen / 4294967296) >>> 0;
+    withPad[withPad.length - 8] = lo & 0xff;
+    withPad[withPad.length - 7] = (lo >>> 8) & 0xff;
+    withPad[withPad.length - 6] = (lo >>> 16) & 0xff;
+    withPad[withPad.length - 5] = (lo >>> 24) & 0xff;
+    withPad[withPad.length - 4] = hi & 0xff;
+    withPad[withPad.length - 3] = (hi >>> 8) & 0xff;
+    withPad[withPad.length - 2] = (hi >>> 16) & 0xff;
+    withPad[withPad.length - 1] = (hi >>> 24) & 0xff;
+
+    var a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+
+    for (var off = 0; off < withPad.length; off += 64){
+      var m = new Array(16);
+      for (i = 0; i < 16; i++){
+        m[i] = (withPad[off + i * 4]) | (withPad[off + i * 4 + 1] << 8) |
+               (withPad[off + i * 4 + 2] << 16) | (withPad[off + i * 4 + 3] << 24);
+      }
+      var a = a0, b = b0, c = c0, d = d0;
+      for (i = 0; i < 64; i++){
+        var f, g;
+        if (i < 16){ f = (b & c) | (~b & d); g = i; }
+        else if (i < 32){ f = (d & b) | (~d & c); g = (5 * i + 1) % 16; }
+        else if (i < 48){ f = b ^ c ^ d; g = (3 * i + 5) % 16; }
+        else { f = c ^ (b | ~d); g = (7 * i) % 16; }
+        f = add32(add32(f, a), add32(MD5_K[i], m[g]));
+        a = d; d = c; c = b;
+        b = add32(b, rotl(f, MD5_S[i]));
+      }
+      a0 = add32(a0, a); b0 = add32(b0, b); c0 = add32(c0, c); d0 = add32(d0, d);
+    }
+
+    function word(w){
+      var s = '';
+      for (var j = 0; j < 4; j++) s += hex((w >>> (j * 8)) & 0xff, 1).toLowerCase();
+      return s;
+    }
+    return word(a0) + word(b0) + word(c0) + word(d0);
+  }
+
+  // ---------- 页面交互 ----------
+
+  var DATA_HINT = '按字节解析：忽略空格、逗号、换行与 0x 前缀；逐字节需为 00～FF。';
+  var TEXT_HINT = '按 UTF-8 编码取字节，中文一个字通常 3 字节，与设备侧编码保持一致。';
+
+  function selectedPreset(){ return presets[$('preset').selectedIndex] || presets[0]; }
+
+  function clearErrors(){
+    dataEl.classList.remove('invalid');
+    var h = $('data-hint');
+    h.className = 'hint';
+    h.textContent = mode === 'hex' ? DATA_HINT : TEXT_HINT;
+  }
+
+  function showError(msg){
+    resultEl.classList.remove('show');
+    dataEl.classList.add('invalid');
+    var h = $('data-hint');
+    h.className = 'hint err';
+    h.textContent = msg;
+    dataEl.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function fillPreset(){
+    var sel = $('preset');
+    sel.innerHTML = '';
+    presets.forEach(function(p, i){
+      var o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = p.name;
+      sel.appendChild(o);
+    });
+    // 默认给工控现场最常用的 Modbus
+    presets.forEach(function(p, i){ if (p.name === 'CRC-16/MODBUS') sel.selectedIndex = i; });
+    syncPresetNote();
+  }
+
+  function syncPresetNote(){
+    var p = selectedPreset();
+    $('preset-note').textContent = p.desc;
+    $('preset-params').textContent =
+      '宽度 ' + p.width + ' · 多项式 0x' + hex(p.poly, p.width / 8) +
+      ' · 初值 0x' + hex(p.init, p.width / 8) +
+      ' · 输入' + (p.refin ? '反转' : '正序') +
+      ' · 输出' + (p.refout ? '反转' : '正序') +
+      ' · 结果异或 0x' + hex(p.xorout, p.width / 8);
+  }
+
+  function cell(k, v, extra, copyText){
+    var node = el('div');
+    var kk = el('div', 'k');
+    kk.appendChild(document.createTextNode(k));
+    if (extra){
+      var em = el('em', null, ' ' + extra);
+      kk.appendChild(em);
+    }
+    node.appendChild(kk);
+    var vv = el('div', 'v');
+    vv.appendChild(document.createTextNode(v));
+    node.appendChild(vv);
+    if (copyText != null){
+      var btn = el('button', 'copy', '复制');
+      btn.type = 'button';
+      btn.addEventListener('click', function(){ copy(copyText, btn); });
+      node.appendChild(btn);
+    }
+    return node;
+  }
+
+  function copy(text, btn){
+    var done = function(){ var old = btn.textContent; btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = old; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e){ /* 剪贴板不可用时静默跳过 */ }
+    document.body.removeChild(ta);
+  }
+
+  function group(title, note, cells){
+    var box = el('div', 'group');
+    var h = el('h3');
+    h.appendChild(document.createTextNode(title));
+    var span = el('span', null, note);
+    h.appendChild(span);
+    box.appendChild(h);
+    var grid = el('div', 'grid');
+    cells.forEach(function(c){ grid.appendChild(c); });
+    box.appendChild(grid);
+    return box;
+  }
+
+  function render(bytes){
+    var wantCrc = $('chk-crc').checked;
+    var wantSum = $('chk-sum').checked;
+    var wantXor = $('chk-xor').checked;
+    var wantMd5 = $('chk-md5').checked;
+
+    if (!wantCrc && !wantSum && !wantXor && !wantMd5){
+      showError('请至少勾选一项计算项。');
+      return;
+    }
+
+    var groups = [];
+    var firstValue = '—';
+    var firstLabel = '';
+
+    if (wantCrc){
+      var p = selectedPreset();
+      var v = crcCompute(bytes, p);
+      var b = bytesOf(v, p.width / 8, p.refin || p.refout ? 'le' : 'be');
+      firstValue = b; firstLabel = p.name + '（字节序）';
+      groups.push(group('CRC 校验', p.name, [
+        cell('结果（HEX）', '0x' + hex(v, p.width / 8)),
+        cell('结果（DEC）', String(v)),
+        cell('校验字节', b, p.refin || p.refout ? '低位在前' : '高位在前', b.replace(/ /g, '')),
+        cell('参数', 'poly 0x' + hex(p.poly, p.width / 8) + ' / init 0x' + hex(p.init, p.width / 8) +
+          ' / xorout 0x' + hex(p.xorout, p.width / 8))
+      ]));
+    }
+
+    if (wantSum){
+      var sw = Number($('sumWidth').value);
+      var sEnd = $('sumEndian').value;
+      var sum = 0;
+      bytes.forEach(function(x){ sum = (sum + x) >>> 0; });
+      var smask = sw === 32 ? 0xFFFFFFFF : Math.pow(2, sw) - 1;
+      var sv = (sum % (smask + 1)) >>> 0;
+      var sb = bytesOf(sv, sw / 8, sEnd);
+      if (!wantCrc && groups.length === 0){ firstValue = sb; firstLabel = sw + ' 位累加和（字节序）'; }
+      groups.push(group('累加和校验', sw + ' 位 · ' + (sEnd === 'le' ? '小端' : '大端'), [
+        cell('结果（HEX）', '0x' + hex(sv, sw / 8)),
+        cell('结果（DEC）', String(sv)),
+        cell('校验字节', sb, sEnd === 'le' ? '低位在前' : '高位在前', sb.replace(/ /g, '')),
+        cell('原始和', String(sum) + ' → 取低 ' + sw + ' 位')
+      ]));
+    }
+
+    if (wantXor){
+      var xw = Number($('xorWidth').value);
+      var xEnd = $('xorEndian').value;
+      var x = 0;
+      bytes.forEach(function(y){ x = (x ^ y) >>> 0; });
+      var xmask = xw === 32 ? 0xFFFFFFFF : Math.pow(2, xw) - 1;
+      var xv = (x & xmask) >>> 0;
+      var xb = bytesOf(xv, xw / 8, xEnd);
+      if (!wantCrc && !wantSum){ firstValue = xb; firstLabel = xw + ' 位异或（字节序）'; }
+      groups.push(group('异或校验', xw + ' 位 · ' + (xEnd === 'le' ? '小端' : '大端'), [
+        cell('结果（HEX）', '0x' + hex(xv, xw / 8)),
+        cell('结果（DEC）', String(xv)),
+        cell('校验字节', xb, xEnd === 'le' ? '低位在前' : '高位在前', xb.replace(/ /g, '')),
+        cell('参与字节数', String(bytes.length))
+      ]));
+    }
+
+    if (wantMd5){
+      var digest = md5(bytes);
+      if (!wantCrc && !wantSum && !wantXor){ firstValue = digest; firstLabel = 'MD5'; }
+      groups.push(group('MD5 校验', '128 位散列', [
+        cell('摘要（小写）', digest, null, digest),
+        cell('摘要（大写）', digest.toUpperCase(), null, digest.toUpperCase())
+      ]));
+    }
+
+    var main = el('div', 'result-main');
+    main.appendChild(el('div', 'k', firstLabel));
+    main.appendChild(el('div', 'v', firstValue));
+    $('result-main').innerHTML = '';
+    $('result-main').appendChild(main);
+
+    var host = $('groups');
+    host.innerHTML = '';
+    // 字节数作为上下文放在最上面，方便核对输入长度
+    host.appendChild(group('输入统计', mode === 'hex' ? 'HEX 模式' : 'UTF-8 文本模式', [
+      cell('字节数', String(bytes.length) + ' 字节'),
+      cell('数据（HEX）', bytes.map(function(b){ return hex(b, 1); }).join(' ') || '—')
+    ]));
+    groups.forEach(function(g){ host.appendChild(g); });
+
+    resultEl.classList.add('show');
+    resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function switchMode(next){
+    mode = next;
+    Array.prototype.forEach.call($('mode').querySelectorAll('button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-mode') === next);
+    });
+    $('data-label').innerHTML = next === 'hex'
+      ? '<b>十六进制字节</b>（空格、逗号、换行、0x 均可分隔）'
+      : '<b>字符串</b>（按 UTF-8 编码取字节）';
+    dataEl.placeholder = next === 'hex' ? '例如 01 03 00 00 00 0A' : '例如 hello 中国';
+    clearErrors();
+    resultEl.classList.remove('show');
+  }
+
+  $('mode').addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('button') : null;
+    if (btn && btn.getAttribute('data-mode')) switchMode(btn.getAttribute('data-mode'));
+  });
+
+  $('preset').addEventListener('change', syncPresetNote);
+  dataEl.addEventListener('input', function(){ clearErrors(); resultEl.classList.remove('show'); });
+
+  formEl.addEventListener('submit', function(e){
+    e.preventDefault();
+    clearErrors();
+    var parsed = readBytes();
+    if (!parsed.ok){ showError(parsed.msg); return; }
+    if (parsed.bytes.length === 0){ showError('请先填写要计算的数据。'); return; }
+    render(parsed.bytes);
+  });
+
+  $('reset').addEventListener('click', function(){
+    dataEl.value = '';
+    $('chk-crc').checked = true;
+    $('chk-sum').checked = true;
+    $('chk-xor').checked = true;
+    $('chk-md5').checked = true;
+    $('sumWidth').value = '8';
+    $('sumEndian').value = 'be';
+    $('xorWidth').value = '8';
+    $('xorEndian').value = 'be';
+    switchMode('hex');
+    fillPreset();
+    dataEl.focus();
+  });
+
+  fillPreset();
+  switchMode('hex');
+})();
+</script>
+</body>
+</html>

@@ -53,6 +53,7 @@
   }
   .entry.gold .badge{background:linear-gradient(135deg,#c9922e,#e8b04b)}
   .entry.flow .badge{background:linear-gradient(135deg,#0f8f74,#28b492)}
+  .entry.chk .badge{background:linear-gradient(135deg,#6d28d9,#8b5cf6)}
   .entry-body{flex:1;min-width:0}
   .entry-body .t{display:block;font-size:15px;font-weight:600}
   .entry-body .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
@@ -95,6 +96,15 @@
       <span class="entry-body">
         <span class="t">瞬时流量与流速换算</span>
         <span class="d">m³/h ↔ m/s 双向换算，按口径与缩进百分比折算</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry chk" href="./checksum.html">
+      <span class="badge">校验</span>
+      <span class="entry-body">
+        <span class="t">校验和计算</span>
+        <span class="d">CRC / 累加和 / 异或 / MD5，一次算全并给出校验字节</span>
       </span>
       <span class="arrow">›</span>
     </a>
