@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>互动小工具</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 30px/1.25 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);margin:2px 0 12px;font-variant-numeric:tabular-nums}
+  .big small{font-size:14px;color:var(--sub);font-weight:400}
+  .grid-schulte{display:grid;gap:6px;margin-bottom:12px}
+  .grid-schulte button{aspect-ratio:1;font-size:18px;font-weight:600;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--text)}
+  .grid-schulte button.done{background:var(--soft);color:var(--sub);border-color:var(--soft-line)}
+  .pad{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .pad button{height:56px;font-size:16px;font-weight:600;border-radius:12px;border:1px solid var(--line);background:#fff}
+  .pad button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .react{height:150px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:17px;font-weight:600;color:#fff;margin-bottom:12px;user-select:none;cursor:pointer;text-align:center;padding:0 16px}
+  .react.wait{background:#c0392b}
+  .react.go{background:#0f8f74}
+  .react.idle{background:var(--sub)}
+  .scores{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:12px;color:var(--sub)}
+  .scores span{background:#f7f8fa;border-radius:8px;padding:4px 8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>互动小工具</h1>
+  <p>舒尔特方格 · 反应速度 · 点击手速 · 计数器</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button data-tab="schulte" class="on">舒尔特方格</button>
+    <button data-tab="react">反应速度</button>
+    <button data-tab="cps">点击手速</button>
+    <button data-tab="counter">计数器</button>
+  </div>
+
+  <!-- 舒尔特 -->
+  <section id="panel-schulte">
+    <section class="card">
+      <h2>舒尔特方格</h2>
+      <div class="row">
+        <label>大小</label>
+        <div class="seg" id="sc-size">
+          <button data-n="5" class="on">5×5</button>
+          <button data-n="6">6×6</button>
+          <button data-n="7">7×7</button>
+        </div>
+      </div>
+      <p class="hint">按 1 到 N² 的顺序依次点出数字，计时从点中 1 开始。方格每次排布都是随机的。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="sc-restart">重新开始</button>
+      <button type="button" class="primary" id="sc-start">开始计时</button>
+    </div>
+    <section class="card">
+      <h2>用时</h2>
+      <div class="big" id="sc-time">00:00.00</div>
+      <div class="grid" id="sc-out"></div>
+      <div id="sc-grid" class="grid-schulte"></div>
+      <div class="note" id="sc-note"></div>
+    </section>
+  </section>
+
+  <!-- 反应速度 -->
+  <section id="panel-react" hidden>
+    <section class="card">
+      <h2>反应速度测试</h2>
+      <p class="hint">点下面的色块开始，变绿的一瞬间点它。抢点会算犯规并重来。</p>
+      <div class="react idle" id="re-box">点击开始测试</div>
+      <div class="grid" id="re-out"></div>
+      <div class="scores" id="re-hist"></div>
+      <div class="note" id="re-note"></div>
+    </section>
+  </section>
+
+  <!-- CPS -->
+  <section id="panel-cps" hidden>
+    <section class="card">
+      <h2>点击手速（CPS）</h2>
+      <p class="hint">点「开始」后在下面的区域尽可能快地点，计时 10 秒。CPS 即每秒点击次数。</p>
+      <div class="react idle" id="cp-box" style="font-size:15px">点击开始</div>
+      <div class="grid" id="cp-out"></div>
+      <div class="note" id="cp-note"></div>
+    </section>
+  </section>
+
+  <!-- 计数器 -->
+  <section id="panel-counter" hidden>
+    <section class="card">
+      <h2>计数器</h2>
+      <div class="big" id="ct-num">0</div>
+      <div class="row">
+        <label>点击一次增加的数值</label>
+        <div class="input-wrap"><input type="number" id="ct-step" value="1" step="1"><span class="unit">每步</span></div>
+      </div>
+      <div class="row">
+        <label>目标值（可选，用于进度显示）</label>
+        <div class="input-wrap"><input type="number" id="ct-target" placeholder="留空不显示"><span class="unit">目标</span></div>
+      </div>
+      <div class="pad">
+        <button type="button" class="primary" id="ct-inc">计数 +</button>
+        <button type="button" id="ct-dec">计数 −</button>
+        <button type="button" id="ct-reset">清零</button>
+        <button type="button" id="ct-rec">记一笔</button>
+      </div>
+      <p class="hint">也可以按空格键加一。清点时用「记一笔」记录当前值，导出成清单。</p>
+    </section>
+    <section class="card">
+      <h2>记录</h2>
+      <div class="out" id="ct-log" style="white-space:pre-wrap;min-height:60px"></div>
+      <button type="button" class="ghost" id="ct-copy" style="width:100%;height:44px;font-size:15px;font-weight:600;border-radius:12px;border:1px solid var(--line);background:#fff;margin-bottom:12px">复制记录</button>
+    </section>
+  </section>
+
+  <footer>
+    纯本地运行，不上传任何内容<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./fun.js"></script>
+</body>
+</html>
