@@ -31,6 +31,10 @@ LOCAL_NAMES = {
     'net.html': '网络计算',
     'date.html': '日期与时间',
     'checksum.html': '校验和计算',
+    'clock.html': '在线时钟',
+    'geometry.html': '几何与电子计算',
+    'dev.html': '开发工具',
+    'finance.html': '个税与健康计算',
 }
 
 

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>个税与健康计算</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 30px/1.25 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);margin:2px 0 12px;font-variant-numeric:tabular-nums}
+  .big small{font-size:14px;color:var(--sub);font-weight:400}
+  .seg{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .rate-tb{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+  .rate-tb th,.rate-tb td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .rate-tb th:first-child,.rate-tb td:first-child{text-align:left;font-family:inherit}
+  .rate-tb tr.on{background:#e8f1fd}
+  .rate-tb tr.on td{font-weight:600;color:var(--primary)}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .chk:last-child{border-bottom:none}
+  .chk input{width:18px;height:18px;flex:0 0 18px}
+  .chk span{flex:1}
+  .chk em{font-style:normal;font-size:12px;color:var(--sub);font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+<header>
+  <h1>个税与健康计算</h1>
+  <p>工资个税 · 年终奖 · 专项扣除 · BMI 体脂</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button data-tab="salary" class="on">工资个税</button>
+    <button data-tab="bonus">年终奖</button>
+    <button data-tab="bmi">BMI / 体脂</button>
+    <button data-tab="bmr">基础代谢</button>
+  </div>
+
+  <!-- 工资个税 -->
+  <section id="panel-salary">
+    <section class="card">
+      <h2>收入与扣除</h2>
+      <div class="row">
+        <label>税前月薪（元）</label>
+        <div class="input-wrap"><input type="number" id="sa-pay" value="20000" step="100" min="0"><span class="unit">元</span></div>
+      </div>
+      <div class="row">
+        <label>三险一金个人部分（元/月，可留空按比例估算）</label>
+        <div class="input-wrap"><input type="number" id="sa-ins" placeholder="留空自动估算" step="10" min="0"><span class="unit">元</span></div>
+      </div>
+      <div class="row">
+        <label>专项附加扣除合计（元/月）</label>
+        <div class="input-wrap"><input type="number" id="sa-extra" value="0" step="100" min="0"><span class="unit">元</span></div>
+      </div>
+      <div class="seg" id="sa-city">
+        <button data-city="sh" class="on">上海/北京（五险 10.5%）</button>
+        <button data-city="other">其他城市（10.2%）</button>
+        <button data-city="none">不估算</button>
+      </div>
+      <div class="row">
+        <label>预计专项附加扣除（点击累加，会写入上方输入框）</label>
+        <div id="sa-items"></div>
+      </div>
+    </section>
+    <div class="btns"><button type="button" class="ghost" id="sa-reset">重置</button><button type="button" class="primary" id="sa-run">计算</button></div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="sa-net">—<small>元 / 月</small></div>
+      <div class="grid" id="sa-grid"></div>
+      <div class="rate-tb-wrap">
+        <table class="rate-tb" id="sa-rate"></table>
+      </div>
+      <div class="out" id="sa-steps"></div>
+      <p class="note" id="sa-note"></p>
+    </section>
+  </section>
+
+  <!-- 年终奖 -->
+  <section id="panel-bonus" hidden>
+    <section class="card">
+      <h2>年终奖</h2>
+      <div class="row">
+        <label>年终奖金额（元）</label>
+        <div class="input-wrap"><input type="number" id="bn-amt" value="50000" step="1000" min="0"><span class="unit">元</span></div>
+      </div>
+      <div class="seg" id="bn-mode">
+        <button data-mode="single" class="on">单独计税（换算成月）</button>
+        <button data-mode="merge">并入综合所得</button>
+      </div>
+      <div class="row" id="bn-merge-wrap" hidden>
+        <label>并入后全年应纳税所得额（元，已减 6 万与各项扣除）</label>
+        <div class="input-wrap"><input type="number" id="bn-base" value="60000" step="1000"><span class="unit">元</span></div>
+      </div>
+    </section>
+    <div class="btns"><button type="button" class="ghost" id="bn-reset">重置</button><button type="button" class="primary" id="bn-run">计算</button></div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="bn-net">—<small>元</small></div>
+      <div class="grid" id="bn-grid"></div>
+      <div class="out" id="bn-steps"></div>
+      <p class="note" id="bn-note"></p>
+    </section>
+  </section>
+
+  <!-- BMI / 体脂 -->
+  <section id="panel-bmi" hidden>
+    <section class="card">
+      <h2>身体数据</h2>
+      <div class="row">
+        <label>性别</label>
+        <div class="seg" id="bm-sex">
+          <button data-sex="m" class="on">男</button>
+          <button data-sex="f">女</button>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="row"><label>身高</label><div class="input-wrap"><input type="number" id="bm-h" value="175" step="0.5" min="0"><span class="unit">cm</span></div></div>
+        <div class="row"><label>体重</label><div class="input-wrap"><input type="number" id="bm-w" value="70" step="0.5" min="0"><span class="unit">kg</span></div></div>
+      </div>
+      <div class="row">
+        <label>腰围（算体脂率用，可留空）</label>
+        <div class="input-wrap"><input type="number" id="bm-waist" placeholder="cm" step="0.5" min="0"><span class="unit">cm</span></div>
+      </div>
+    </section>
+    <div class="btns"><button type="button" class="ghost" id="bm-reset">重置</button><button type="button" class="primary" id="bm-run">计算</button></div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="bm-bmi">—</div>
+      <div class="grid" id="bm-grid"></div>
+      <div class="out" id="bm-steps"></div>
+      <p class="note" id="bm-note"></p>
+    </section>
+  </section>
+
+  <!-- 基础代谢 -->
+  <section id="panel-bmr" hidden>
+    <section class="card">
+      <h2>基础代谢率（BMR）</h2>
+      <div class="row">
+        <label>性别</label>
+        <div class="seg" id="br-sex">
+          <button data-sex="m" class="on">男</button>
+          <button data-sex="f">女</button>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="row"><label>年龄</label><div class="input-wrap"><input type="number" id="br-age" value="30" step="1" min="0"><span class="unit">岁</span></div></div>
+        <div class="row"><label>身高</label><div class="input-wrap"><input type="number" id="br-h" value="175" step="0.5"><span class="unit">cm</span></div></div>
+      </div>
+      <div class="row"><label>体重</label><div class="input-wrap"><input type="number" id="br-w" value="70" step="0.5"><span class="unit">kg</span></div></div>
+      <div class="row">
+        <label>活动水平（用于算每日总消耗）</label>
+        <div class="seg" id="br-act">
+          <button data-act="1.2" class="on">久坐</button>
+          <button data-act="1.375">轻度</button>
+          <button data-act="1.55">中度</button>
+          <button data-act="1.725">高强度</button>
+          <button data-act="1.9">极高</button>
+        </div>
+      </div>
+    </section>
+    <div class="btns"><button type="button" class="ghost" id="br-reset">重置</button><button type="button" class="primary" id="br-run">计算</button></div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="br-tdee">—<small>kcal / 天</small></div>
+      <div class="grid" id="br-grid"></div>
+      <div class="out" id="br-steps"></div>
+      <p class="note" id="br-note"></p>
+    </section>
+  </section>
+
+  <footer>
+    采用现行（2025 版）个税累进税率与常见经验公式，仅供估算参考<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./finance.js"></script>
+</body>
+</html>
