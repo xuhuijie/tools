@@ -6,6 +6,7 @@
 - `docs/calibration.html` — 电磁水表流量点校准计算
 - `docs/gold.html` — 黄金价格换算与斐波那契回调计算
 - `docs/flow.html` — 瞬时流量与流速换算
+- `docs/checksum.html` — 校验和计算（CRC / 累加和 / 异或 / MD5）
 
 
 ## 流量点校准
@@ -100,10 +101,94 @@
 - 结果区给出流速、瞬时流量、口径与等效内径，并附截面积、换算过程与反向核对，便于复核
 - 结果已展示时修改任一参数会即时刷新，无需重复点击
 
+## 校验和计算
+
+输入一段字节，一次算出 CRC、累加和、异或校验与 MD5，省得在几个网页之间来回切：
+
+- **两种输入方式**：十六进制 HEX 与字符串 UTF-8。
+  HEX 忽略空格、逗号、分号、冒号与换行，支持 `0x` 前缀，例如 `01 03 00 00 00 0A`；
+  文本模式按 UTF-8 取字节，中文一个字通常 3 字节，需与设备侧编码一致
+- 四项可勾选：CRC 校验、累加和、异或校验、MD5，算哪项勾哪项
+- 每组结果都给出十六进制、十进制与**校验字节**，并带一键复制
+
+### CRC 校验
+
+内置 22 个常用 CRC 预设（宽度 / 多项式 / 初值 / 输入输出反转 / 结果异或）：
+
+| 预设 | 参数（poly / init / xorout） | 常见场景 |
+| --- | --- | --- |
+| CRC-8 | 0x07 / 0x00 / 0x00 | 基础 CRC-8（SMBus 参数族） |
+| CRC-8/MAXIM | 0x31 / 0x00 / 0x00 | Dallas/Maxim 单总线、温感、iButton |
+| CRC-8/SAE-J1850 | 0x1D / 0xFF / 0xFF | 汽车总线 SAE J1850 |
+| CRC-8/ROHC | 0x07 / 0xFF / 0x00 | ROHC 头压缩 |
+| CRC-16/IBM | 0x8005 / 0x0000 / 0x0000 | 又称 CRC-16/ARC、CRC-16/LHA |
+| CRC-16/MODBUS | 0x8005 / 0xFFFF / 0x0000 | Modbus RTU（默认预设） |
+| CRC-16/USB | 0x8005 / 0xFFFF / 0xFFFF | USB 传输 |
+| CRC-16/MAXIM | 0x8005 / 0x0000 / 0xFFFF | Maxim 单总线 |
+| CRC-16/CCITT-FALSE | 0x1021 / 0xFFFF / 0x0000 | 最常被叫做「CCITT」 |
+| CRC-16/XMODEM | 0x1021 / 0x0000 / 0x0000 | 又称 ZMODEM、ACORN |
+| CRC-16/X25 | 0x1021 / 0xFFFF / 0xFFFF | X.25、HDLC |
+| CRC-16/KERMIT | 0x1021 / 0x0000 / 0x0000 | 又称 CRC-16/BLUETOOTH |
+| CRC-16/DNP | 0x3D65 / 0x0000 / 0xFFFF | 工业网络 DNP3 |
+| CRC-16/DECT | 0x0589 / 0x0000 / 0x0001 | DECT 无线 |
+| CRC-16/T10-DIF | 0x8BB7 / 0x0000 / 0x0000 | SCSI DIF |
+| CRC-16/EN-13757 | 0x3D65 / 0x0000 / 0xFFFF | EN 13757 抄表总线 |
+| CRC-32 | 0x04C11DB7 / 0xFFFFFFFF / 0xFFFFFFFF | ZIP、Gzip、PNG、以太网 |
+| CRC-32/BZIP2 | 0x04C11DB7 / 0xFFFFFFFF / 0xFFFFFFFF | bzip2 |
+| CRC-32/MPEG-2 | 0x04C11DB7 / 0xFFFFFFFF / 0x00000000 | MPEG-2 传输流 |
+| CRC-32/POSIX | 0x04C11DB7 / 0x00000000 / 0xFFFFFFFF | 又称 CRC-32/CKSUM |
+| CRC-32/JAMCRC | 0x04C11DB7 / 0xFFFFFFFF / 0x00000000 | 与 CRC-32 按位取反 |
+| CRC-32/XFER | 0x000000AF / 0x00000000 / 0x00000000 | XFER |
+
+- 多项式一律按**正常（非反转）形式**书写，反射方向由算法的输入反转参数自动决定
+- 采用反射（右移）算法，结果与常见校验工具一致；选中预设后下方会列出完整参数，便于对参数表
+- **校验字节**是现场最需要的东西：按该 CRC 的字节序给出低位在前 / 高位在前，
+  Modbus 这类「CRC 低字节先发」的协议直接照着发即可
+
+### 累加和校验
+
+```
+累加和 = (各字节无符号求和) & (2^宽度 − 1)
+```
+
+- 宽度可选 8 / 16 / 32 位，取低位的方式与设备一致
+- 8 位即常见的一字节累加校验（求和后取低 8 位）
+- 结果按所选大端 / 小端给出校验字节顺序
+
+### 异或校验
+
+```
+异或校验 = 各字节逐位异或，再按宽度取低 N 位
+```
+
+- 宽度可选 8 / 16 / 32 位，同样支持大端 / 小端输出
+- 8 位单字节 XOR 是最常见用法，多用于简单帧校验
+
+### MD5
+
+- 按输入字节算 128 位摘要，同时给出小写与大写，可一键复制
+- 页面自带实现，不依赖网络；与 `md5sum`、`hashlib` 结果一致
+
+### 核验
+
+- CRC 覆盖 22 个预设，与 `crcmod` 参考实现、`zlib.crc32` 及官方「123456789」标准校验值逐一对齐
+- MD5 与 `hashlib` / `md5sum` 结果一致，含空串、中文等多组用例
+
+### 示例
+
+Modbus 读保持寄存器帧 `01 03 00 00 00 0A`：
+
+```
+CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
+累加和 8 位    = 0x0E
+异或 8 位      = 0x08
+MD5           = 5710ae9583f6605b5ed51aaecf2165c4
+```
+
 ## 使用
 
 页面是零依赖的单文件，直接用浏览器打开 `docs/index.html` 进入工具入口页，
-再点击进入 `docs/calibration.html`、`docs/gold.html`、`docs/flow.html` 三个计算页；
+再点击进入 `docs/calibration.html`、`docs/gold.html`、`docs/flow.html`、`docs/checksum.html` 四个计算页；
 也可以直接打开任意计算页，或通过静态托管发布（如仓库 Pages / 云原生构建）。
 
 本地预览：
@@ -114,6 +199,7 @@ python3 -m http.server 8899 --directory docs
 # 校准页   http://127.0.0.1:8899/calibration.html
 # 黄金页   http://127.0.0.1:8899/gold.html
 # 流量页   http://127.0.0.1:8899/flow.html
+# 校验页   http://127.0.0.1:8899/checksum.html
 ```
 
 ### 示例
@@ -136,9 +222,16 @@ python3 -m http.server 8899 --directory docs
 5.5265 m/s = 100 ÷ 3600 ÷ (π × 0.08² ÷ 4)
 ```
 
+校验和计算，Modbus 帧 `01 03 00 00 00 0A`：
+
+```
+CRC-16/MODBUS = 0xCDC5，校验字节 C5 CD（低字节先发）
+```
+
 ## 结构
 
-- `docs/index.html` — 工具入口页，列三个工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
+- `docs/index.html` — 工具入口页，列四个工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
 - `docs/calibration.html` — 电磁水表流量点校准计算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/gold.html` — 黄金价格换算与斐波那契回调计算页（HTML + CSS + JS 单文件，除汇率自动获取外无外部依赖）
 - `docs/flow.html` — 瞬时流量与流速换算页（HTML + CSS + JS 单文件，无外部依赖）
+- `docs/checksum.html` — 校验和计算页（HTML + CSS + JS 单文件，无外部依赖）
