@@ -35,14 +35,19 @@ LOCAL_NAMES = {
     'geometry.html': '几何与电子计算',
     'dev.html': '开发工具',
     'finance.html': '个税与健康计算',
-    'security.html': '加密与令牌',
-    'station.html': '站长工具',
-    'text.html': '文字与文本',
-    'health.html': '健康计算',
-    'life.html': '生活计算',
-    'geo.html': '经纬度与坐标系',
-    'fun.html': '互动小工具',
-    'info.html': '信息查询',
+    # 第二轮补齐的页面
+    'web.html': '网页与站长工具',
+    'station2.html': '站点诊断',
+    'text2.html': '文本与敏感词',
+    'game.html': '小游戏与趣味测试',
+    'codec.html': '二维码与条形码',
+    'crypto.html': '流密码',
+    'crypto2.html': '证书与密钥',
+    'media.html': '图片与坐标',
+    'life2.html': '日常计算',
+    'health2.html': '健康与证件',
+    'tax2.html': '税额计算',
+    'holiday.html': '放假安排',
 }
 
 

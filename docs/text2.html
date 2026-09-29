@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>文本与敏感词</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:150px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .hit{background:#ffd9d2;border-radius:3px;padding:0 1px}
+  .hit-block{background:#ffc7bb;font-weight:600}
+  .hit-risk{background:#ffe8c2}
+  .stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .stat div{background:#fff;padding:10px 6px;text-align:center}
+  .stat b{display:block;font-size:19px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums}
+  .stat span{display:block;font-size:11px;color:var(--sub);margin-top:2px}
+  .words{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .words span{font-size:12px;border-radius:7px;padding:3px 7px;background:#fdeeea;color:#a8291a;border:1px solid #f6c9c0}
+  .words span.risk{background:#fff5e0;color:#8a5b00;border-color:#f3ddb0}
+  .words span.ok{background:#e7f8f1;color:#0a7a5f;border-color:#b7e6d8}
+  .out-text{font-size:14px;line-height:1.9;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;word-break:break-word}
+</style>
+</head>
+<body>
+<header>
+  <h1>文本与敏感词</h1>
+  <p>敏感词检测 · 同义词替换 · 字数统计 · 行去重 · 一键排版</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="sens" class="on">敏感词检测</button>
+    <button data-tab="syn">同义词替换</button>
+    <button data-tab="count">字数统计</button>
+    <button data-tab="dedup">行去重</button>
+    <button data-tab="tidy">一键排版</button>
+    <button data-tab="width">全半角互转</button>
+    <button data-tab="case">大小写转换</button>
+  </div>
+
+  <!-- 敏感词 -->
+  <section class="card" id="panel-sens">
+    <h2>检测文本</h2>
+    <textarea class="area" id="sn-in">这款新品加微信wx123456领取，全国包邮，绝对正品，赌场级体验，点击链接立即购买！联系方式QQ：88888888</textarea>
+    <p class="hint" id="sn-hint"></p>
+  </section>
+  <div class="chips" id="sn-mode">
+    <button type="button" data-mode="strict" class="on">严格模式</button>
+    <button type="button" data-mode="loose">宽松模式（忽略间隔符）</button>
+    <button type="button" data-mode="pinyin">含拼音变形</button>
+  </div>
+  <section class="card">
+    <h2>命中结果</h2>
+    <div class="stat" id="sn-stat"></div>
+    <div class="words" id="sn-words"></div>
+    <div class="out-text" id="sn-mark"></div>
+    <div class="grid" id="sn-grid"></div>
+    <p class="hint" id="sn-note"></p>
+  </section>
+
+  <!-- 同义词 -->
+  <section class="card" id="panel-syn" hidden>
+    <h2>原文</h2>
+    <textarea class="area" id="sy-in">这个产品非常好用，质量不错，价格便宜，物流很快，客服态度很好。</textarea>
+    <div class="row">
+      <label for="sy-level"><b>替换强度</b></label>
+      <select id="sy-level">
+        <option value="1">轻度（只换最容易替换的词）</option>
+        <option value="2" selected>中度（常用同义替换）</option>
+        <option value="3">重度（尽量换，可读性会变差）</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="sy-clear">清空</button>
+      <button type="button" class="primary" id="sy-run">替换</button>
+    </div>
+    <p class="hint" id="sy-hint"></p>
+    <div class="out-text" id="sy-out"></div>
+    <div class="grid" id="sy-grid"></div>
+    <p class="hint">
+      同义词表是内置的固定词表（不联网、不调 AI），只做词面替换，不懂上下文。
+      同一个词在文中出现多次会轮流换成不同说法，避免一眼看出是机器替换。
+    </p>
+  </section>
+
+  <!-- 字数统计 -->
+  <section class="card" id="panel-count" hidden>
+    <h2>文本</h2>
+    <textarea class="area" id="ct-in">计量计算工具，纯前端实现。
+Contains 123 numbers and English words.</textarea>
+    <div class="btns">
+      <button type="button" class="ghost" id="ct-clear">清空</button>
+      <button type="button" class="primary" id="ct-run">统计</button>
+    </div>
+    <div class="stat" id="ct-stat"></div>
+    <div class="grid" id="ct-grid"></div>
+    <table id="ct-table">
+      <thead><tr><th>字符类别</th><th>字符数</th><th>UTF-8 字节</th></tr></thead>
+      <tbody id="ct-body"></tbody>
+    </table>
+    <p class="hint">
+      中文字符按「汉字 + 中文标点」算，单词按连续字母/数字切分（支持中英混排），行数按 <code>\n</code> 计。
+      字节数按 UTF-8 计：汉字 3 字节、ASCII 1 字节，与常见字数平台的「占用字节」口径一致。
+    </p>
+  </section>
+
+  <!-- 行去重 -->
+  <section class="card" id="panel-dedup" hidden>
+    <h2>原始行</h2>
+    <textarea class="area" id="dd-in">苹果
+香蕉
+苹果
+  香蕉
+Apple
+apple
+香蕉
+</textarea>
+    <div class="chips" id="dd-opts">
+      <button type="button" data-opt="trim" class="on">忽略首尾空格</button>
+      <button type="button" data-opt="case">忽略大小写</button>
+      <button type="button" data-opt="blank" class="on">丢弃空行</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="dd-reset">重置</button>
+      <button type="button" class="primary" id="dd-run">去重</button>
+    </div>
+    <div class="out-text" id="dd-out" style="font-family:ui-monospace,Menlo,Consolas,monospace"></div>
+    <div class="grid" id="dd-grid"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="dd-copy">复制结果</button>
+      <button type="button" class="ghost" id="dd-count">按出现次数排序</button>
+    </div>
+    <table id="dd-table" hidden>
+      <thead><tr><th>内容</th><th>出现次数</th></tr></thead>
+      <tbody id="dd-body"></tbody>
+    </table>
+  </section>
+
+  <!-- 一键排版 -->
+  <section class="card" id="panel-tidy" hidden>
+    <h2>杂乱的文本</h2>
+    <textarea class="area" id="td-in">　　　　这是一段     有很多空格的文本。
+
+
+
+它包含多余的空行   和被全角标点。包围的内容，
+
+以及　全角　空格，还有 英文 与 中文 之间的空格问题。     </textarea>
+    <div class="chips" id="td-opts">
+      <button type="button" data-opt="blank" class="on">合并多余空行</button>
+      <button type="button" data-opt="space" class="on">合并多余空格</button>
+      <button type="button" data-opt="fullwidth" class="on">全角空格转半角</button>
+      <button type="button" data-opt="indent" class="on">去掉行首缩进</button>
+      <button type="button" data-opt="trim" class="on">去掉行尾空白</button>
+      <button type="button" data-opt="cjk" class="on">中英文之间补空格</button>
+      <button type="button" data-opt="punct" class="on">中文标点转全角</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="td-reset">重置</button>
+      <button type="button" class="primary" id="td-run">排版</button>
+    </div>
+    <div class="out-text" id="td-out"></div>
+    <div class="grid" id="td-grid"></div>
+  </section>
+
+  <!-- 全半角 -->
+  <section class="card" id="panel-width" hidden>
+    <h2>文本</h2>
+    <textarea class="area" id="wd-in">ＡＢＣ１２３ Ｈｅｌｌｏ，Ｗｏｒｌｄ！</textarea>
+    <div class="btns three">
+      <button type="button" class="ghost" id="wd-half">转半角</button>
+      <button type="button" class="ghost" id="wd-full">转全角</button>
+      <button type="button" class="primary" id="wd-copy">复制结果</button>
+    </div>
+    <div class="out-text" id="wd-out"></div>
+    <div class="grid" id="wd-grid"></div>
+    <p class="hint">
+      全角与半角 ASCII 的码位固定相差 <code>0xFEE0</code>，全角空格与半角空格单独处理，
+      所以转换是可逆的、不需要查表。中文汉字、emoji 不受影响。
+    </p>
+  </section>
+
+  <!-- 大小写 -->
+  <section class="card" id="panel-case" hidden>
+    <h2>文本</h2>
+    <textarea class="area" id="cs-in">the quick brown fox. jumps over the LAZY dog!</textarea>
+    <div class="chips" id="cs-mode">
+      <button type="button" data-mode="upper" class="on">全部大写</button>
+      <button type="button" data-mode="lower">全部小写</button>
+      <button type="button" data-mode="title">标题式</button>
+      <button type="button" data-mode="sentence">句首大写</button>
+      <button type="button" data-mode="toggle">反转大小写</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="cs-copy">复制结果</button>
+      <button type="button" class="primary" id="cs-run">转换</button>
+    </div>
+    <div class="out-text" id="cs-out"></div>
+    <div class="grid" id="cs-grid"></div>
+    <p class="hint">
+      「标题式」按连续字母切词，每个词首字母大写、其余小写；「句首大写」只处理
+      <code>. ! ?</code> 加空白之后的首字母；「反转大小写」逐字符取反，适合快速改常量名。
+    </p>
+  </section>
+
+  <footer>
+    敏感词表与同义词表均为内置静态词表，离线可用；检测结果仅作参考，正式发布请以平台规则为准<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./text2.js"></script>
+</body>
+</html>
