@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>小游戏与趣味测试</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  /* ---- 数独 ---- */
+  .sudoku{display:grid;grid-template-columns:repeat(9,1fr);gap:1px;background:#c9cdd4;
+    border:2px solid #8a9099;border-radius:8px;overflow:hidden;margin-bottom:12px;max-width:396px}
+  .sudoku input{width:100%;aspect-ratio:1;border:none;text-align:center;font-size:18px;font-weight:600;
+    background:#fff;color:var(--text);outline:none;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .sudoku input.given{background:#f0f1f3;color:#4b5563}
+  .sudoku input.bad{background:#ffe0d9;color:#b02a1a}
+  .sudoku input:focus{background:var(--soft)}
+  .sudoku input:nth-child(3n){border-right:2px solid #8a9099}
+  .sudoku input:nth-child(9n){border-right:none}
+  .sudoku .r3{border-bottom:2px solid #8a9099}
+  /* ---- 舒尔特方格 ---- */
+  .schulte{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:360px;margin-bottom:12px}
+  .schulte button{aspect-ratio:1;font-size:18px;font-weight:600;border-radius:10px;border:1px solid var(--line);
+    background:#fff;color:var(--text);font-variant-numeric:tabular-nums}
+  .schulte button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .schulte button.done{background:#e7f8f1;color:#0a7a5f;border-color:#b7e6d8}
+  /* ---- 测试类 ---- */
+  .hitbox{min-height:150px;border-radius:12px;border:1px solid var(--line);background:#fff;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:20px 14px;margin-bottom:12px;
+    font-size:15px;color:var(--sub);cursor:pointer;user-select:none;line-height:1.7}
+  .hitbox.armed{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .hitbox.go{background:#0f8f74;color:#fff;border-color:#0f8f74;font-size:22px;font-weight:700}
+  .hitbox.tooearly{background:#ffe0d9;color:#b02a1a;border-color:#f6c9c0}
+  .clicks{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .clicks div{background:#fff;padding:10px 6px;text-align:center}
+  .clicks b{display:block;font-size:20px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums}
+  .clicks span{display:block;font-size:11px;color:var(--sub);margin-top:2px}
+  .bars{margin-bottom:12px}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px}
+  .bar .lab{flex:0 0 92px;color:var(--sub)}
+  .bar .track{flex:1;height:12px;background:#eef0f3;border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;background:linear-gradient(90deg,#1668dc,#5b9df3)}
+  .bar .val{flex:0 0 62px;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace}
+  /* ---- 计数器 ---- */
+  .counter-num{font:700 56px/1.1 ui-monospace,Menlo,Consolas,monospace;text-align:center;
+    color:var(--primary);font-variant-numeric:tabular-nums;margin:6px 0 14px}
+  /* ---- 磁力 ---- */
+  .magnet{font:12px/1.7 ui-monospace,Menlo,Consolas,monospace;background:#f7f8fa;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<header>
+  <h1>小游戏与趣味测试</h1>
+  <p>数独 · 舒尔特方格 · 反应速度 · CPS 手速 · 计数器 · 猜数字 · 种子转磁力</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="sdk" class="on">在线数独</button>
+    <button data-tab="schulte">舒尔特方格</button>
+    <button data-tab="reaction">反应速度</button>
+    <button data-tab="cps">CPS 手速</button>
+    <button data-tab="count">计数器</button>
+    <button data-tab="guess">数字小游戏</button>
+    <button data-tab="magnet">种子转磁力</button>
+  </div>
+
+  <!-- 数独 -->
+  <section class="card" id="panel-sdk">
+    <h2>题目</h2>
+    <div class="chip-row">
+      <label for="sk-level"><b>难度</b></label>
+      <select id="sk-level">
+        <option value="easy">简单（留给 40+ 个提示数）</option>
+        <option value="mid" selected>中等（33~36 个）</option>
+        <option value="hard">困难（26~32 个）</option>
+        <option value="expert">专家（22~25 个）</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="sk-new">换一题</button>
+      <button type="button" class="ghost" id="sk-clear">清空填写</button>
+      <button type="button" class="primary" id="sk-check">检查</button>
+    </div>
+    <p class="hint" id="sk-msg"></p>
+    <div class="sudoku" id="sk-grid"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="sk-hint">提示一格</button>
+      <button type="button" class="ghost" id="sk-solve">直接看答案</button>
+    </div>
+    <div class="grid" id="sk-stat"></div>
+    <p class="hint">
+      题目由「随机终盘 + 挖洞」生成，并逐洞回验唯一解，所以每道题都有且只有一个答案。
+      检查只对比与标准解是否一致，不做「是否有解」的重复推理。
+    </p>
+  </section>
+
+  <!-- 舒尔特方格 -->
+  <section class="card" id="panel-schulte" hidden>
+    <h2>舒尔特方格</h2>
+    <div class="chip-row">
+      <label for="sc-size"><b>格子规模</b></label>
+      <select id="sc-size">
+        <option value="3">3 × 3（1~9）</option>
+        <option value="4">4 × 4（1~16）</option>
+        <option value="5" selected>5 × 5（1~25）</option>
+        <option value="6">6 × 6（1~36）</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="sc-new">重新开始</button>
+      <button type="button" class="primary" id="sc-start">开始计时</button>
+    </div>
+    <p class="hint" id="sc-msg">按 1 到 N 的顺序依次点击，用来练视觉搜索与注意力。点对自动进入下一个数字。</p>
+    <div class="schulte" id="sc-grid"></div>
+    <div class="grid" id="sc-stat"></div>
+    <p class="hint">格子每次重新排布，同一个数字的位置不会重复。计时从点「开始」或点第一个数字起算。</p>
+  </section>
+
+  <!-- 反应速度 -->
+  <section class="card" id="panel-reaction" hidden>
+    <h2>反应速度测试</h2>
+    <div class="hitbox" id="rx-box">点击这里开始，变绿后立刻再点一次</div>
+    <div class="clicks" id="rx-stat"></div>
+    <div class="bars" id="rx-bars"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="rx-reset">重置记录</button>
+      <button type="button" class="primary" id="rx-start">再来一次</button>
+    </div>
+    <p class="hint">
+      平均反应时间样本越多越准；抢跑（变绿前点）那次会被判无效并重来，不计入成绩。
+      浏览器定时器精度约 1~4ms，加上显示器延迟，绝对值仅供参考，看相对变化更有意义。
+    </p>
+  </section>
+
+  <!-- CPS -->
+  <section class="card" id="panel-cps" hidden>
+    <h2>CPS 手速测试</h2>
+    <div class="hitbox" id="cp-box">点击开始，然后在 5 秒内尽可能多地点击</div>
+    <div class="clicks" id="cp-stat"></div>
+    <div class="bars" id="cp-bars"></div>
+    <p class="hint">
+      5 秒计时窗口，统计点击次数与每秒点击（CPS）。单次点击间隔小于 15ms 会被当作连点/触屏抖动剔除，
+      否则长按或连发会刷出虚高结果。
+    </p>
+  </section>
+
+  <!-- 计数器 -->
+  <section class="card" id="panel-count" hidden>
+    <h2>计数器</h2>
+    <div class="row">
+      <label for="ct-step"><b>步长</b></label>
+      <div class="input-wrap"><input id="ct-step" type="number" inputmode="numeric" step="1" value="1"></div>
+    </div>
+    <div class="counter-num" id="ct-num">0</div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="ct-minus">− 减少</button>
+      <button type="button" class="ghost" id="ct-reset">归零</button>
+      <button type="button" class="primary" id="ct-plus">+ 增加</button>
+    </div>
+    <div class="grid" id="ct-stat"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="ct-copy">复制数值</button>
+      <button type="button" class="ghost" id="ct-undo">撤销上一步</button>
+    </div>
+    <p class="hint">支持键盘操作：<code>+</code>/<code>↑</code> 增加，<code>-</code>/<code>↓</code> 减少，<code>0</code> 归零，<code>Ctrl+Z</code> 撤销。状态记在浏览器里，刷新不丢。</p>
+  </section>
+
+  <!-- 猜数字 -->
+  <section class="card" id="panel-guess" hidden>
+    <h2>数字小游戏 · 猜数字</h2>
+    <div class="chip-row">
+      <label for="gs-range"><b>范围</b></label>
+      <select id="gs-range">
+        <option value="10">1 ~ 10</option>
+        <option value="100" selected>1 ~ 100</option>
+        <option value="1000">1 ~ 1000</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="gs-new">重新开局</button>
+      <button type="button" class="primary" id="gs-guess">猜</button>
+    </div>
+    <div class="row">
+      <label for="gs-in"><b>你猜的数字</b></label>
+      <div class="input-wrap"><input id="gs-in" type="number" inputmode="numeric" step="1" placeholder="输入后回车"></div>
+    </div>
+    <p class="hint" id="gs-msg"></p>
+    <div class="grid" id="gs-stat"></div>
+    <ul class="list" id="gs-log"></ul>
+    <p class="hint">二分法最快：每次猜中间值，1~100 最多 7 次必中。每次都给出「大了 / 小了」与还剩下多少个可能值。</p>
+  </section>
+
+  <!-- 种子转磁力 -->
+  <section class="card" id="panel-magnet" hidden>
+    <h2>种子转磁力链接</h2>
+    <div class="row">
+      <label for="mg-in"><b>torrent 种子文件</b>（本地解析，不上传）</label>
+      <input id="mg-in" type="file" accept=".torrent,application/x-bittorrent">
+    </div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="mg-clear">清空</button>
+      <button type="button" class="primary" id="mg-run">生成磁力链接</button>
+      <button type="button" class="ghost" id="mg-copy">复制</button>
+    </div>
+    <p class="hint err" id="mg-msg"></p>
+    <div class="magnet" id="mg-out"></div>
+    <div class="grid" id="mg-grid"></div>
+    <p class="hint">
+      磁力链接的核心是 <code>btih</code>：单文件种子取整个文件的 SHA-1，
+      多文件种子先把各文件的 <code>路径长度 + 路径 + 长度</code> 拼成 info 串再取 SHA-1。
+      本页按 bencode 自己解析种子文件，不依赖任何库，也不发网络请求。
+    </p>
+  </section>
+
+  <footer>
+    全部功能纯本地运行，不联网、不上传；游戏成绩只存在你自己的浏览器里<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./game.js"></script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>网页与站长工具</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:220px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .preview{background:#f7f8fa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;
+    font-size:13px;line-height:1.7;max-height:420px;overflow:auto;word-break:break-word}
+  .preview h1,.preview h2,.preview h3{margin:12px 0 6px;font-size:15px}
+  .preview p{margin:6px 0}
+  .preview code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eceef1;border-radius:4px;padding:1px 4px}
+  .preview pre{background:#eceef1;border-radius:8px;padding:8px 10px;overflow:auto}
+  .preview table{border-collapse:collapse;width:100%;font-size:12px}
+  .preview th,.preview td{border:1px solid var(--line);padding:4px 6px}
+  .preview blockquote{margin:6px 0;padding-left:10px;border-left:3px solid var(--line);color:var(--sub)}
+  .frame{width:100%;height:320px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .code{font:12px/1.7 ui-monospace,Menlo,Consolas,monospace;background:#f7f8fa;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap}
+  .mini{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .mini button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--text);border:1px solid var(--line)}
+  .mini button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .stat-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .stat-row:last-child{border-bottom:none}
+  .stat-row b{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .warn{color:var(--warn)}
+</style>
+</head>
+<body>
+<header>
+  <h1>网页与站长工具</h1>
+  <p>源码查看 · Markdown · HTML 编辑器 · 定时刷新 · 短链 · robots · 备案 · DNS</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="source" class="on">网页源码</button>
+    <button data-tab="markdown">Markdown</button>
+    <button data-tab="html">HTML 编辑器</button>
+    <button data-tab="refresh">网址定时刷新</button>
+    <button data-tab="short">短链生成</button>
+    <button data-tab="robots">robots.txt</button>
+    <button data-tab="icp">备案号解析</button>
+    <button data-tab="dns">DNS 清单</button>
+  </div>
+
+  <!-- 1. 网页源码 -->
+  <section class="card" id="panel-source">
+    <h2>查看网页源代码</h2>
+    <div class="row">
+      <label for="src-url"><b>网页地址</b></label>
+      <input id="src-url" type="text" placeholder="https://example.com" value="https://example.com">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="src-clear">清空</button>
+      <button type="button" class="primary" id="src-run">获取源码</button>
+    </div>
+    <p class="hint err" id="src-msg"></p>
+    <div class="code" id="src-out"></div>
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:13px;color:var(--sub);margin-bottom:6px">渲染预览（iframe 沙箱，脚本被拦截）</label>
+      <iframe class="frame" id="src-frame" sandbox="" referrerpolicy="no-referrer" title="网页预览"></iframe>
+    </div>
+    <p class="hint">
+      跨域限制绕不过去：浏览器直接抓别的网站会被 CORS 拦下。本页先直连，失败后走公开的只读代理
+      （<code>r.jina.ai</code>、<code>api.allorigins.win</code>）转一手，两者都拿不到就只给提示。
+      预览用 <code>sandbox=""</code> 完全隔离，不执行页面里的脚本。
+    </p>
+  </section>
+
+  <!-- 2. Markdown -->
+  <section class="card" id="panel-markdown" hidden>
+    <h2>Markdown 编辑器</h2>
+    <textarea class="area" id="md-in" placeholder="# 标题&#10;&#10;正文 **加粗**、`代码`、[链接](https://cnb.cool)&#10;&#10;- 列表项&#10;- 列表项&#10;&#10;| 列 | 值 |&#10;| --- | --- |&#10;| a | 1 |"></textarea>
+    <div class="btns">
+      <button type="button" class="ghost" id="md-sample">示例</button>
+      <button type="button" class="ghost" id="md-clear">清空</button>
+      <button type="button" class="primary" id="md-run">渲染</button>
+    </div>
+    <div class="mini" id="md-demo">
+      <button type="button" data-demo="basic">基础语法</button>
+      <button type="button" data-demo="table">表格与代码块</button>
+      <button type="button" data-demo="xss">XSS 注入测试</button>
+    </div>
+    <div class="preview" id="md-out"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="md-copy">复制 HTML</button>
+      <button type="button" class="ghost" id="md-file">下载 .html</button>
+    </div>
+    <p class="hint">
+      解析用 <code>marked</code>，输出经 <code>DOMPurify</code> 净化后才插入页面。
+      点「XSS 注入测试」可以直接看到 <code>&lt;script&gt;</code>、<code>onerror</code> 一类载荷被剥掉的效果。
+      下载的 .html 为独立文件，样式内联、无外链。
+    </p>
+  </section>
+
+  <!-- 3. HTML 编辑器 -->
+  <section class="card" id="panel-html" hidden>
+    <h2>可视化 HTML 编辑器</h2>
+    <div class="mini" id="he-tools">
+      <button type="button" data-cmd="bold" class="on">加粗</button>
+      <button type="button" data-cmd="italic">斜体</button>
+      <button type="button" data-cmd="underline">下划线</button>
+      <button type="button" data-cmd="strikeThrough">删除线</button>
+      <button type="button" data-cmd="insertUnorderedList">无序列表</button>
+      <button type="button" data-cmd="insertOrderedList">有序列表</button>
+      <button type="button" data-cmd="justifyLeft">左对齐</button>
+      <button type="button" data-cmd="justifyCenter">居中</button>
+      <button type="button" data-cmd="removeFormat">清格式</button>
+    </div>
+    <div class="mini" id="he-colors">
+      <button type="button" data-color="#1f2329" class="on">默认色</button>
+      <button type="button" data-color="#d4380d">红</button>
+      <button type="button" data-color="#0f8f74">绿</button>
+      <button type="button" data-color="#1668dc">蓝</button>
+    </div>
+    <div class="preview" id="he-edit" contenteditable="true" style="min-height:180px;background:#fff">
+      <p>在这里直接编辑，选中文字后点上面的按钮。</p>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="he-preview">切换源码 / 预览</button>
+      <button type="button" class="ghost" id="he-copy">复制 HTML</button>
+      <button type="button" class="ghost" id="he-file">下载 .html</button>
+    </div>
+    <div class="preview" id="he-out" hidden></div>
+    <p class="hint">
+      用浏览器自带的 <code>contenteditable</code> 与 <code>execCommand</code> 实现，不依赖任何富文本库。
+      编辑区本身就是渲染结果，切到源码模式看/改 HTML 后可直接写回。
+    </p>
+  </section>
+
+  <!-- 4. 网址定时刷新 -->
+  <section class="card" id="panel-refresh" hidden>
+    <h2>网址定时刷新</h2>
+    <div class="row">
+      <label for="rf-url"><b>目标网址</b>（在下方内嵌窗口里打开）</label>
+      <input id="rf-url" type="text" placeholder="https://example.com" value="https://example.com">
+    </div>
+    <div class="row">
+      <label for="rf-sec"><b>刷新间隔</b>（秒，最小 5）</label>
+      <div class="input-wrap"><input id="rf-sec" type="number" inputmode="numeric" step="1" value="30" min="5"><span class="unit">秒</span></div>
+    </div>
+    <div class="mini" id="rf-presets">
+      <button type="button" data-sec="10">10 秒</button>
+      <button type="button" data-sec="30" class="on">30 秒</button>
+      <button type="button" data-sec="60">1 分钟</button>
+      <button type="button" data-sec="300">5 分钟</button>
+    </div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="rf-open">打开</button>
+      <button type="button" class="primary" id="rf-toggle">开始刷新</button>
+      <button type="button" class="ghost" id="rf-stop">停止</button>
+    </div>
+    <div class="stat-row"><span>状态</span><b id="rf-state">未开始</b></div>
+    <div class="stat-row"><span>下次刷新</span><b id="rf-next">—</b></div>
+    <div class="stat-row"><span>已刷新</span><b id="rf-count">0 次</b></div>
+    <iframe class="frame" id="rf-frame" referrerpolicy="no-referrer" title="定时刷新预览"></iframe>
+    <p class="hint">
+      只刷新上面这个内嵌窗口，不会动你自己打开的标签页——浏览器不允许网页去刷新别人的页签。
+      目标站点可能用 <code>X-Frame-Options</code> 禁止被内嵌，此时窗口会空白，属于站点设置，不是本页的问题。
+    </p>
+  </section>
+
+  <!-- 5. 短链生成 -->
+  <section class="card" id="panel-short" hidden>
+    <h2>短链生成</h2>
+    <div class="row">
+      <label for="sh-url"><b>原始网址</b></label>
+      <input id="sh-url" type="text" placeholder="https://example.com/a/very/long/path?x=1" value="https://www.metools.info/">
+    </div>
+    <div class="mini" id="sh-ways">
+      <button type="button" data-way="isgd" class="on">is.gd</button>
+      <button type="button" data-way="vgd">v.gd</button>
+      <button type="button" data-way="tinyurl">tinyurl.com</button>
+      <button type="button" data-way="local">本地短参（不联网）</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="sh-clear">清空结果</button>
+      <button type="button" class="primary" id="sh-run">生成</button>
+    </div>
+    <p class="hint err" id="sh-msg"></p>
+    <div class="code" id="sh-out"></div>
+    <p class="hint">
+      短链必须由服务端发码，本地生不出来，所以这里老实调用公开接口：is.gd / v.gd / TinyURL 均为免密钥 GET 接口。
+      接口挂了或断网时，「本地短参」把长 URL 压成一个可分享的短参数形式，它仍然指向原地址（不会真的变短），只做兜底不假装能发码。
+    </p>
+  </section>
+
+  <!-- 6. robots.txt -->
+  <section class="card" id="panel-robots" hidden>
+    <h2>robots.txt 生成器</h2>
+    <div class="row">
+      <label for="rb-agent"><b>User-agent</b>（多个用逗号分隔，<code>*</code> 表示所有爬虫）</label>
+      <input id="rb-agent" type="text" value="*">
+    </div>
+    <div class="row">
+      <label for="rb-disallow"><b>禁止抓取</b>（每行一条；<code>/</code> 表示整站禁止）</label>
+      <textarea class="area" id="rb-disallow" style="min-height:90px">/admin/
+/tmp/
+/*.pdf$</textarea>
+    </div>
+    <div class="row">
+      <label for="rb-allow"><b>允许抓取</b>（每行一条，优先级高于禁止）</label>
+      <textarea class="area" id="rb-allow" style="min-height:70px">/admin/public/</textarea>
+    </div>
+    <div class="row">
+      <label for="rb-delay"><b>Crawl-delay</b>（秒，留空不输出）</label>
+      <div class="input-wrap"><input id="rb-delay" type="number" inputmode="numeric" step="1" min="0" value="1"><span class="unit">秒</span></div>
+    </div>
+    <div class="row">
+      <label for="rb-sitemap"><b>Sitemap</b>（每行一条，留空不输出）</label>
+      <textarea class="area" id="rb-sitemap" style="min-height:60px">https://example.com/sitemap.xml</textarea>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="rb-reset">重置</button>
+      <button type="button" class="primary" id="rb-run">生成</button>
+    </div>
+    <div class="code" id="rb-out"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="rb-copy">复制</button>
+      <button type="button" class="ghost" id="rb-file">下载 robots.txt</button>
+    </div>
+    <p class="hint">
+      按 Robots Exclusion Protocol 生成：一组 User-agent 可挂多条规则，同一组内 <code>Allow</code> 先于 <code>Disallow</code> 输出。
+      <code>$</code> 结尾通配与 <code>*</code> 通配原样保留，不做转义——robots.txt 就是按字面匹配的。
+    </p>
+  </section>
+
+  <!-- 7. 备案号解析 -->
+  <section class="card" id="panel-icp" hidden>
+    <h2>网站备案号解析与自查清单</h2>
+    <div class="row">
+      <label for="icp-in"><b>备案号</b>（可带或不带省份简称，如 <code>京ICP备12345678号-1</code>）</label>
+      <input id="icp-in" type="text" placeholder="京ICP备12345678号-1" value="京ICP备12345678号-1">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="icp-clear">清空</button>
+      <button type="button" class="primary" id="icp-run">解析</button>
+    </div>
+    <p class="hint err" id="icp-msg"></p>
+    <div class="grid" id="icp-out"></div>
+    <div class="code" id="icp-link"></div>
+    <p class="hint">
+      备案信息存在工信部数据库里，没有任何公开接口能让纯前端直接查——需要备案号 + 域名 + 验证码，
+      还要过反爬。所以本页做的是**格式解析**：拆出省份、备案主体类型、编号、网站序号，
+      校验括号与后缀写法，并给出官方查询入口。不给假结果，也替你省掉手工拆解。
+    </p>
+  </section>
+
+  <!-- 8. DNS 清单 -->
+  <section class="card" id="panel-dns" hidden>
+    <h2>公共 DNS 服务器清单</h2>
+    <div class="row">
+      <label for="dns-q"><b>按名称 / 地址 / 备注搜索</b></label>
+      <input id="dns-q" type="search" placeholder="如 电信 / 114 / IPv6">
+    </div>
+    <div class="mini" id="dns-filter">
+      <button type="button" data-op="all" class="on">全部</button>
+      <button type="button" data-op="公共">公共</button>
+      <button type="button" data-op="电信">电信</button>
+      <button type="button" data-op="联通">联通</button>
+      <button type="button" data-op="移动">移动</button>
+      <button type="button" data-op="教育网">教育网</button>
+      <button type="button" data-op="安全">安全 / 家长</button>
+    </div>
+    <p class="hint" id="dns-count"></p>
+    <table id="dns-table">
+      <thead><tr><th>运营商 / 机构</th><th>首选</th><th>备用</th><th>备注</th></tr></thead>
+      <tbody id="dns-body"></tbody>
+    </table>
+    <p class="hint">
+      地址是写死的静态清单（不联网查询），选一个填进网卡或路由器的 DNS 设置即可。
+      服务器会变、也可能按地域限速，实测为准。
+    </p>
+  </section>
+
+  <footer>
+    网页抓取与短链需联网，其余功能纯本地；本页不采集、不上传你输入的内容<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./lib/dompurify.js"></script>
+<script src="./lib/marked.js"></script>
+<script src="./web.js"></script>
+</body>
+</html>
