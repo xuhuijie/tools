@@ -35,6 +35,14 @@ LOCAL_NAMES = {
     'geometry.html': '几何与电子计算',
     'dev.html': '开发工具',
     'finance.html': '个税与健康计算',
+    'security.html': '加密与令牌',
+    'station.html': '站长工具',
+    'text.html': '文字与文本',
+    'health.html': '健康计算',
+    'life.html': '生活计算',
+    'geo.html': '经纬度与坐标系',
+    'fun.html': '互动小工具',
+    'info.html': '信息查询',
 }
 
 

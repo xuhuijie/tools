@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>经纬度与坐标系</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 22px/1.3 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);margin:2px 0 12px;word-break:break-all}
+</style>
+</head>
+<body>
+<header>
+  <h1>经纬度与坐标系</h1>
+  <p>度分秒转换 · 坐标系互转 · 距离与方位</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button data-tab="dms" class="on">度分秒转换</button>
+    <button data-tab="conv">坐标系互转</button>
+    <button data-tab="dist">距离与方位</button>
+  </div>
+
+  <!-- 度分秒 -->
+  <section id="panel-dms">
+    <section class="card">
+      <h2>十进制度 → 度分秒</h2>
+      <div class="row">
+        <label>纬度（DD，负数为南纬）</label>
+        <div class="input-wrap"><input type="number" id="dm-lat" value="39.9087" step="0.000001" min="-90" max="90"><span class="unit">°</span></div>
+      </div>
+      <div class="row">
+        <label>经度（DD，负数为西经）</label>
+        <div class="input-wrap"><input type="number" id="dm-lng" value="116.3975" step="0.000001" min="-180" max="180"><span class="unit">°</span></div>
+      </div>
+      <p class="hint">十进制度保留 6 位小数约为 0.1 米精度，够日常使用。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="dm-swap">反向输入</button>
+      <button type="button" class="primary" id="dm-run">转换</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="dm-big">—</div>
+      <div class="grid" id="dm-out"></div>
+      <div class="note" id="dm-note"></div>
+    </section>
+    <section class="card" id="dm-rev" hidden>
+      <h2>度分秒 → 十进制度</h2>
+      <div class="grid2" style="margin-bottom:10px">
+        <input type="number" id="rv-lat-d" value="39" step="1" placeholder="纬度 度">
+        <input type="number" id="rv-lat-m" value="54" step="1" placeholder="分">
+      </div>
+      <div class="grid2" style="margin-bottom:10px">
+        <input type="number" id="rv-lat-s" value="31.3" step="0.1" placeholder="秒">
+        <select id="rv-lat-dir"><option value="1">北纬 N</option><option value="-1">南纬 S</option></select>
+      </div>
+      <div class="grid2" style="margin-bottom:10px">
+        <input type="number" id="rv-lng-d" value="116" step="1" placeholder="经度 度">
+        <input type="number" id="rv-lng-m" value="23" step="1" placeholder="分">
+      </div>
+      <div class="grid2" style="margin-bottom:10px">
+        <input type="number" id="rv-lng-s" value="51" step="0.1" placeholder="秒">
+        <select id="rv-lng-dir"><option value="1">东经 E</option><option value="-1">西经 W</option></select>
+      </div>
+    </section>
+  </section>
+
+  <!-- 坐标系互转 -->
+  <section id="panel-conv" hidden>
+    <section class="card">
+      <h2>WGS84 / GCJ-02 / BD-09 互转</h2>
+      <div class="row">
+        <label>源坐标系</label>
+        <div class="seg" id="cv-from">
+          <button data-cs="wgs" class="on">WGS84（GPS）</button>
+          <button data-cs="gcj">GCJ-02（高德/腾讯）</button>
+          <button data-cs="bd">BD-09（百度）</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>纬度 / 经度</label>
+        <div class="grid2">
+          <input type="number" id="cv-lat" value="39.9087" step="0.000001">
+          <input type="number" id="cv-lng" value="116.3975" step="0.000001">
+        </div>
+      </div>
+      <p class="hint">WGS84 → GCJ-02 用国测局公开的偏移算法；GCJ-02 → BD-09 用百度公开的偏移公式。反向换算用迭代逼近，误差在 1 米内。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="cv-reset">重置</button>
+      <button type="button" class="primary" id="cv-run">转换</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="grid" id="cv-out"></div>
+      <div class="note" id="cv-note"></div>
+    </section>
+  </section>
+
+  <!-- 距离与方位 -->
+  <section id="panel-dist" hidden>
+    <section class="card">
+      <h2>两点距离</h2>
+      <div class="row">
+        <label>起点 纬度 / 经度</label>
+        <div class="grid2">
+          <input type="number" id="ds-lat1" value="39.9087" step="0.000001">
+          <input type="number" id="ds-lng1" value="116.3975" step="0.000001">
+        </div>
+      </div>
+      <div class="row">
+        <label>终点 纬度 / 经度</label>
+        <div class="grid2">
+          <input type="number" id="ds-lat2" value="31.2304" step="0.000001">
+          <input type="number" id="ds-lng2" value="121.4737" step="0.000001">
+        </div>
+      </div>
+      <p class="hint">按 WGS84 椭球用 Haversine 公式算大圆距离，方位角以正北为 0° 顺时针。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="ds-reset">重置</button>
+      <button type="button" class="primary" id="ds-run">计算</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="ds-big">—</div>
+      <div class="grid" id="ds-out"></div>
+      <div class="note" id="ds-note"></div>
+    </section>
+  </section>
+
+  <footer>
+    纯本地计算，不上传任何内容<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./geo.js"></script>
+</body>
+</html>

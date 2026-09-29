@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>生活计算</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 28px/1.25 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);margin:2px 0 12px;font-variant-numeric:tabular-nums}
+  .big small{font-size:14px;color:var(--sub);font-weight:400}
+  .seg{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .live{font-size:12px;color:var(--sub);background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;line-height:1.7}
+  .live b{color:var(--text)}
+  .holiday{font-size:13px;line-height:1.8}
+  .holiday b{color:var(--primary)}
+  .warn{color:var(--warn);font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>生活计算</h1>
+  <p>退休 · 税金 · 劳务报酬 · 国债 · 养老金 · 放假安排</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button data-tab="retire" class="on">退休年龄</button>
+    <button data-tab="tax">税金换算</button>
+    <button data-tab="labor">劳务报酬</button>
+    <button data-tab="bond">国债利息</button>
+    <button data-tab="pension">养老金</button>
+    <button data-tab="holiday">放假安排</button>
+  </div>
+
+  <!-- 退休 -->
+  <section id="panel-retire">
+    <section class="card">
+      <h2>退休测算（2024 延迟退休办法）</h2>
+      <div class="row">
+        <label>性别 · 岗位类别</label>
+        <div class="seg" id="re-kind">
+          <button data-kind="m" class="on">男性</button>
+          <button data-kind="fCadre">女性 · 干部</button>
+          <button data-kind="fFlex">女性 · 灵活就业</button>
+          <button data-kind="fWorker">女性 · 普通工人</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>出生年月</label>
+        <div class="grid2">
+          <input type="number" id="re-year" value="1990" min="1960" max="2010" step="1" placeholder="年">
+          <select id="re-month"></select>
+        </div>
+      </div>
+      <p class="hint">按《关于实施渐进式延迟法定退休年龄的决定》附表计算：从 2025 年 1 月起，每 4 个月延 1 个月（临近原法定年龄者按月递增），最低缴费年限另行规定。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="re-reset">重置</button>
+      <button type="button" class="primary" id="re-run">计算</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="re-big">— <small>退休年龄</small></div>
+      <div class="grid" id="re-out"></div>
+      <div class="note" id="re-note"></div>
+    </section>
+  </section>
+
+  <!-- 税额 -->
+  <section id="panel-tax" hidden>
+    <section class="card">
+      <h2>含税 / 不含税金额与税额</h2>
+      <div class="seg" id="tx-mode">
+        <button data-mode="rate" class="on">由金额求税率</button>
+        <button data-mode="net">含税 → 不含税</button>
+        <button data-mode="gross">不含税 → 含税</button>
+        <button data-mode="tax">税额 → 金额</button>
+      </div>
+      <div id="tx-fields"></div>
+      <p class="hint" id="tx-hint"></p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="tx-reset">重置</button>
+      <button type="button" class="primary" id="tx-run">计算</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="grid" id="tx-out"></div>
+      <div class="formula" id="tx-formula"></div>
+      <div class="note" id="tx-note"></div>
+    </section>
+  </section>
+
+  <!-- 劳务报酬 -->
+  <section id="panel-labor" hidden>
+    <section class="card">
+      <h2>劳务报酬所得（2025）</h2>
+      <div class="row">
+        <label>劳务报酬金额</label>
+        <div class="input-wrap"><input type="number" id="lb-amt" value="20000" min="0" step="100"><span class="unit">元</span></div>
+      </div>
+      <p class="hint">4000 元以下减 800 元费用，4000 元以上按 20% 减除；再按预扣率表算税。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="lb-reset">重置</button>
+      <button type="button" class="primary" id="lb-run">计算</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="grid" id="lb-out"></div>
+      <div class="formula" id="lb-formula"></div>
+      <div class="note" id="lb-note"></div>
+    </section>
+  </section>
+
+  <!-- 国债 -->
+  <section id="panel-bond" hidden>
+    <section class="card">
+      <h2>国债 / 存款利息</h2>
+      <div class="row">
+        <label>本金</label>
+        <div class="input-wrap"><input type="number" id="bd-amt" value="100000" min="0" step="1000"><span class="unit">元</span></div>
+      </div>
+      <div class="row">
+        <label>期限</label>
+        <div class="input-wrap"><input type="number" id="bd-years" value="3" min="0.1" step="0.5"><span class="unit">年</span></div>
+      </div>
+      <div class="row">
+        <label>年利率</label>
+        <div class="input-wrap"><input type="number" id="bd-rate" value="1.63" min="0" step="0.01"><span class="unit">%</span></div>
+      </div>
+      <p class="hint">储蓄国债多为按年付息、到期还本；这里按单利计算。参考利率：2025 年 10 月电子式 3 年期 1.63%、5 年期 1.70%。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="bd-reset">重置</button>
+      <button type="button" class="primary" id="bd-run">计算</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="bd-big">— <small>到期本息</small></div>
+      <div class="grid" id="bd-out"></div>
+      <div class="formula" id="bd-formula"></div>
+    </section>
+  </section>
+
+  <!-- 养老金 -->
+  <section id="panel-pension" hidden>
+    <section class="card">
+      <h2>养老金测算</h2>
+      <div class="row">
+        <label>本市上年社平工资</label>
+        <div class="input-wrap"><input type="number" id="pe-avg" value="12000" min="0" step="100"><span class="unit">元/月</span></div>
+      </div>
+      <div class="row">
+        <label>社平工资年增长</label>
+        <div class="input-wrap"><input type="number" id="pe-growth" value="5" min="0" step="0.5"><span class="unit">%</span></div>
+      </div>
+      <div class="row">
+        <label>当前年龄 / 计划退休年龄</label>
+        <div class="grid2">
+          <input type="number" id="pe-age" value="35" min="16" max="70" step="1" placeholder="当前">
+          <select id="pe-retire"></select>
+        </div>
+      </div>
+      <div class="row">
+        <label>个人账户累积余额</label>
+        <div class="input-wrap"><input type="number" id="pe-acct" value="200000" min="0" step="1000"><span class="unit">元</span></div>
+      </div>
+      <div class="row">
+        <label>累计缴费年限</label>
+        <div class="input-wrap"><input type="number" id="pe-years" value="20" min="1" max="45" step="1"><span class="unit">年</span></div>
+      </div>
+      <div class="row">
+        <label>平均缴费指数（社平 60% ~ 300%）</label>
+        <div class="input-wrap"><input type="number" id="pe-index" value="100" min="60" max="300" step="1"><span class="unit">%</span></div>
+      </div>
+      <p class="hint">基础养老金 = 退休时社平 × (1 + 缴费指数) ÷ 2 × 缴费年限 × 1%；个人账户养老金 = 账户余额 ÷ 计发月数。本页不含过渡性养老金。</p>
+    </section>
+    <div class="btns">
+      <button type="button" class="ghost" id="pe-reset">重置</button>
+      <button type="button" class="primary" id="pe-run">测算</button>
+    </div>
+    <section class="card">
+      <h2>结果</h2>
+      <div class="big" id="pe-big">— <small>预估月养老金</small></div>
+      <div class="grid" id="pe-out"></div>
+      <div class="formula" id="pe-formula"></div>
+      <div class="note" id="pe-note"></div>
+    </section>
+  </section>
+
+  <!-- 放假安排 -->
+  <section id="panel-holiday" hidden>
+    <section class="card">
+      <h2>放假安排</h2>
+      <div class="seg" id="hd-year">
+        <button data-year="2026" class="on">2026 年</button>
+        <button data-year="2025">2025 年</button>
+      </div>
+      <div class="row">
+        <label>查某一天（可选）</label>
+        <input type="date" id="hd-date">
+      </div>
+      <p class="hint">数据来源于国务院办公厅发布的节假日安排通知，已内置到页面，不联网。</p>
+    </section>
+    <section class="card">
+      <h2>安排</h2>
+      <div class="live" id="hd-day" hidden></div>
+      <div class="holiday" id="hd-out"></div>
+      <div class="note" id="hd-note"></div>
+    </section>
+  </section>
+
+  <footer>
+    结果为测算参考，以官方口径为准<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./life.js"></script>
+</body>
+</html>
