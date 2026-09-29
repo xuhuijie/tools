@@ -54,6 +54,10 @@
   .entry.gold .badge{background:linear-gradient(135deg,#c9922e,#e8b04b)}
   .entry.flow .badge{background:linear-gradient(135deg,#0f8f74,#28b492)}
   .entry.chk .badge{background:linear-gradient(135deg,#6d28d9,#8b5cf6)}
+  .entry.tool .badge{background:linear-gradient(135deg,#6d4bc7,#9b7ce8)}
+  .entry.net .badge{background:linear-gradient(135deg,#b45309,#e08b2e)}
+  .entry.date .badge{background:linear-gradient(135deg,#1d4ed8,#5b8def)}
+  .entry.random .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
   .entry-body{flex:1;min-width:0}
   .entry-body .t{display:block;font-size:15px;font-weight:600}
   .entry-body .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
@@ -66,7 +70,7 @@
 <body>
 <header>
   <h1>计量计算工具</h1>
-  <p>日常计量换算小工具</p>
+  <p>计量换算与通用小工具，零依赖单文件</p>
 </header>
 
 <main>
@@ -110,12 +114,97 @@
     </a>
   </section>
 
+  <section class="card">
+    <h2>通用工具</h2>
+
+    <a class="entry tool" href="./tools.html">
+      <span class="badge">目录</span>
+      <span class="entry-body">
+        <span class="t">工具目录（142 个）</span>
+        <span class="d">metools.info 全站清单，标注哪些已本地实现</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry tool" href="./base.html">
+      <span class="badge">编码</span>
+      <span class="entry-body">
+        <span class="t">编码解码</span>
+        <span class="d">Base64 / Base32 / Base58 / URL / Hex / Unicode / Punycode</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry tool" href="./hash.html">
+      <span class="badge">摘要</span>
+      <span class="entry-body">
+        <span class="t">哈希与校验和</span>
+        <span class="d">MD5 / SHA / CRC / 累加和 / Adler-32 / HMAC</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry tool" href="./cipher.html">
+      <span class="badge">密码</span>
+      <span class="entry-body">
+        <span class="t">古典密码</span>
+        <span class="d">摩尔斯 / 凯撒 / ROT13 / 维吉尼亚 / 栅栏 / 培根</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry tool" href="./number.html">
+      <span class="badge">数字</span>
+      <span class="entry-body">
+        <span class="t">数字与单位</span>
+        <span class="d">金额大写 / 存储单位 / 幂与开方 / 因数 / 数列 / 钢管重量</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry tool" href="./color.html">
+      <span class="badge">颜色</span>
+      <span class="entry-body">
+        <span class="t">颜色转换</span>
+        <span class="d">RGB / HEX / HSL / HSV / CMYK 互转，附对比度</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry random" href="./random.html">
+      <span class="badge">随机</span>
+      <span class="entry-body">
+        <span class="t">随机生成</span>
+        <span class="d">密码 / 随机数 / 随机点名 / MAC 地址</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry net" href="./net.html">
+      <span class="badge">网络</span>
+      <span class="entry-body">
+        <span class="t">网络计算</span>
+        <span class="d">IPv4 子网划分 / MAC 地址解析</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry date" href="./date.html">
+      <span class="badge">日期</span>
+      <span class="entry-body">
+        <span class="t">日期与时间</span>
+        <span class="d">年龄计算 / 日期间隔 / 第几周 / 时间戳转换</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+  </section>
+
   <p class="hint">
     点击任一工具即可进入对应计算页，各页之间也可互相切换。
   </p>
 
   <footer>
-    计量计算工具集合 · 零依赖单文件 H5
+    计量计算工具集合 · 零依赖单文件 H5 · 工具清单整理自 metools.info
   </footer>
 </main>
 </body>

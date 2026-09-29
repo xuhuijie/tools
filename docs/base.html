@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>编码解码</title>
+<link rel="stylesheet" href="./app.css">
+</head>
+<body>
+<header>
+  <h1>编码解码</h1>
+  <p>Base64 / Base32 / Base58 / URL / Hex / Unicode / Punycode 互转</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="base64" class="on">Base64</button>
+    <button data-tab="base58">Base58 / 62</button>
+    <button data-tab="base32">Base32</button>
+    <button data-tab="url">URL</button>
+    <button data-tab="hex">Hex / 二进制</button>
+    <button data-tab="unicode">Unicode 转义</button>
+    <button data-tab="punycode">Punycode</button>
+  </div>
+
+  <section class="card">
+    <h2 id="in-title">输入</h2>
+    <textarea id="input" placeholder="在此粘贴待处理内容"></textarea>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <div class="btns">
+    <button type="button" class="ghost" id="swap">交换</button>
+    <button type="button" class="primary" id="encode">编码</button>
+    <button type="button" class="primary" id="decode">解码</button>
+  </div>
+
+  <section class="card">
+    <h2>输出</h2>
+    <div class="out mono-lg" id="output"></div>
+    <button type="button" class="ghost" id="copy" style="width:100%;height:44px;font-size:15px;font-weight:600;border-radius:12px;border:1px solid var(--line);background:#fff;margin-bottom:12px">复制结果</button>
+  </section>
+
+  <footer>
+    纯本地计算，不上传任何内容<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./base.js"></script>
+</body>
+</html>
