@@ -8,6 +8,11 @@
 - `docs/flow.html` — 瞬时流量与流速换算
 - `docs/checksum.html` — 校验和计算（CRC / 累加和 / 异或）
 - `docs/md5.html` — 文件 / 文本 MD5 校验（含 SHA 系列，文件分块流式计算）
+- `docs/tools.html` — 工具目录（metools.info 全站 142 个工具清单）
+- `docs/base.html`、`docs/cipher.html`、`docs/hash.html`、`docs/number.html` —
+  编码解码、古典密码、哈希校验、数字与单位
+- `docs/color.html`、`docs/random.html`、`docs/net.html`、`docs/date.html` —
+  颜色转换、随机生成、网络计算、日期与时间
 
 
 ## 流量点校准
@@ -220,6 +225,56 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 累加和 8 位    = 0x0E
 异或 8 位      = 0x08
 ```
+## 工具目录与通用工具
+
+参考 [metools.info](https://www.metools.info/) 整理，`docs/tools.html` 收录该站全部 **142 个工具**，
+分站长 / 开发 / 学习 / 生活 / 小工具五类。每条给出官方入口，其中 **47 条**本仓库有等效实现，
+标「本地」可直接跳转，断网也能用。
+
+本地实现按主题合并为 8 个页面，参数与结果都附代入过程便于复核：
+
+| 页面 | 覆盖的工具 |
+| --- | --- |
+| `base.html` | Base64 / Base32 / Base58 / Base62 / URL 编解码、Hex、Unicode 转义、Punycode |
+| `cipher.html` | 摩尔斯电码、凯撒密码、ROT13、维吉尼亚密码、栅栏密码、培根密码 |
+| `hash.html` | MD5、SHA-1/256/512、8 种 CRC 模型、累加和与异或校验、Adler-32、HMAC（偏向文件与文本摘要） |
+| `number.html` | 金额大写、存储单位换算、幂与开方、对数、因数分解与整除、等差等比数列、字节统计、钢管重量 |
+| `color.html` | RGB / HEX / HSL / HSV / CMYK 互转，附 WCAG 对比度 |
+| `random.html` | 密码生成、随机数、随机点名、MAC 地址（随机源为 `crypto.getRandomValues`） |
+| `net.html` | IPv4 子网划分、MAC 地址解析 |
+| `date.html` | 年龄计算、日期间隔、ISO 周号、时间戳互转 |
+
+要点：
+
+- **目录可搜索可筛选**：支持按名称/说明搜索，可切分类，也可只筛「有本地实现」的条目
+- **与已有页面的分工**：CRC / 累加和 / 异或这三类清单项指向本仓库已有的 `checksum.html`，
+  它按通信协议给预设、宽度与大小端、校验字节，比 `hash.html` 更贴实际组帧；
+  `hash.html` 则偏向文件与文本摘要（MD5、SHA、HMAC、Adler-32）
+- **依赖外部服务的条目只给链接**：图片压缩、二维码生成识别、SSL 证书校验、端口扫描、短链、
+  敏感词检测等需要服务端或第三方库，与「零依赖单文件」冲突，故不本地复刻
+- 本地页与 metools 的计算口径若有差异，以本地页说明为准
+- `docs/tools.html` 由 `tools/gen_tools_page.py` 生成，数据在 `tools/catalog.json`（一次性抓取结果），
+  本地映射在 `tools/local_pages.json`；改完映射重跑脚本即可
+
+### 校验
+
+`tools/check_algos.mjs` 把各工具页的核心算法摘出来与标准测试向量逐条比对，
+改完算法跑一遍：
+
+```bash
+node tools/check_algos.mjs
+# 105 通过, 0 失败
+```
+
+覆盖的向量：
+
+- MD5、SHA-1/256/512 对 RFC 测试向量（`abc`、空串、长输入、中文）
+- CRC 对 CRC RevEng 目录（`123456789` 在 8 种模型下的标准值）
+- Base32/Base58/Base62 对 RFC 4648 与比特币地址样例；Punycode 对 RFC 3492（`中国` → `fiqs8s`、`münchen`）
+- 金额大写覆盖零、整、角、分、负数与跨节补零等边界
+- HMAC-SHA1/256/512 与 Node `crypto` 对照
+- 日期对 ISO 8601 周号边界（如 2021-01-01 属 2020 年第 53 周）
+- 子网掩码连续性、MAC 单播/组播位、WCAG 黑白对比度 21:1
 
 ## 文件 / 文本 MD5 校验
 
@@ -250,18 +305,25 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 ## 使用
 
 页面是零依赖的单文件，直接用浏览器打开 `docs/index.html` 进入工具入口页，
-再点击进入 `docs/calibration.html`、`docs/gold.html`、`docs/flow.html`、`docs/checksum.html`、`docs/md5.html` 五个计算页；
-也可以直接打开任意计算页，或通过静态托管发布（如仓库 Pages / 云原生构建）。
+再点击进入各计算页；`docs/tools.html` 是工具总目录。也可以直接打开任意页面，
+或通过静态托管发布（如仓库 Pages / 云原生构建）。
+
+通用工具页共用 `docs/app.css` 与 `docs/app.js`，是本次为减少重复而抽出的一份公共样式与工具函数
+（取元素、格式化、复制、页签）。其余计算页（`calibration` / `gold` / `flow` / `checksum` / `md5`）
+仍是各自独立的单文件，不受影响。
 
 本地预览：
 
 ```bash
 python3 -m http.server 8899 --directory docs
 # 入口页   http://127.0.0.1:8899/index.html
+# 工具目录 http://127.0.0.1:8899/tools.html
 # 校准页   http://127.0.0.1:8899/calibration.html
 # 黄金页   http://127.0.0.1:8899/gold.html
 # 流量页   http://127.0.0.1:8899/flow.html
 # 校验页   http://127.0.0.1:8899/checksum.html
+# 通用工具 http://127.0.0.1:8899/base.html（同理 base/hash/cipher/number/color/random/net/date）
+#          http://127.0.0.1:8899/hash.html
 # MD5 页   http://127.0.0.1:8899/md5.html
 ```
 
@@ -294,9 +356,16 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 
 ## 结构
 
-- `docs/index.html` — 工具入口页，列五个工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
+- `docs/index.html` — 工具入口页，列计量工具与通用工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
+- `docs/tools.html` — 工具目录页（HTML + CSS + 少量 JS 单文件，用于搜索与筛选）
+- `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（八页共用，避免各写一份）
+- `tools/gen_catalog.py` — 从 metools.info 抓取工具清单，产出 `tools/catalog.json`
+- `tools/gen_tools_page.py` — 由 catalog 与本地映射渲染出 `docs/tools.html`
+- `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验
 - `docs/calibration.html` — 电磁水表流量点校准计算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/gold.html` — 黄金价格换算与斐波那契回调计算页（HTML + CSS + JS 单文件，除汇率自动获取外无外部依赖）
 - `docs/flow.html` — 瞬时流量与流速换算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/checksum.html` — 校验和计算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/md5.html` — 文件 / 文本 MD5 校验页（HTML + CSS + JS 单文件，SHA 系列调用浏览器原生 crypto，无外部依赖）
+- `docs/base.html` / `cipher.html` / `hash.html` / `number.html` / `color.html` / `random.html` / `net.html` / `date.html`
+  — 通用工具页（HTML + CSS + JS，依赖同目录的 `app.css` / `app.js`，无其它外部依赖）
