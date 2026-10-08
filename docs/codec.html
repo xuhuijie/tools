@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>二维码与条形码</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:110px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .canvas-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:12px;min-height:120px;overflow:auto}
+  .canvas-wrap canvas{max-width:100%;image-rendering:pixelated}
+  .svg-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;
+    margin-bottom:12px;overflow:auto;text-align:center}
+  .svg-wrap svg{max-width:100%;height:auto}
+  .drop{border:2px dashed var(--line);border-radius:10px;padding:22px 14px;text-align:center;font-size:13px;
+    color:var(--sub);margin-bottom:12px;background:#fafbfc;cursor:pointer}
+  .drop.on{border-color:var(--primary);background:var(--soft)}
+  .drop img{max-width:100%;max-height:240px;margin-top:10px;border-radius:8px}
+  .row2{display:flex;gap:10px;flex-wrap:wrap}
+  .row2 > *{flex:1 1 130px}
+  .seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .result{font-size:14px;line-height:1.7;background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;margin-bottom:12px;word-break:break-all}
+</style>
+</head>
+<body>
+<header>
+  <h1>二维码与条形码</h1>
+  <p>二维码生成 · 二维码识别 · 条形码生成（Code128 / EAN / UPC 等）</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="qr" class="on">二维码生成</button>
+    <button data-tab="qrread">二维码识别</button>
+    <button data-tab="bar">条形码生成</button>
+  </div>
+
+  <!-- 二维码生成 -->
+  <section class="card" id="panel-qr">
+    <h2>内容</h2>
+    <textarea class="area" id="qr-text">https://cnb.cool</textarea>
+    <div class="row2">
+      <div class="row">
+        <label for="qr-level"><b>容错级别</b></label>
+        <select id="qr-level">
+          <option value="L">L（7%，最省空间）</option>
+          <option value="M" selected>M（15%，常用）</option>
+          <option value="Q">Q（25%）</option>
+          <option value="H">H（30%，可贴 logo）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="qr-size"><b>像素尺寸</b></label>
+        <div class="input-wrap"><input id="qr-size" type="number" inputmode="numeric" step="1" min="64" max="1024" value="300"><span class="unit">px</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <label for="qr-margin"><b>静区（边距，单位：模块数）</b></label>
+      <div class="input-wrap"><input id="qr-margin" type="number" inputmode="numeric" step="1" min="0" max="10" value="4"><span class="unit">模块</span></div>
+    </div>
+    <div class="seg" id="qr-color">
+      <button type="button" data-color="#000000" class="on">黑白</button>
+      <button type="button" data-color="#1668dc">蓝色</button>
+      <button type="button" data-color="#b02a1a">红色</button>
+      <button type="button" data-color="#0f8f74">绿色</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="primary" id="qr-run">生成</button>
+      <button type="button" class="ghost" id="qr-down">下载 PNG</button>
+    </div>
+    <p class="hint" id="qr-msg"></p>
+    <div class="canvas-wrap" id="qr-wrap"></div>
+    <div class="grid" id="qr-stat"></div>
+    <p class="hint">
+      编码用 <code>qrcode-generator</code>，按 ISO/IEC 18004 生成。容错级别越高，同样内容需要的模块越多，
+      但被遮挡或磨损后越容易扫出来；要往中间贴 logo 就选 H。
+    </p>
+  </section>
+
+  <!-- 二维码识别 -->
+  <section class="card" id="panel-qrread" hidden>
+    <h2>上传或拖入二维码图片</h2>
+    <div class="drop" id="qrr-drop">
+      点击选择图片，或把图片拖到这里
+      <br><small>PNG / JPG / WebP 均可，图片不会上传，全部在本地解码</small>
+      <input id="qrr-file" type="file" accept="image/*" hidden>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="qrr-clear">清空</button>
+      <button type="button" class="primary" id="qrr-run">识别</button>
+    </div>
+    <p class="hint" id="qrr-msg"></p>
+    <div class="result" id="qrr-out"></div>
+    <div class="grid" id="qrr-stat"></div>
+    <div class="canvas-wrap" id="qrr-wrap"></div>
+    <p class="hint">
+      解码用 <code>jsQR</code>，按 ZXing 的定位算法找三个角点。识别不出来通常是这几类原因：
+      二维码太小、图被压缩失真、光照不均反光、有遮挡，或图片里根本没有码。
+      可以把原图放大再试，本页会把定位角点画出来，方便判断是没找到码还是解码失败。
+    </p>
+  </section>
+
+  <!-- 条形码 -->
+  <section class="card" id="panel-bar" hidden>
+    <h2>条码类型与内容</h2>
+    <div class="row">
+      <label for="bc-type"><b>类型</b></label>
+      <select id="bc-type">
+        <option value="code128" selected>Code 128（任意 ASCII）</option>
+        <option value="code39">Code 39（大写字母与数字）</option>
+        <option value="ean13">EAN-13（13 位，含校验位）</option>
+        <option value="ean8">EAN-8（8 位，含校验位）</option>
+        <option value="upca">UPC-A（12 位，含校验位）</option>
+        <option value="upce">UPC-E（8 位）</option>
+        <option value="itf14">ITF-14（14 位，含校验位）</option>
+        <option value="code93">Code 93</option>
+        <option value="datamatrix">Data Matrix（二维码变体）</option>
+        <option value="pdf417">PDF417（二维码变体）</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="bc-text"><b>内容</b></label>
+      <input id="bc-text" type="text" value="CNB-2026-0001">
+    </div>
+    <div class="row2">
+      <div class="row">
+        <label for="bc-scale"><b>放大倍数</b></label>
+        <div class="input-wrap"><input id="bc-scale" type="number" inputmode="numeric" step="1" min="1" max="10" value="3"></div>
+      </div>
+      <div class="row">
+        <label for="bc-height"><b>条高（mm，一维码用）</b></label>
+        <div class="input-wrap"><input id="bc-height" type="number" inputmode="numeric" step="1" min="5" max="60" value="15"><span class="unit">mm</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <label><b>显示内容文字</b></label>
+      <select id="bc-include">
+        <option value="1" selected>显示（条码下方打印内容）</option>
+        <option value="0">不显示（纯条码）</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="bc-copy">复制 SVG</button>
+      <button type="button" class="primary" id="bc-run">生成</button>
+    </div>
+    <p class="hint" id="bc-msg"></p>
+    <div class="svg-wrap" id="bc-out"></div>
+    <div class="grid" id="bc-stat"></div>
+    <p class="hint">
+      编码由 <code>bwip-js</code>（Barcode Writer in Pure PostScript 的 JS 版）完成，输出 SVG 矢量图，
+      打印或放大都不糊。EAN/UPC/ITF 的校验位会自动算，输入位数不对会直接报错，不会生成一张扫不出来的图。
+    </p>
+  </section>
+
+  <footer>
+    二维码与条形码全部在浏览器本地生成与识别，图片不上传；生成结果可用于印刷与扫码<br>
+    <a href="./tools.html">← 工具目录</a>·<a href="./index.html">工具入口</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./lib/qrcode-generator.js"></script>
+<script src="./lib/jsqr.js"></script>
+<script src="./lib/bwip-js.js"></script>
+<script src="./codec.js"></script>
+</body>
+</html>

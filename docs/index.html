@@ -63,6 +63,18 @@
   .entry.geo .badge{background:linear-gradient(135deg,#0f766e,#2aa79b)}
   .entry.dev .badge{background:linear-gradient(135deg,#4338ca,#7c74e8)}
   .entry.fin .badge{background:linear-gradient(135deg,#a16207,#e0a83c)}
+  .entry.web .badge{background:linear-gradient(135deg,#0e7490,#22b8d4)}
+  .entry.stat .badge{background:linear-gradient(135deg,#b45309,#e08b2e)}
+  .entry.text .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
+  .entry.game .badge{background:linear-gradient(135deg,#6d28d9,#9b7ce8)}
+  .entry.codec .badge{background:linear-gradient(135deg,#0f766e,#2aa79b)}
+  .entry.pwd .badge{background:linear-gradient(135deg,#b02a6b,#e0559a)}
+  .entry.cert .badge{background:linear-gradient(135deg,#1d4ed8,#5b8def)}
+  .entry.img .badge{background:linear-gradient(135deg,#4338ca,#7c74e8)}
+  .entry.daily .badge{background:linear-gradient(135deg,#0f8f74,#28b492)}
+  .entry.health .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
+  .entry.tax .badge{background:linear-gradient(135deg,#a16207,#e0a83c)}
+  .entry.holiday .badge{background:linear-gradient(135deg,#b02a1a,#e05a4a)}
   .entry-body{flex:1;min-width:0}
   .entry-body .t{display:block;font-size:15px;font-weight:600}
   .entry-body .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
@@ -75,7 +87,7 @@
 <body>
 <header>
   <h1>计量计算工具</h1>
-  <p>计量换算与通用小工具，零依赖单文件</p>
+  <p>计量换算与通用小工具 · 142 个工具全部本地实现</p>
 </header>
 
 <main>
@@ -135,7 +147,7 @@
       <span class="badge">目录</span>
       <span class="entry-body">
         <span class="t">工具目录（142 个）</span>
-        <span class="d">metools.info 全站清单，114 个已本地实现，可离线用</span>
+        <span class="d">metools.info 全站清单，142 个全部有本地实现，断网可用</span>
       </span>
       <span class="arrow">›</span>
     </a>
@@ -172,78 +184,6 @@
       <span class="entry-body">
         <span class="t">个税与健康计算</span>
         <span class="d">工资个税、年终奖（含跳档提醒）、BMI / 体脂、基础代谢</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry clock" href="./security.html">
-      <span class="badge">加密</span>
-      <span class="entry-body">
-        <span class="t">加密与令牌</span>
-        <span class="d">RC4 / Rabbit 流加密、JWT 签名校验、RSA 密钥结构解析</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry net" href="./station.html">
-      <span class="badge">站长</span>
-      <span class="entry-body">
-        <span class="t">站长工具</span>
-        <span class="d">HTTP 状态码速查、User-Agent 分析、robots.txt 生成、公共 DNS</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./text.html">
-      <span class="badge">文字</span>
-      <span class="entry-body">
-        <span class="t">文字与文本</span>
-        <span class="d">一键排版、全半角转换、去重、字数统计、大小写、同义词替换</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry fin" href="./health.html">
-      <span class="badge">健康</span>
-      <span class="entry-body">
-        <span class="t">健康计算</span>
-        <span class="d">eGFR 肾功能、胎儿体重（Hadlock）、预产期、BMI 与内衣尺码</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry gold" href="./life.html">
-      <span class="badge">生活</span>
-      <span class="entry-body">
-        <span class="t">生活计算</span>
-        <span class="d">渐进式延迟退休、含税换算、劳务报酬、国债利息、养老金、放假安排</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry geo" href="./geo.html">
-      <span class="badge">经纬</span>
-      <span class="entry-body">
-        <span class="t">经纬度与坐标系</span>
-        <span class="d">度分秒转换、WGS84/GCJ-02/BD-09 互转、球面距离与方位角</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry random" href="./fun.html">
-      <span class="badge">互动</span>
-      <span class="entry-body">
-        <span class="t">互动小工具</span>
-        <span class="d">舒尔特方格、反应速度测试、点击手速（CPS）、计数器</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./info.html">
-      <span class="badge">信息</span>
-      <span class="entry-body">
-        <span class="t">信息查询</span>
-        <span class="d">身份证解析与校验、百家姓排名、衣服与鞋子尺码对照</span>
       </span>
       <span class="arrow">›</span>
     </a>
@@ -319,6 +259,114 @@
       </span>
       <span class="arrow">›</span>
     </a>
+
+    <a class="entry web" href="./web.html">
+      <span class="badge">网页</span>
+      <span class="entry-body">
+        <span class="t">网页与站长工具</span>
+        <span class="d">源码查看 / Markdown 与 HTML 编辑器 / 定时刷新 / 短链 / robots / 备案 / DNS</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry stat" href="./station2.html">
+      <span class="badge">站点</span>
+      <span class="entry-body">
+        <span class="t">站点诊断</span>
+        <span class="d">HTTP 状态码 66 条速查 / User-Agent 分析与伪造识别 / 端口风险清单</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry text" href="./text2.html">
+      <span class="badge">文本</span>
+      <span class="entry-body">
+        <span class="t">文本与敏感词</span>
+        <span class="d">敏感词检测（含间隔符与拼音变形）/ 同义词替换 / 字数统计 / 去重 / 排版</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry game" href="./game.html">
+      <span class="badge">趣味</span>
+      <span class="entry-body">
+        <span class="t">小游戏与趣味测试</span>
+        <span class="d">在线数独 / 舒尔特方格 / 反应速度 / CPS 手速 / 计数器 / 猜数字 / 种子转磁力</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry codec" href="./codec.html">
+      <span class="badge">条码</span>
+      <span class="entry-body">
+        <span class="t">二维码与条形码</span>
+        <span class="d">二维码生成与识别 / Code128、EAN、UPC、DataMatrix、PDF417 条码生成</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry pwd" href="./crypto.html">
+      <span class="badge">流密码</span>
+      <span class="entry-body">
+        <span class="t">流密码</span>
+        <span class="d">RC4 / Rabbit（RFC 4503），附 9 组标准向量当场自检</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry cert" href="./crypto2.html">
+      <span class="badge">证书</span>
+      <span class="entry-body">
+        <span class="t">证书与密钥</span>
+        <span class="d">SSL 证书解析与风险自查 / 自建 CA 签发 / RSA·EC 密钥与 CSR / JWT 签名验签</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry img" href="./media.html">
+      <span class="badge">图片</span>
+      <span class="entry-body">
+        <span class="t">图片与坐标</span>
+        <span class="d">图片压缩 / 加水印 / 经纬度拾取与 WGS84·GCJ02·BD09 互转 / 可校准的在线尺子</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry daily" href="./life2.html">
+      <span class="badge">日常</span>
+      <span class="entry-body">
+        <span class="t">日常计算</span>
+        <span class="d">油耗四种算法 / 渐进式延迟退休测算 / 国债利息</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry health" href="./health2.html">
+      <span class="badge">健康</span>
+      <span class="entry-body">
+        <span class="t">健康与证件</span>
+        <span class="d">eGFR 与 CKD 分期 / 胎儿体重与预产期 / 身份证解析 / 尺码对照 / 百家姓</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry tax" href="./tax2.html">
+      <span class="badge">税额</span>
+      <span class="entry-body">
+        <span class="t">税额计算</span>
+        <span class="d">增值税四件套互算 / 劳务报酬预扣税 / 年终奖跳档提醒</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="entry holiday" href="./holiday.html">
+      <span class="badge">假期</span>
+      <span class="entry-body">
+        <span class="t">放假安排</span>
+        <span class="d">2025 / 2026 法定节假日与调休日历，含补班日标注</span>
+      </span>
+      <span class="arrow">›</span>
+    </a>
   </section>
 
   <p class="hint">
@@ -326,7 +374,7 @@
   </p>
 
   <footer>
-    计量计算工具集合 · 零依赖单文件 H5 · 工具清单整理自 metools.info
+    计量计算工具集合 · 离线 H5 · 工具清单整理自 metools.info
   </footer>
 </main>
 </body>
