@@ -113,7 +113,7 @@
 <body>
 <header>
   <h1>瞬时流量与流速换算</h1>
-  <p>m³/h ↔ m/s 双向换算，按口径与有效内径占比折算</p>
+  <p>m³/h ↔ m/s 双向换算，按口径与有效内径占比折算，可按脉冲当量折算每秒脉冲数</p>
 </header>
 
 <main>
@@ -148,8 +148,15 @@
           <input id="inset" name="inset" type="number" inputmode="decimal" step="any" placeholder="例如 80" value="100">
           <span class="unit">%</span>
         </div>
-        <div class="hint" id="inset-hint">指有效内径占口径的百分比：等效内径 = 口径 DN × 缩进 ÷ 100。如 DN80 缩进 80% → 内径 64 mm；不缩进填 100。取值大于 0、不超过 100。</div>
       </div>
+      <div class="row">
+        <label for="pulse"><b>脉冲当量</b>（每个脉冲代表的体积，可留空）</label>
+        <div class="input-wrap">
+          <input id="pulse" name="pulse" type="number" inputmode="decimal" step="any" placeholder="例如 10" value="10">
+          <span class="unit">ml</span>
+        </div>
+      </div>
+      <div class="hint" id="hint">指有效内径占口径的百分比：等效内径 = 口径 DN × 缩进 ÷ 100。如 DN80 缩进 80% → 内径 64 mm；不缩进填 100。取值大于 0、不超过 100。脉冲当量填每个脉冲对应的体积（ml），用于折算每秒脉冲数，留空则不显示脉冲频率。</div>
     </section>
 
     <div class="btns">
@@ -168,6 +175,7 @@
     两侧互为输入，改任意一侧即自动换算另一侧<br>
     流速 = 流量 ÷ 3600 ÷ (π × 等效内径² ÷ 4)<br>
     缩进 = 有效内径占口径的百分比：等效内径 = 口径 DN × 缩进 ÷ 100（DN80 缩进 80% → 64 mm）<br>
+    脉冲当量按 ml 计：每秒脉冲数 = 瞬时流量(m³/h) × 1000000 ÷ 脉冲当量(ml) ÷ 3600（留空不显示）<br>
     <a href="./index.html">← 返回首页</a>·<a href="./calibration.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>·<a href="./checksum.html">校验和计算</a>·<a href="./md5.html">MD5 校验</a>
   </footer>
 </main>
@@ -183,6 +191,7 @@
   // 体积流量按 m³/h、流速按 m/s、内径按 mm 计，故 1 m³/h = 1/3600 m³/s，1 mm = 0.001 m
   var SECONDS_PER_HOUR = 3600;
   var MM_PER_M = 1000;
+  var ML_PER_M3 = 1e6;  // 1 m³ = 1e6 ml，脉冲当量按 ml 计
 
   function el(tag, cls, text){
     var node = document.createElement(tag);
@@ -198,23 +207,35 @@
     return isFinite(n) ? n : NaN;
   }
 
-  var INSET_HINT = '指有效内径占口径的百分比：等效内径 = 口径 DN × 缩进 ÷ 100。如 DN80 缩进 80% → 内径 64 mm；不缩进填 100。取值大于 0、不超过 100。';
+  var HINT = '指有效内径占口径的百分比：等效内径 = 口径 DN × 缩进 ÷ 100。如 DN80 缩进 80% → 内径 64 mm；不缩进填 100。取值大于 0、不超过 100。脉冲当量填每个脉冲对应的体积（ml），用于折算每秒脉冲数，留空则不显示脉冲频率。';
+  var FIELDS = ['flow', 'vel', 'dn', 'inset', 'pulse'];
 
   function clearErrors(){
-    ['flow', 'vel', 'dn', 'inset'].forEach(function(id){ $(id).classList.remove('invalid'); });
-    var h = $('inset-hint');
+    FIELDS.forEach(function(id){ $(id).classList.remove('invalid'); });
+    var h = $('hint');
     h.className = 'hint';
-    h.textContent = INSET_HINT;
+    h.textContent = HINT;
   }
 
   // scroll=false 用于输入过程中的实时提示：反复滚动会把视口拽得乱跳
   function showError(msg, id, scroll){
     resultEl.classList.remove('show');
     if (id) $(id).classList.add('invalid');
-    var h = $('inset-hint');
+    var h = $('hint');
     h.className = 'hint err';
     h.textContent = msg;
     if (id && scroll !== false) $(id).scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  // 脉冲当量与每秒脉冲数都跨几个数量级：小到 0.00001 ml，大到上千 Hz。
+  // 固定 3 位小数会把小值压成「0」，故按数量级给位数。
+  function scaledDigits(n){
+    if (!isFinite(n) || n === 0) return 0;
+    var abs = Math.abs(n);
+    if (abs >= 1000) return 0;
+    if (abs >= 1) return 3;
+    if (abs >= 0.001) return 6;
+    return 9;
   }
 
   // 保留指定位小数并去掉长浮点尾巴（如 3.1249999999999996）
@@ -246,7 +267,8 @@
     return velocity * area(d) * SECONDS_PER_HOUR;
   }
 
-  function render(flow, vel, d){
+  function render(flow, vel, d, pulse){
+    var hz = pulse ? flow / ML_PER_M3 / pulse : NaN;
     var main = el('div', 'result-main');
     main.appendChild(el('div', 'k', '流速'));
     var v = el('div', 'v', fmt(vel, 4));
@@ -261,7 +283,9 @@
       ['瞬时流量', fmt(flow, 3) + ' m³/h'],
       ['流速', fmt(vel, 4) + ' m/s'],
       ['口径 DN', fmt($('dn').value === '' ? NaN : readNumber('dn'), 1) + ' mm'],
-      ['有效内径', fmt(d, 2) + ' mm']
+      ['有效内径', fmt(d, 2) + ' mm'],
+      ['脉冲当量', pulse ? fmt(pulse, scaledDigits(pulse)) + ' ml' : '未填'],
+      ['每秒脉冲数', pulse ? fmt(hz, scaledDigits(hz)) + ' Hz' : '—']
     ];
     cells.forEach(function(c){
       var cell = el('div');
@@ -277,7 +301,10 @@
       '<div><code>等效内径 = ' + fmt(readNumber('dn'), 1) + ' mm × ' + fmt(inset, 3) + ' ÷ 100 = ' + fmt(d, 2) + ' mm</code></div>' +
       '<div><code>流通截面积 = π × (' + fmt(d, 2) + ' ÷ 1000 ÷ 2)² ≈ ' + fmt(area(d), 6) + ' m²</code></div>' +
       '<div><code>流速 = ' + fmt(flow, 3) + ' m³/h ÷ 3600 ÷ ' + fmt(area(d), 6) + ' ≈ ' + fmt(vel, 4) + ' m/s</code></div>' +
-      '<div style="margin-top:6px">反向核对：<code>' + fmt(velocityToFlow(vel, d), 3) + ' m³/h = ' + fmt(vel, 4) + ' m/s × ' + fmt(area(d), 6) + ' m² × 3600</code></div>';
+      '<div style="margin-top:6px">反向核对：<code>' + fmt(velocityToFlow(vel, d), 3) + ' m³/h = ' + fmt(vel, 4) + ' m/s × ' + fmt(area(d), 6) + ' m² × 3600</code></div>' +
+      (pulse
+        ? '<div>脉冲频率 = 流量 ÷ 脉冲当量 = <code>' + fmt(flow, 3) + ' m³/h × 1000000 ÷ ' + fmt(pulse, scaledDigits(pulse)) + ' ml ÷ 3600 ≈ ' + fmt(hz, scaledDigits(hz)) + ' 脉冲/s</code></div>'
+        : '<div>脉冲当量未填，不折算脉冲频率</div>');
 
     resultEl.classList.add('show');
     resultEl.scrollIntoView({behavior:'smooth', block:'start'});
@@ -302,6 +329,17 @@
     return v;
   }
 
+  // 脉冲当量：留空按未填处理（不显示脉冲频率）；填了必须是大于 0 的数字
+  function readPulse(){
+    var v = readNumber('pulse');
+    if (v === null) return 0;
+    if (isNaN(v) || v <= 0){
+      showError('脉冲当量需为大于 0 的数字（每个脉冲对应的体积，ml）', 'pulse');
+      return null;
+    }
+    return v;
+  }
+
   // 双向输入的核心：source 标记用户最后编辑的一侧，另一侧据此算出，
   // 保证两个框永远自洽。source='flow' 以流量为准，'vel' 以流速为准。
   function collect(source){
@@ -313,6 +351,9 @@
     var d = effectiveDiameter(dn, inset);
     if (!(d > 0)){ showError('有效内径需大于 0，请检查口径与缩进', 'inset'); return null; }
 
+    var pulse = readPulse();
+    if (pulse === null) return null;
+
     var flow, vel;
     if (source === 'vel'){
       vel = readPositive('vel', '流速');
@@ -323,7 +364,7 @@
       if (flow === null) return null;
       vel = flowToVelocity(flow, d);
     }
-    return { flow: flow, vel: vel, d: d };
+    return { flow: flow, vel: vel, d: d, pulse: pulse };
   }
 
   // 把结果写回「对面」输入框；用户正在编辑的框不动，避免打断输入
@@ -345,14 +386,14 @@
     var data = collect(lastSource);
     if (!data) return;
     syncPair(lastSource, data.flow, data.vel);
-    if (resultEl.classList.contains('show')) render(data.flow, data.vel, data.d);
+    if (resultEl.classList.contains('show')) render(data.flow, data.vel, data.d, data.pulse);
   }
 
   formEl.addEventListener('submit', function(e){
     e.preventDefault();
     clearErrors();
     var data = collect(lastSource);
-    if (data) { syncPair(lastSource, data.flow, data.vel); render(data.flow, data.vel, data.d); }
+    if (data) { syncPair(lastSource, data.flow, data.vel); render(data.flow, data.vel, data.d, data.pulse); }
   });
 
   function resetForm(){
@@ -360,6 +401,7 @@
     $('flow').value = '100';
     $('dn').value = '80';
     $('inset').value = '100';
+    $('pulse').value = '10';
     resultEl.classList.remove('show');
     clearErrors();
     var data = collect('flow');
@@ -388,8 +430,8 @@
     });
   });
 
-  // 口径与缩进只影响换算系数，不改变「谁是源」，因此共用一套处理
-  ['dn', 'inset'].forEach(function(id){
+  // 口径、缩进与脉冲当量只影响换算系数，不改变「谁是源」，因此共用一套处理
+  ['dn', 'inset', 'pulse'].forEach(function(id){
     $(id).addEventListener('input', function(){
       clearErrors();
       recalc();
