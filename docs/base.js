@@ -257,6 +257,7 @@
   function activeOp() { return OPS[current] || OPS.base64; }
 
   function setTab(name) {
+    T.markTab(name);
     current = name;
     var op = activeOp();
     hint.className = 'hint';
@@ -330,5 +331,5 @@
 
   input.addEventListener('input', function () { hint.className = 'hint'; hint.textContent = HINTS[current] || ''; });
 
-  setTab('base64');
+  setTab(T.firstTab('base64'));
 })();

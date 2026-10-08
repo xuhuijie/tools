@@ -343,6 +343,7 @@
 
   var PANELS = ['qr', 'qrread', 'bar'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -357,7 +358,7 @@
 
   qrRun();
   bcRun();
-  setTab('qr');
+  setTab(T.firstTab('qr'));
 
   window.__codec = {
     qrEncode: qrEncode, qrDraw: qrDraw, qrColors: qrColor,

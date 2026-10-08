@@ -929,9 +929,11 @@
 
   var PANELS = ['sdk', 'schulte', 'reaction', 'cps', 'count', 'guess', 'magnet'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
+  setTab(T.firstTab('sdk'));
 
   function cell(k, v) {
     var d = document.createElement('div');

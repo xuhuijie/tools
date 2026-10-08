@@ -744,6 +744,7 @@
 
   var PANELS = ['zip', 'mark', 'gps', 'ruler'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -753,7 +754,7 @@
   gpDist();
   rlLoad();
   rlRun();
-  setTab('zip');
+  setTab(T.firstTab('zip'));
 
   window.__media = {
     fitSize: fitSize, canvasToBlob: canvasToBlob, wmDraw: wmDraw,

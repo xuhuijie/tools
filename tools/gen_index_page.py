@@ -11,6 +11,7 @@
 import html
 import json
 import pathlib
+import re
 import sys
 
 HERE = pathlib.Path(__file__).parent
@@ -100,6 +101,45 @@ DUP_ENTRIES = {
 }
 
 
+# 少数页面没有页签按钮，靠勾选框/分段器切工具，可用的 hash 单独列出
+HASH_TABS = {
+    'checksum.html': {'crc', 'sum', 'xor'},
+}
+
+
+def page_tabs(page):
+    """返回页面能认的 hash 目标：有页签按钮的取 data-tab，没有的查 HASH_TABS。"""
+    if page in HASH_TABS:
+        return HASH_TABS[page]
+    src = (DOCS / page).read_text(encoding='utf-8')
+    box = re.search(r'<div class="tabs" id="tabs">(.*?)</div>', src, re.S)
+    if not box:
+        return set()
+    return set(re.findall(r'data-tab="([a-z0-9]+)"', box.group(1)))
+
+
+def check_entry_tabs(catalog, local):
+    """每条映射都必须指向该页面真实存在的页签，否则首页会跳到一个不存在的锚点。
+
+    清单改名、页面加/删页签都可能让映射失配，跑脚本时直接报错，比线上点了才发现强。
+    """
+    seen = set()
+    for items in catalog.values():
+        for url, meta in items:
+            name = meta['name']
+            if name not in ENTRY_TABS:
+                continue
+            seen.add(name)
+            page = local.get(url)
+            tab = ENTRY_TABS[name]
+            if tab not in page_tabs(page):
+                raise SystemExit(
+                    '%s → %s#%s：%s 里没有这个页签' % (name, page, tab, page))
+    unused = set(ENTRY_TABS) - seen
+    if unused:
+        raise SystemExit('映射里的条目已不在清单：' + '、'.join(sorted(unused)))
+
+
 def collapse(catalog):
     """去掉 DUP_ENTRIES 里的重复入口，返回（新清单, 被去掉的条数）。"""
     dropped = 0
@@ -126,6 +166,130 @@ SPECIAL = [
     ('flow.html', '瞬时流量与流速换算', 'm³/h ↔ m/s 双向换算，按口径与有效内径占比折算', 'flow'),
 ]
 
+# 清单条目 → 目标页面里的页签（data-tab）。
+# 同一张页面装了多个工具，条目不带页签就永远落回页面默认页签——比如「整除计算器」
+# 和「整除数计算器」都指向 number.html，点开都停在「金额大写」，看着像同一个工具。
+# 这里把每条入口钉到它自己的页签上，首页跳转即 page.html#tab，由 app.js 的 T.firstTab 认领。
+# 键为清单条目名，值为 data-tab；页面内部没有页签的功能（放假安排等）不列，用页面默认。
+ENTRY_TABS = {
+    '在线查看网页源代码': 'source',
+    'HTTP状态码': 'http',
+    'URL编码': 'url',
+    '同义词转换器': 'syn',
+    '在线Markdown编辑器': 'markdown',
+    '在线网页HTML编辑器': 'html',
+    '网页自动刷新_在线网址定时刷新工具': 'refresh',
+    '在线短网址生成_短网址在线生成': 'short',
+    '在线uuencode编码解码': 'unicode',
+    'Punycode编码_Punycode转换_中文域名转码': 'punycode',
+    'UserAgent分析，UA查询、检测': 'ua',
+    'Escape加密/UnEscape解密工具': 'hex',
+    '在线端口扫描工具': 'port',
+    '敏感词检测_在线敏感词检测': 'sens',
+    'robots文件生成': 'robots',
+    '网站备案查询': 'icp',
+    'DNS查询/DNS解析': 'dns',
+    'Base64编码': 'base64',
+    'Base62编码': 'base58',
+    'Base58编码解码': 'base58',
+    'Base32解码': 'base32',
+    'ROT13加密解密': 'rot13',
+    'adler32校验和计算器': 'adler',
+    'BCC异或校验和工具': 'xor',
+    'HMAC在线计算工具': 'hmac',
+    '在线格式化JSON_生成格式化JSON工具': 'json',
+    'SSL证书校验_证书文件校验在线': 'ssl',
+    '在线https私有证书生成颁发工具': 'ca',
+    'JWT解密解码': 'jwt',
+    'jwt签名验证': 'jwt',
+    'jwt在线生成': 'jwt',
+    '在线时间戳转换工具_时间戳转换': 'ts',
+    '在线文本对比_代码对比工具': 'diff',
+    'SQL在线格式化工具': 'sql',
+    '培根密码解密加密': 'bacon',
+    '栅栏密码解密【基础型】': 'fence',
+    '在线Rabbit加密解密': 'rabbit',
+    '累加和在线计算': 'sum',
+    '在线RSA公私钥生成': 'rsa',
+    'CRC32在线校验工具': 'crc',
+    '维吉尼亚密码翻译器': 'vigenere',
+    '凯撒密码转换器': 'caesar',
+    '摩尔斯电码转换器': 'morse',
+    '在线RC4加密解密': 'rc4',
+    '整除计算器': 'divide',
+    '经纬度拾取_高德经纬度拾取': 'gps',
+    '等差数列求和公式计算器': 'series',
+    '等比数列求和公式计算器': 'series',
+    '字节数统计在线计算工具': 'bytes',
+    '正方体表面积公式计算器': 'solid',
+    '正方形面积公式计算器_矩形面积公式计算器': 'plane',
+    '梯形周长公式计算器': 'plane',
+    '在线文字排版_文本排版工具': 'tidy',
+    '圆柱体表面积公式计算器': 'solid',
+    '存储单位换算': 'storage',
+    'log计算器_log在线计算器': 'log',
+    '圆锥表面积公式计算': 'solid',
+    '长方体表面积公式计算器': 'solid',
+    '正弦计算器': 'trig',
+    '并联电阻分流计算': 'res',
+    '电阻分压计算器_电阻分压计算公式': 'res',
+    '串联电阻计算器': 'res',
+    '电阻并联计算器_并联电阻计算器': 'res',
+    '反正切函数计算器_反正切函数计算器在线': 'trig',
+    '舒尔特方格在线测试游戏': 'schulte',
+    '大写转换器': 'daxie',
+    '在线数独': 'sdk',
+    'N次方计算器': 'power',
+    '整除数计算器': 'divisor',
+    '开平方根计算器': 'power',
+    'log2为底计算器': 'log',
+    '个人所得税计算器': 'salary',
+    '年终奖计算器_年终奖个税计算器': 'bonus',
+    '在线尺子测量工具': 'ruler',
+    '在线毫秒时钟显示': 'clock',
+    '胎儿体重计算器在线': 'preg',
+    '身份证号提取年龄': 'card',
+    '预产期计算器在线计算': 'preg',
+    '10万国债一年多少利息_国债收益率计算': 'bond',
+    '内衣尺码表_内衣尺码对照表': 'bmi',
+    'egfr计算器_egfr计算公式': 'egfr',
+    '百家姓排名_百家姓': 'name',
+    '体脂率在线计算器': 'bmi',
+    '基础代谢率计算器': 'bmr',
+    '年龄计算器在线计算': 'age',
+    '退休倒计时计算器': 'retire',
+    '时间间隔计算器': 'diff',
+    '退休年龄计算器': 'retire',
+    '油耗计算器': 'fuel',
+    '劳务报酬所得税计算器': 'labor',
+    '税额计算器': 'all',
+    '退休金计算器': 'pension',
+    '个税专项扣除计算器': 'salary',
+    'BMI计算器公式': 'bmi',
+    '文件md5计算': 'md5',
+    '数字小游戏': 'guess',
+    '图片压缩_压缩图片在线工具': 'zip',
+    '在线学生随机点名器': 'roll',
+    '二维码识别_二维码在线识别': 'qrread',
+    '随机密码生成器_生成随机密码': 'pass',
+    '在线秒表毫秒计时器': 'stopwatch',
+    '反应速度测试_测试反应速度': 'reaction',
+    '随机数生成器在线版': 'num',
+    'CPS测试手速测试': 'cps',
+    '钢管重量计算器_计算公式': 'steel',
+    '计数器在线': 'count',
+    '种子转磁力': 'magnet',
+    '今天是第几周_今天第几周': 'week',
+    '子网掩码计算器': 'subnet',
+    '在线秒表': 'stopwatch',
+    '二维码生成器': 'qr',
+    '条形码生成器': 'bar',
+    '在线MAC地址生成器': 'mac',
+}
+
+# 首页条目与页面页签对不上时用来兜底：单页单工具，整页就是这一项
+CHECKSUM_TABS = ('crc', 'sum', 'xor', 'md5')
+
 # 已删除与清单内条目重复的专项页入口：
 #  - checksum.html（校验和计算）与 CRC32 / adler32 / BCC 异或 重复
 #  - md5.html（文件 / 文本 MD5 校验）与「文件md5计算」重复
@@ -141,14 +305,18 @@ def icon_svg(key, cls='ico'):
     return '<svg class="%s" aria-hidden="true"><use href="#ic-%s"/></svg>' % (cls, key)
 
 
-def item_html(href, name, sub, icon_key):
-    """带图标的工具条目：左侧色块图标，右侧名称与副标题。"""
+def item_html(href, name, sub, icon_key, tab=None):
+    """带图标的工具条目：左侧色块图标，右侧名称与副标题。
+
+    带 tab 时链接写成 ./page.html#tab，点开直达该条工具自己的页签。
+    """
     color, soft = index_icons.color_of(icon_key)
+    url = href + ('#' + tab if tab else '')
     return (
         '<a class="item" href="./%s" data-page="%s" style="--ic:%s;--ic-bg:%s">'
         '<span class="thumb">%s</span>'
         '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>'
-        '</a>' % (esc(href), esc(href), color, soft, icon_svg(icon_key), esc(name), esc(sub))
+        '</a>' % (esc(url), esc(href), color, soft, icon_svg(icon_key), esc(name), esc(sub))
     )
 
 
@@ -156,6 +324,7 @@ def main():
     catalog = json.loads((HERE / 'catalog.json').read_text(encoding='utf-8'))
     local = json.loads((HERE / 'local_pages.json').read_text(encoding='utf-8'))
     catalog, dropped = collapse(catalog)
+    check_entry_tabs(catalog, local)
 
     sections, navs = [], []
     total = 0
@@ -170,7 +339,7 @@ def main():
                 raise SystemExit('条目缺少本地实现映射：' + url)
             if page not in pages:
                 pages.append(page)
-            rows.append(item_html(page, meta['name'], PAGE_NAMES[page], index_icons.icon_of(meta['name'])))
+            rows.append(item_html(page, meta['name'], PAGE_NAMES[page], index_icons.icon_of(meta['name']), ENTRY_TABS.get(meta['name'])))
         navs.append(
             '<a class="nav" href="#cat-%s"><b>%s</b><span>%d 项</span></a>'
             % (key, esc(title), len(items))

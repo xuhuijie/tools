@@ -247,6 +247,7 @@
 
   function setTab(name) {
     current = name;
+    T.markTab(name);
     buildFields(FORMS[name]);
     hint.className = 'hint';
     hint.textContent = FORMS[name].hint;
@@ -259,5 +260,5 @@
   $('reset').addEventListener('click', function () { setTab(current); });
   fields.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
 
-  setTab('age');
+  setTab(T.firstTab('age'));
 })();

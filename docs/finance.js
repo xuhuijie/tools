@@ -419,6 +419,7 @@
 
   /* 页签绑定 */
   function showTab(name) {
+    T.markTab(name);
     [].forEach.call($('tabs').querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.tab === name); });
     ['salary', 'bonus', 'bmi', 'bmr'].forEach(function (k) { $('panel-' + k).hidden = k !== name; });
     if (name === 'salary') salaryRun();
@@ -427,6 +428,7 @@
     if (name === 'bmr') bmrRun();
   }
   T.tabs($('tabs'), showTab);
+  showTab(T.firstTab('salary'));
 
   /* 分段选择器通用绑定 */
   function bindSeg(id, key, cb) {

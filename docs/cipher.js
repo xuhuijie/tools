@@ -165,6 +165,7 @@
 
   function setTab(name) {
     current = name;
+    T.markTab(name);
     var op = OPS[name];
     PARAM_ROWS.forEach(function (id) { $(id).style.display = op.params.indexOf(id) >= 0 ? '' : 'none'; });
     hint.className = 'hint';
@@ -199,5 +200,5 @@
   });
   T.bindCopy($('copy'), function () { return output.classList.contains('err') ? '' : output.textContent; });
 
-  setTab('morse');
+  setTab(T.firstTab('morse'));
 })();

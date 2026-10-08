@@ -75,11 +75,42 @@
     btns.forEach(function (b) {
       b.addEventListener('click', function () {
         btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
         onPick(b.dataset.tab, b);
       });
     });
     return btns;
   }
 
-  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs };
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
 })(window);

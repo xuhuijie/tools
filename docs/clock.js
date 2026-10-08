@@ -32,6 +32,7 @@
   var panels = { clock: 'panel-clock', stopwatch: 'panel-stopwatch', timer: 'panel-timer', countdown: 'panel-countdown', zones: 'panel-zones' };
 
   function show(name) {
+    T.markTab(name);
     current = name;
     [].forEach.call(tabsBox.querySelectorAll('button'), function (b) {
       b.classList.toggle('on', b.dataset.tab === name);
@@ -467,6 +468,7 @@
     $('cd-at').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' +
       pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
   })();
+  show(T.firstTab('clock'));
   tm.total = tm.remain = tmRead();
   $('tm-preset').querySelector('button[data-sec="300"]').classList.add('on');
   clkTick();

@@ -350,6 +350,7 @@
   var TAB = 'json';
 
   function showTab(name) {
+    T.markTab(name);
     TAB = name;
     [].forEach.call($('tabs').querySelectorAll('button'), function (b) {
       b.classList.toggle('on', b.dataset.tab === name);
@@ -357,6 +358,7 @@
     ['json', 'sql', 'diff', 'jwt'].forEach(function (k) { $('panel-' + k).hidden = k !== name; });
   }
   T.tabs($('tabs'), showTab);
+  showTab(T.firstTab('json'));
 
   /* JSON 面板 */
   function jsonRun() {

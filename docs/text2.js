@@ -589,6 +589,7 @@
 
   var PANELS = ['sens', 'syn', 'count', 'dedup', 'tidy', 'width', 'case'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -598,7 +599,7 @@
   snRun(); syRun(); ctRun(); ddRun(); tdRun();
   widthRun('half');
   caseRun('upper');
-  setTab('sens');
+  setTab(T.firstTab('sens'));
 
   window.__text2 = {
     SENSITIVE: SENSITIVE, SYNONYMS: SYNONYMS, PINYIN_ALIAS: PINYIN_ALIAS,
