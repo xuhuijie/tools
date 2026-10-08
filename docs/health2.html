@@ -524,8 +524,11 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     });
   }
 
-  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上。
+  // 整站单文件里 No-op：地址栏归页面导航用（见 applyPageHash），页签只活在内存里，
+  // 免得「这一页的 #ssl」被带到下一页去抢页签。
   function syncHash(name) {
+    if (isHost()) return;
     if (!global.history || !global.history.replaceState) return;
     global.history.replaceState(null, '', '#' + name);
   }
@@ -537,13 +540,21 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     return /^[a-z0-9]+$/i.test(h) ? h : null;
   }
 
+  // 页面「认不认」这个页签：不带页签按钮的页面（首页、放假日历、专项页）一律不认，
+  // 别让上一条留在地址里的 #source 之类被它们接了去。
+  function hasTab(name) {
+    var scope = global.__PAGE__ || document;
+    return [].slice.call(scope.querySelectorAll('#tabs button'))
+      .some(function (b) { return b.dataset.tab === name; });
+  }
+
   // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  // 只有「本页真的有这个页签」时才算数：#<页签名> 在整站单文件里是全局的，切页/返回首页
+  // 都会把它带过去，本页没有同名页签就当成没写过——否则上一页的 #ssl 能把这一页顶到默认页签。
   function firstTab(defaultTab) {
     var want = hashTab();
     if (!want) return defaultTab;
-    var btns = [].slice.call((global.__PAGE__ || document).querySelectorAll('#tabs button'));
-    var ok = btns.some(function (b) { return b.dataset.tab === want; });
-    return ok ? want : defaultTab;
+    return hasTab(want) ? want : defaultTab;
   }
 
   // ---- 整站单文件（多页合一）支持 ----
@@ -551,13 +562,27 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
   // 文件」的链接会被拦下，报「文件找不到」。内联只解决了 css/js 子资源，解决不了跨页跳转。
   // 于是把全部页面装进同一个文档、每个页面一个 <section class="page" id="page-xxx.html">，
   // 点链接改成文档内切 section。散装单页里没有这些 section，一切维持原样。
-  // 页面状态只放内存，不写地址栏：#<页签名> 这个通道被页面自己的页签逻辑占着
-  //（如 checksum.html 会把它改写成 #crc），占用它会让页签与切页互相踩。
+  // 地址栏只记「在哪一页」（#page=web.html），页签状态不写地址：#<页签名> 这个通道被
+  // 各页自己的页签逻辑占着（如 checksum.html 会把它改写成 #crc），争它只会互相踩。
   var PAGE_SEL = 'main > section.page';
 
   function isHost() { return !!document.querySelector(PAGE_SEL); }
 
   function pageEl(name) { return document.querySelector(PAGE_SEL + '[data-name="' + name + '"]'); }
+
+  // 单文件里页签只放内存，地址栏改记「当前在哪一页」：#page=web.html。
+  // 记它有两个用处：一是把上一页残留的 #ssl 这类页签顶掉，二是在手机上切后台被浏览器
+  // 回收后重新加载，还能落回原来那一页，而不是一起回到首页。不写也不会坏，只是回到首页。
+  function hashPage() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    var m = /^(?:page=|\/)?([a-z0-9_-]+\.html)$/i.exec(h);
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  function applyPageHash(name) {
+    if (!isHost() || !global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#page=' + name);
+  }
 
   // 切到某页：只显示这一页、把它的脚本拉起来一次（首访），并同步 hash 与标题。
   function go(name) {
@@ -572,16 +597,21 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     });
     global.__PAGE__ = want;
     document.title = (want.dataset.title || name) + ' · 工具合集';
+    applyPageHash(name);
     global.scrollTo(0, 0);
-    // 本页脚本在合成时收进了 <script type="text/plain" data-for="page">，首访才执行：
+    // 本页脚本在合成时收进了 <script type="text/x-page-init">，首访才按顺序逐条执行：
     // 不执行的话，页里那些 document.getElementById 会先撞上别页的同名元素。
-    var lazy = want.querySelector('script[type="text/x-page-init"]');
-    if (lazy && !want.dataset.ready) {
+    // 注意是「逐条」：随页面内联进来的第三方库（DOMPurify、marked、bwip-js）在本页脚本
+    // 之前各占一条，只跑第一条的话，本页脚本永远轮不到，按钮点了没反应、页签也切不动。
+    var lazy = [].slice.call(want.querySelectorAll('script[type="text/x-page-init"]'));
+    if (lazy.length && !want.dataset.ready) {
       want.dataset.ready = '1';
-      var run = document.createElement('script');
-      run.textContent = lazy.textContent;
-      document.body.appendChild(run);
-      run.remove();
+      lazy.forEach(function (src) {
+        var run = document.createElement('script');
+        run.textContent = src.textContent;
+        document.body.appendChild(run);
+        run.remove();
+      });
     }
     return false;
   }
@@ -601,7 +631,10 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
   function boot() {
     if (!isHost()) return;
     if (global.__PAGE__) return;            // 已有活动页，别覆盖
-    go(pageEl('index.html') ? 'index.html' : document.querySelector(PAGE_SEL).dataset.name);
+    var want = hashPage();
+    if (!want || !pageEl(want)) want = pageEl('index.html') ? 'index.html'
+      : document.querySelector(PAGE_SEL).dataset.name;
+    go(want);
     bindNav();
   }
 
@@ -611,7 +644,7 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     boot();
   }
 
-  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab, go: go };
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab, hasTab: hasTab, go: go };
 })(window);
 </script>
 <script>
