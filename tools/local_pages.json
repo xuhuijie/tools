@@ -86,7 +86,7 @@
  "https://www.metools.info/master/refresh195.html": "web.html",
  "https://www.metools.info/master/shorturl180.html": "web.html",
  "https://www.metools.info/master/m117.html": "station2.html",
- "https://www.metools.info/master/m62.html": "web.html",
+ "https://www.metools.info/master/m62.html": "station2.html",
  "https://www.metools.info/master/m56.html": "web.html",
  "https://www.metools.info/master/m38.html": "station2.html",
  "https://www.metools.info/master/m29.html": "text2.html",
@@ -140,5 +140,5 @@
  "https://www.metools.info/other/qrcode397.html": "codec.html",
  "https://www.metools.info/other/barcode396.html": "codec.html",
  "https://www.metools.info/other/codeupc395.html": "codec.html",
- "https://www.metools.info/other/pension376.html": "health2.html"
+ "https://www.metools.info/other/pension376.html": "life2.html"
 }
