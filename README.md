@@ -408,8 +408,17 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 各页原本共用同一套 id（`tabs` / `input` / `output`…），合到一份文档里会互相抢，
 所以 `T.$` 只在当前活动页里找；页内自带的 `$` 定义在打包时改写成走 `T.$`，
-`markTab` / `firstTab` 也只看当前页。页面状态放内存不写地址栏——`#<页签名>`
-这个通道被各页自己的页签逻辑占着（如 `checksum.html` 会把它改写成 `#crc`）。
+`markTab` / `firstTab` 也只看当前页。
+
+一个页面里的脚本**要把 section 里那几条 `script[type="text/x-page-init"]` 逐条跑完**，
+不能只跑第一条：随页面内联进来的第三方库（DOMPurify、marked、bwip-js 等）在本页脚本
+之前各占一条，只跑第一条的话本页脚本永远轮不到——`web.html`（网页源码）、
+`crypto2.html`（证书与密钥）、`codec.html`（二维码）就是这样点按钮没反应、页签也切不动的。
+
+地址栏只记「在哪一页」（`#page=web.html`），页签状态不写地址：`#<页签名>` 这个通道被各页
+自己的页签逻辑占着（如 `checksum.html` 会把它改写成 `#crc`），争它只会互相踩。
+单文件里 `syncHash` 是 no-op，`firstTab` 也要求「本页真有这个页签」才认——
+否则上一页留下的 `#ssl` 会把这一页顶到默认页签。
 
 散装单页不受影响：`app.js` 里没有 `section.page` 时一切照旧，`docs/*.html` 仍可单独打开。
 
@@ -472,6 +481,7 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
 - `tools/index_icons.py` — 首页条目的图标（内联 SVG）与配色映射
 - `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/index.html`，并做重复入口收敛
+- `tools/entry_subs.json` — 首页每条工具的一句话副标题（`gen_index_page.py` 会校验一条都不缺）
 - `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验（815 条断言）
 - `tools/smoke.py` — 无头 Chrome 逐页点遍按钮，收集 JS 报错
 - `tools/check_index_links.py` — 无头 Chrome 逐条打开首页入口，核对落点是不是该条工具自己的页签

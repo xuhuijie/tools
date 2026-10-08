@@ -27,6 +27,12 @@ CATEGORIES = [
     ('other', '小工具', '随机生成、图片处理、趣味测试'),
 ]
 
+# 每条工具的副标题：一句话说清「它是干什么的」，写死在这里而不是抓清单描述。
+# 清单描述是给搜索引擎看的（「在线XX工具，可对...」），句长、重复名称，铺在首页等于没写。
+# 拿不到副标题的条目会退回 PAGE_NAMES[page]（页面名），仅作兜底——正常不该走到。
+ENTRY_SUBS = json.loads((HERE / 'entry_subs.json').read_text(encoding='utf-8'))
+
+
 PAGE_NAMES = {
     'base.html': '编码解码',
     'cipher.html': '古典密码',
@@ -163,6 +169,22 @@ def check_entry_tabs(catalog, local):
     unused = set(ENTRY_TABS) - seen
     if unused:
         raise SystemExit('映射里的条目已不在清单：' + '、'.join(sorted(unused)))
+
+
+def check_entry_subs(catalog):
+    """每条工具的副标题都必须写过，否则首页会显示成页面名（「编码解码」），等于没说。
+
+    清单里改名、去重后新留下的条目，都会在这里当场露出来，不会悄悄退回兜底文案。
+    """
+    missing = [m['name'] for items in catalog.values() for _, m in items
+               if m['name'] not in ENTRY_SUBS and m['name'] not in {t[1] for t in SPECIAL}]
+    if missing:
+        raise SystemExit('这些条目还没有副标题（补进 entry_subs.json）：' + '、'.join(missing))
+    stale = [n for n in ENTRY_SUBS
+             if n not in {m['name'] for items in catalog.values() for _, m in items}
+             and n not in {t[1] for t in SPECIAL}]
+    if stale:
+        raise SystemExit('副标题表里的条目已不在首页：' + '、'.join(stale))
 
 
 def move_entries(catalog):
@@ -511,6 +533,7 @@ def main():
     catalog, moved = move_entries(catalog)
     check_search_alias(catalog)
     check_entry_tabs(catalog, local)
+    check_entry_subs(catalog)
 
     sections, navs = [], []
     total = 0
@@ -525,22 +548,23 @@ def main():
                 raise SystemExit('条目缺少本地实现映射：' + url)
             if page not in pages:
                 pages.append(page)
-            rows.append(item_html(page, meta['name'], PAGE_NAMES[page],
+            rows.append(item_html(page, meta['name'],
+                                  ENTRY_SUBS.get(meta['name'], PAGE_NAMES[page]),
                                   index_icons.icon_of(meta['name']),
                                   ENTRY_TABS.get(meta['name']),
                                   SEARCH_ALIAS.get(meta['name'], '')))
         navs.append(
-            '<a class="nav" href="#cat-%s"><b>%s</b><span>%d 项</span></a>'
+            '<a class="nav" href="#cat-%s">%s<span>%d</span></a>'
             % (key, esc(title), len(items))
         )
         sections.append(
             '<section class="cat" id="cat-%s">\n'
             '  <div class="cat-hd">\n'
-            '    <h2>%s <small>%d 项 · 分类名称</small></h2>\n'
+            '    <h2 id="h-cat-%s">%s <small>%d 项</small></h2>\n'
             '    <p>%s</p>\n'
             '  </div>\n'
             '  <div class="items">\n    %s\n  </div>\n'
-            '</section>' % (key, esc(title), len(items),
+            '</section>' % (key, key, esc(title), len(items),
                             esc(subtitle), '\n    '.join(rows))
         )
 
@@ -564,8 +588,13 @@ def main():
 
 <header>
   <div class="wrap">
-    <h1>工具合集</h1>
-    <p>共 %d 个工具，按分类铺开，搜索直达单项</p>
+    <h1><span class="logo">%s</span>工具合集</h1>
+    <p>全离线可用的浏览器端工具集，打开即算，数据不出本机</p>
+    <div class="stats">
+      <span><b>%d</b>个工具</span>
+      <span><b>%d</b>个分类</span>
+      <span><b>0</b>依赖联网</span>
+    </div>
   </div>
 </header>
 
@@ -633,7 +662,8 @@ def main():
 </script>
 </body>
 </html>
-''' % (index_icons.sprite(), total, len(SPECIAL), specials, '\n    '.join(navs), '\n'.join(sections))
+''' % (index_icons.sprite(), icon_svg('layers'), total, len(CATEGORIES),
+        len(SPECIAL), specials, '\n    '.join(navs), '\n'.join(sections))
 
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
     print('wrote docs/index.html', len(page), 'bytes;', total,
