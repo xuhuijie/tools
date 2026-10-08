@@ -53,14 +53,22 @@ PAGE_NAMES = {
     'holiday.html': '放假安排',
 }
 
-# 本仓库自有的专项工具，不在 142 条清单内；置顶展示
+# 本仓库自有的专项工具，不在 142 条清单内；按主题归位展示
+# 校验和与 MD5 属开发域，并入「开发工具」；其余三项自带区域工具属性，
+# 单列一个分区放在站长工具之前、五大类之上
 SPECIAL = [
     ('calibration.html', '电磁水表流量点校准', '按零点与误差百分比换算各流量点校正值', 'target'),
     ('gold.html', '黄金价格换算', '美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位', 'coin'),
     ('flow.html', '瞬时流量与流速换算', 'm³/h ↔ m/s 双向换算，按口径与有效内径占比折算', 'flow'),
-    ('checksum.html', '校验和计算', 'CRC（60 种预设）/ 累加和 / 异或一次算全，给出校验字节', 'check'),
-    ('md5.html', '文件 / 文本 MD5 校验', '文件分块流式计算不占内存，附 SHA 系列', 'hash'),
 ]
+
+# 并入五大类各分组首页的专项条目：分类键 → 条目
+SPECIAL_IN_CAT = {
+    'code': [
+        ('checksum.html', '校验和计算', 'CRC（60 种预设）/ 累加和 / 异或一次算全，给出校验字节', 'check'),
+        ('md5.html', '文件 / 文本 MD5 校验', '文件分块流式计算不占内存，附 SHA 系列', 'hash'),
+    ],
+}
 
 
 def esc(s):
@@ -94,6 +102,10 @@ def main():
         total += len(items)
         rows = []
         pages = []
+        for page, name, desc, icon_key in SPECIAL_IN_CAT.get(key, []):
+            rows.append(item_html(page, name, desc, icon_key))
+            if page not in pages:
+                pages.append(page)
         for url, meta in items:
             page = local.get(url)
             if not page:
@@ -103,7 +115,7 @@ def main():
             rows.append(item_html(page, meta['name'], PAGE_NAMES[page], index_icons.icon_of(meta['name'])))
         navs.append(
             '<a class="nav" href="#cat-%s"><b>%s</b><span>%d 项 · %d 页</span></a>'
-            % (key, esc(title), len(items), len(pages))
+            % (key, esc(title), len(items) + len(SPECIAL_IN_CAT.get(key, [])), len(pages))
         )
         sections.append(
             '<section class="cat" id="cat-%s">\n'
@@ -112,7 +124,8 @@ def main():
             '    <p>%s</p>\n'
             '  </div>\n'
             '  <div class="items">\n    %s\n  </div>\n'
-            '</section>' % (key, esc(title), len(items), esc(subtitle), '\n    '.join(rows))
+            '</section>' % (key, esc(title), len(items) + len(SPECIAL_IN_CAT.get(key, [])),
+                            esc(subtitle), '\n    '.join(rows))
         )
 
     specials = '\n      '.join(
@@ -149,7 +162,7 @@ def main():
   <section class="cat" id="cat-special">
     <div class="cat-hd">
       <h2>专项工具 <small>%d 项</small></h2>
-      <p>本仓库自有的计算页，不在这 142 项清单内</p>
+      <p>流量、计量与行情相关的自有计算页，不在这 142 项清单内</p>
     </div>
     <div class="items">
       %s
