@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""把 docs/*.html 合成一份自包含的整站单文件 docs/all.html。
+
+为什么需要：内联（tools/inline_pages.py）只解决了 css/js 这类子资源；手机从「下载 /
+文件管理器」打开时走 content:// URI，页面里 ./xxx.html 这种「跳到另一个文件」的链接
+仍会被拦，报「文件找不到」。把全部页面装进同一个文档，跨页跳转变成文档内切 section，
+整站才真正离线可用。
+
+形态：每个页面一个
+    <section class="page" data-name="<文件名>.html" data-title="…" hidden> …该页正文… </section>
+    <script data-page-init>…该页自己的脚本…</script>   ← 收在 section 里，首次切到时才执行
+共用样式与 app.js 只出现一次（放文档顶层）。app.js 见到 main > section.page 就接管导航。
+
+为什么页面脚本要延迟执行：各页共用同一套 id（tabs / input / output…），合到一份文档里
+首屏会互相抢。app.js 的 $ 只在「当前活动页」里找，脚本等切到本页再跑，才各找各的。
+
+各页 <header>（标题副标题）与 <footer>（返回首页）去掉，文档顶部有统一导航。
+输出幂等：跑两遍一致；页数对不上就报错退出。
+"""
+import pathlib
+import re
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+DOCS = ROOT / 'docs'
+OUT = DOCS / 'all.html'
+
+HEAD_RE = re.compile(r'<head>(.*?)</head>', re.S | re.I)
+BODY_RE = re.compile(r'<body>(.*)</body>', re.S | re.I)
+TITLE_RE = re.compile(r'<title>(.*?)</title>', re.S | re.I)
+STYLE_RE = re.compile(r'<style>(.*?)</style>', re.S)
+SCRIPT_RE = re.compile(r'<script>(.*?)</script>', re.S)
+
+# app.js 是各页共用的工具层，单独提出来放文档顶层；其余页面脚本留在各自 section 里延迟跑
+SHARED = 'app.js'
+
+
+# 页内自带的 $ 定义（9 个页面各写一份），合到一份文档里会全站撞 id，必须改成按本页找。
+OWN_DOLLAR_RE = re.compile(
+    r'var\s+\$\s*=\s*function\s*\(\s*id\s*\)\s*\{\s*return\s+document\.getElementById\(id\);\s*\};')
+SCOPED_DOLLAR = ('var $ = function (id) { return T.$(id); };'
+                 '  // 多页合一文档里按当前页找，避免撞别页同名元素')
+
+
+def scope_dollar(code: str) -> str:
+    """把页内自带的 $ 换成走 T.$（T.$ 会先在本页 section 里找）。"""
+    return OWN_DOLLAR_RE.sub(SCOPED_DOLLAR, code)
+
+
+def split(name: str) -> dict:
+    """把一份页面拆成 head 样式、正文、页内脚本。"""
+    text = (DOCS / name).read_text(encoding='utf-8')
+    head = HEAD_RE.search(text)
+    body = BODY_RE.search(text)
+    if not body:
+        raise SystemExit('%s 没有 <body>' % name)
+    t = TITLE_RE.search(head.group(1)) if head else None
+    inner, own_scripts = body.group(1), []
+
+    def pull(m):
+        code = m.group(1)
+        own_scripts.append(code.strip('\n'))
+        return ''
+
+    inner = SCRIPT_RE.sub(pull, inner)
+    own_scripts = [scope_dollar(c) for c in own_scripts]
+    # 页头 / 页脚由文档统一处理
+    inner = re.sub(r'<footer>.*?</footer>', '', inner, flags=re.S)
+    inner = re.sub(r'<header>.*?</header>', '', inner, count=1, flags=re.S)
+    styles = [m.group(1).strip('\n') for m in STYLE_RE.finditer(head.group(1) if head else '')]
+    return {'name': name, 'title': (t.group(1).strip() if t else name),
+            'body': inner.strip(), 'styles': styles, 'scripts': own_scripts}
+
+
+def is_app_js(code: str) -> bool:
+    """app.js 的特征：定义全局 T。"""
+    return 'global.T = {' in code
+
+
+def main() -> int:
+    # app.js 的代码来自 _src 引用的 docs/app.js（已内联进各页，这里单独取原文）
+    app_js = (DOCS / SHARED).read_text(encoding='utf-8').strip('\n')
+
+    names = sorted(p.name for p in DOCS.glob('*.html') if p.name != 'all.html')
+    names.sort(key=lambda n: (n != 'index.html', n))
+    pages = [split(n) for n in names]
+
+    styles, first_page_scripts = [], []
+    for p in pages:
+        styles.extend(p['styles'])
+        # 每页脚本数组里，app.js 只留一份；其余是本页专属
+        p['scripts'] = [c for c in p['scripts'] if not is_app_js(c)]
+    shared_css = (DOCS / 'app.css').read_text(encoding='utf-8').strip('\n')
+    index_css = (DOCS / 'index.css').read_text(encoding='utf-8').strip('\n')
+
+    viewport = next((m for m in re.findall(r'<meta[^>]*>', HEAD_RE.search(
+        (DOCS / 'index.html').read_text(encoding='utf-8')).group(1)) if 'viewport' in m), '')
+
+    secs = []
+    for p in pages:
+        secs.append('<section class="page" data-name="%s" data-title="%s" hidden>'
+                    % (p['name'], p['title'].replace('"', '&quot;')))
+        secs.append(p['body'])
+        for code in p['scripts']:
+            # type 用非 JS 值：浏览器不会在解析时执行，切到本页时由 app.js 取出改写成真脚本再跑
+            secs.append('<script type="text/x-page-init">%s</script>' % code)
+        secs.append('</section>\n')
+
+    doc = ['<!DOCTYPE html>', '<html lang="zh-CN">', '<head>',
+           '<meta charset="UTF-8">', viewport,
+           '<meta name="theme-color" content="#1668dc">',
+           '<title>工具合集</title>',
+           '<style>\n%s\n\n%s\n\n%s\n</style>' % (shared_css, index_css, '\n\n'.join(styles)),
+           '</head>', '<body>',
+           '<nav id="site-nav"><a href="#" data-page="index.html">首页</a></nav>',
+           '<main>'] + secs + ['</main>',
+           '<script>\n%s\n</script>' % app_js,
+           '</body>', '</html>', '']
+    OUT.write_text('\n'.join(doc), encoding='utf-8')
+
+    got = OUT.read_text(encoding='utf-8').count('<section class="page" data-name=')
+    if got != len(pages):
+        raise SystemExit('自检失败：section %d 个，页面 %d 个' % (got, len(pages)))
+    print('wrote docs/all.html（%d 个页面，%.0f KB）' % (len(pages), OUT.stat().st_size / 1024))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
