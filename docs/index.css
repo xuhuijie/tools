@@ -21,6 +21,9 @@ header p{margin:4px 0 0;font-size:12px;opacity:.9}
 .wrap{max-width:1440px;margin:0 auto;padding:0 16px}
 main{max-width:1440px;margin:0 auto;padding:12px 16px 0}
 
+/* 内联图标集：只作 symbol 定义，本身不渲染 */
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+
 /* 概览 */
 .lead{
   display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
@@ -59,27 +62,30 @@ main{max-width:1440px;margin:0 auto;padding:12px 16px 0}
 
 /* 工具条目：窄屏单列，宽屏自动多列铺满 */
 .items{display:grid;grid-template-columns:1fr;gap:10px}
+#cat-special{margin-bottom:16px}
 .item{
-  display:flex;flex-direction:column;gap:4px;
-  min-height:76px;padding:12px 14px;
+  display:flex;align-items:center;gap:10px;
+  min-height:70px;padding:10px 12px;
   background:#fff;border:1px solid var(--line);border-radius:var(--radius);
   text-decoration:none;color:inherit;
+  border-left:3px solid var(--ic,var(--line));
 }
 .item:active{background:#f7f8fa;border-color:var(--soft-line)}
-.item .n{font-size:15px;font-weight:600;line-height:1.4}
-.item .c{font-size:12px;color:var(--sub)}
-
-/* 专项工具 */
-.special-box{margin-bottom:18px}
-.specials{display:grid;grid-template-columns:1fr;gap:10px}
-.special{
-  display:flex;flex-direction:column;gap:4px;
-  padding:12px 14px;background:#fff;border:1px solid var(--line);
-  border-radius:var(--radius);text-decoration:none;color:inherit;
+/* 图标：圆角色块承托，颜色取自该条目的功能域 */
+.thumb{
+  flex:0 0 38px;width:38px;height:38px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ic-bg,#f1f2f4);color:var(--ic,var(--sub));
 }
-.special:active{background:#f7f8fa}
-.special .sn{font-size:15px;font-weight:600}
-.special .sd{font-size:12px;color:var(--sub);line-height:1.45}
+.thumb .ico{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.item .t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.item .n{font-size:14.5px;font-weight:600;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .c{font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 专项工具（置顶） */
+#cat-special .item{background:linear-gradient(180deg,#fff,#fbfcfe)}
 
 .empty{font-size:13px;color:var(--sub);text-align:center;padding:24px 0}
 footer{
@@ -89,14 +95,14 @@ footer{
 
 /* 逐级加宽：手机 1 列 → 平板 2~3 列 → 桌面铺满多列 */
 @media(min-width:520px){
-  .items,.specials{grid-template-columns:repeat(2,1fr)}
+  .items{grid-template-columns:repeat(2,1fr)}
 }
 @media(min-width:768px){
-  .items,.specials{grid-template-columns:repeat(3,1fr)}
+  .items{grid-template-columns:repeat(3,1fr)}
 }
 @media(min-width:1080px){
-  .items,.specials{grid-template-columns:repeat(4,1fr)}
+  .items{grid-template-columns:repeat(4,1fr)}
 }
 @media(min-width:1340px){
-  .items,.specials{grid-template-columns:repeat(5,1fr)}
+  .items{grid-template-columns:repeat(5,1fr)}
 }

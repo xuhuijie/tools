@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""渲染 docs/index.html：142 个工具按分类全列在首页，另附本仓库专项工具入口。
+"""渲染 docs/index.html：专项工具置顶，随后 142 个工具按分类全列在首页。
 
-数据来源 tools/catalog.json（条目与说明）与 tools/local_pages.json（条目 → 本地页）。
-条目本身不带外链，点击即进本地实现页；专项工具（校准 / 黄金 / 流量 / 校验和 / MD5）
-不属于这 142 条，单独成组。
+数据来源 tools/catalog.json（条目与说明）、tools/local_pages.json（条目 → 本地页）
+与 tools/index_icons.py（图标与配色）。条目本身不带外链，点击即进本地实现页。
 
-布局：手机单列，桌面按容器宽度自适应多列铺满；改完映射重跑本脚本即可。
+布局：手机单列，桌面按容器宽度自适应多列铺满；每条带图标与主题色。
+改完映射重跑本脚本即可，输出幂等。
 """
 import html
 import json
 import pathlib
+import sys
 
 HERE = pathlib.Path(__file__).parent
 DOCS = HERE.parent / 'docs'
+sys.path.insert(0, str(HERE))
+import index_icons  # noqa: E402
 
 CATEGORIES = [
     ('master', '站长工具', '域名解析、编码转换、HTTP 与网页相关'),
@@ -50,18 +53,34 @@ PAGE_NAMES = {
     'holiday.html': '放假安排',
 }
 
-# 本仓库自有的专项工具，不在 142 条清单内
+# 本仓库自有的专项工具，不在 142 条清单内；置顶展示
 SPECIAL = [
-    ('calibration.html', '电磁水表流量点校准', '按零点与误差百分比换算各流量点校正值'),
-    ('gold.html', '黄金价格换算', '美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位'),
-    ('flow.html', '瞬时流量与流速换算', 'm³/h ↔ m/s 双向换算，按口径与有效内径占比折算'),
-    ('checksum.html', '校验和计算', 'CRC（60 种预设）/ 累加和 / 异或一次算全，给出校验字节'),
-    ('md5.html', '文件 / 文本 MD5 校验', '文件分块流式计算不占内存，附 SHA 系列'),
+    ('calibration.html', '电磁水表流量点校准', '按零点与误差百分比换算各流量点校正值', 'target'),
+    ('gold.html', '黄金价格换算', '美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位', 'coin'),
+    ('flow.html', '瞬时流量与流速换算', 'm³/h ↔ m/s 双向换算，按口径与有效内径占比折算', 'flow'),
+    ('checksum.html', '校验和计算', 'CRC（60 种预设）/ 累加和 / 异或一次算全，给出校验字节', 'check'),
+    ('md5.html', '文件 / 文本 MD5 校验', '文件分块流式计算不占内存，附 SHA 系列', 'hash'),
 ]
 
 
 def esc(s):
     return html.escape(s, quote=True)
+
+
+def icon_svg(key, cls='ico'):
+    """按图标键输出 <svg><use></svg>。"""
+    return '<svg class="%s" aria-hidden="true"><use href="#ic-%s"/></svg>' % (cls, key)
+
+
+def item_html(href, name, sub, icon_key):
+    """带图标的工具条目：左侧色块图标，右侧名称与副标题。"""
+    color, soft = index_icons.color_of(icon_key)
+    return (
+        '<a class="item" href="./%s" data-page="%s" style="--ic:%s;--ic-bg:%s">'
+        '<span class="thumb">%s</span>'
+        '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>'
+        '</a>' % (esc(href), esc(href), color, soft, icon_svg(icon_key), esc(name), esc(sub))
+    )
 
 
 def main():
@@ -81,12 +100,7 @@ def main():
                 raise SystemExit('条目缺少本地实现映射：' + url)
             if page not in pages:
                 pages.append(page)
-            rows.append(
-                '<a class="item" href="./%s" data-page="%s">'
-                '<span class="n">%s</span>'
-                '<span class="c">%s</span>'
-                '</a>' % (esc(page), esc(page), esc(meta['name']), esc(PAGE_NAMES[page]))
-            )
+            rows.append(item_html(page, meta['name'], PAGE_NAMES[page], index_icons.icon_of(meta['name'])))
         navs.append(
             '<a class="nav" href="#cat-%s"><b>%s</b><span>%d 项 · %d 页</span></a>'
             % (key, esc(title), len(items), len(pages))
@@ -101,13 +115,10 @@ def main():
             '</section>' % (key, esc(title), len(items), esc(subtitle), '\n    '.join(rows))
         )
 
-    specials = []
-    for page, name, desc in SPECIAL:
-        specials.append(
-            '<a class="special" href="./%s">'
-            '<span class="sn">%s</span><span class="sd">%s</span>'
-            '</a>' % (esc(page), esc(name), esc(desc))
-        )
+    specials = '\n      '.join(
+        item_html(page, name, desc, icon_key)
+        for page, name, desc, icon_key in SPECIAL
+    )
 
     page = '''<!DOCTYPE html>
 <html lang="zh-CN">
@@ -119,6 +130,8 @@ def main():
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
+%s
+
 <header>
   <div class="wrap">
     <h1>计量计算工具</h1>
@@ -131,6 +144,16 @@ def main():
     <div class="stat"><b>%d</b><span>个工具</span></div>
     <div class="stat"><b>%d</b><span>个分类</span></div>
     <div class="stat"><b>%d</b><span>张页面</span></div>
+  </section>
+
+  <section class="cat" id="cat-special">
+    <div class="cat-hd">
+      <h2>专项工具 <small>%d 项</small></h2>
+      <p>本仓库自有的计算页，不在这 142 项清单内</p>
+    </div>
+    <div class="items">
+      %s
+    </div>
   </section>
 
   <nav class="cats">
@@ -147,16 +170,6 @@ def main():
 %s
   </div>
 
-  <section class="special-box">
-    <div class="cat-hd">
-      <h2>专项工具</h2>
-      <p>本仓库自有的计算页，不在这 142 项清单内</p>
-    </div>
-    <div class="specials">
-      %s
-    </div>
-  </section>
-
   <footer>
     全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。
   </footer>
@@ -165,8 +178,8 @@ def main():
 <script>
 (function () {
   'use strict';
-  var items = [].slice.call(document.querySelectorAll('#list .item'));
-  var cats = [].slice.call(document.querySelectorAll('#list .cat'));
+  var items = [].slice.call(document.querySelectorAll('.cat .item'));
+  var cats = [].slice.call(document.querySelectorAll('.cat'));
   var q = document.getElementById('q');
   var empty = document.getElementById('empty');
 
@@ -189,8 +202,8 @@ def main():
 </script>
 </body>
 </html>
-''' % (total, total, len(CATEGORIES), len(PAGE_NAMES), '\n    '.join(navs),
-       '\n'.join(sections), '\n      '.join(specials))
+''' % (index_icons.sprite(), total, total, len(CATEGORIES), len(PAGE_NAMES),
+       len(SPECIAL), specials, '\n    '.join(navs), '\n'.join(sections))
 
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
     print('wrote docs/index.html', len(page), 'bytes;', total, 'tools,',
