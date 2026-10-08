@@ -10,7 +10,7 @@
 
 | 页面 | 内容 |
 | --- | --- |
-| `docs/index.html` | 首页：142 个工具按分类铺开，附搜索与专项工具入口 |
+| `docs/index.html` | 首页：专项工具置顶 + 142 个工具按分类铺开，附图标、配色与搜索 |
 | `docs/index.css` | 首页样式（手机单列，宽屏按容器宽度自适应多列） |
 | `docs/calibration.html` | 电磁水表流量点校准计算 |
 | `docs/gold.html` | 黄金价格换算与斐波那契回调计算 |
@@ -255,9 +255,13 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 ```
 ## 首页与工具清单
 
-`docs/index.html` 是唯一入口：**142 个工具**分站长 / 开发 / 学习 / 生活 / 小工具五类全部铺在首页，
-桌面按容器宽度自适应多列铺满，手机单列；顶部有分类导航与搜索框，点任意条目直接进本地实现页。
+`docs/index.html` 是唯一入口：**专项工具置顶**，随后 **142 个工具**分站长 / 开发 / 学习 / 生活 / 小工具
+五类全部铺在首页。桌面按容器宽度自适应多列铺满，手机单列；顶部有分类导航与搜索框，点任意条目直接进本地实现页。
 整站没有外链，标签页里也不出现外部站点名。
+
+每个条目都带**图标与主题色**：图标按工具功能归类（编码、哈希、加解密、几何、健康、财税……），
+同一功能域用同一组「主色 + 浅底色」，视觉上分层。图标是内联 SVG（`<symbol>` + `<use>`），
+不引外部图标库，断网可用；映射表在 `tools/index_icons.py`，改完重跑 `tools/gen_index_page.py` 即可。
 
 这 142 条按主题合并进 25 个实现页，参数与结果都附代入过程便于复核：
 
@@ -405,7 +409,8 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（30 页共用，避免各写一份）
 - `docs/lib/` — 随仓库携带的第三方库（二维码、条码、证书、Markdown 净化），见该目录的 README
 - `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
-- `tools/gen_index_page.py` — 由 catalog 与本地映射渲染出 `docs/index.html`
+- `tools/index_icons.py` — 首页条目的图标（内联 SVG）与配色映射
+- `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/index.html`
 - `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验（797 条断言）
 - `tools/smoke.py` — 无头 Chrome 逐页点遍按钮，收集 JS 报错
 - `tools/vendor.sh` — 重新拉取 `docs/lib/` 下的第三方库（版本号写死，日常不需要跑）
