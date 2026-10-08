@@ -2,380 +2,268 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>计量计算工具</title>
-<style>
-  :root{
-    --bg:#f5f6f8;
-    --card:#fff;
-    --text:#1f2329;
-    --sub:#8a9099;
-    --line:#e8eaed;
-    --primary:#1668dc;
-    --radius:14px;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{
-    background:var(--bg);color:var(--text);
-    font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-    padding-bottom:calc(24px + env(safe-area-inset-bottom));
-  }
-  header{
-    position:sticky;top:0;z-index:10;
-    background:var(--primary);color:#fff;
-    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-  }
-  header h1{margin:0;font-size:17px;font-weight:600}
-  header p{margin:4px 0 0;font-size:12px;opacity:.85}
-  main{max-width:640px;margin:0 auto;padding:12px 12px 0}
-  .card{
-    background:var(--card);border-radius:var(--radius);
-    padding:14px 14px 6px;margin-bottom:12px;
-    box-shadow:0 1px 3px rgba(0,0,0,.05);
-  }
-  .card h2{margin:0 0 10px;font-size:14px;font-weight:600}
-  .entry{
-    display:flex;align-items:center;gap:12px;
-    padding:13px 2px;margin-bottom:12px;
-    text-decoration:none;color:inherit;
-    border-bottom:1px solid var(--line);
-  }
-  .entry:last-child{border-bottom:none;margin-bottom:6px}
-  .entry:active{background:#f7f8fa}
-  .badge{
-    flex:0 0 40px;width:40px;height:40px;border-radius:11px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:13px;font-weight:600;color:#fff;
-    background:linear-gradient(135deg,#1668dc,#3b8bf0);
-  }
-  .entry.gold .badge{background:linear-gradient(135deg,#c9922e,#e8b04b)}
-  .entry.flow .badge{background:linear-gradient(135deg,#0f8f74,#28b492)}
-  .entry.chk .badge{background:linear-gradient(135deg,#6d28d9,#8b5cf6)}
-  .entry.tool .badge{background:linear-gradient(135deg,#6d4bc7,#9b7ce8)}
-  .entry.net .badge{background:linear-gradient(135deg,#b45309,#e08b2e)}
-  .entry.date .badge{background:linear-gradient(135deg,#1d4ed8,#5b8def)}
-  .entry.random .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
-  .entry.md5 .badge{background:linear-gradient(135deg,#b02a6b,#e0559a)}
-  .entry.clock .badge{background:linear-gradient(135deg,#0e7490,#22b8d4)}
-  .entry.geo .badge{background:linear-gradient(135deg,#0f766e,#2aa79b)}
-  .entry.dev .badge{background:linear-gradient(135deg,#4338ca,#7c74e8)}
-  .entry.fin .badge{background:linear-gradient(135deg,#a16207,#e0a83c)}
-  .entry.web .badge{background:linear-gradient(135deg,#0e7490,#22b8d4)}
-  .entry.stat .badge{background:linear-gradient(135deg,#b45309,#e08b2e)}
-  .entry.text .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
-  .entry.game .badge{background:linear-gradient(135deg,#6d28d9,#9b7ce8)}
-  .entry.codec .badge{background:linear-gradient(135deg,#0f766e,#2aa79b)}
-  .entry.pwd .badge{background:linear-gradient(135deg,#b02a6b,#e0559a)}
-  .entry.cert .badge{background:linear-gradient(135deg,#1d4ed8,#5b8def)}
-  .entry.img .badge{background:linear-gradient(135deg,#4338ca,#7c74e8)}
-  .entry.daily .badge{background:linear-gradient(135deg,#0f8f74,#28b492)}
-  .entry.health .badge{background:linear-gradient(135deg,#be185d,#e8578f)}
-  .entry.tax .badge{background:linear-gradient(135deg,#a16207,#e0a83c)}
-  .entry.holiday .badge{background:linear-gradient(135deg,#b02a1a,#e05a4a)}
-  .entry-body{flex:1;min-width:0}
-  .entry-body .t{display:block;font-size:15px;font-weight:600}
-  .entry-body .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
-  .arrow{flex:0 0 auto;color:var(--sub);font-size:16px}
-  .hint{font-size:12px;color:var(--sub);margin:0 0 12px;line-height:1.6}
-  footer{max-width:640px;margin:0 auto;padding:0 14px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
-  footer a{color:var(--primary);text-decoration:none;margin:0 6px}
-</style>
+<link rel="stylesheet" href="./index.css">
 </head>
 <body>
 <header>
-  <h1>计量计算工具</h1>
-  <p>计量换算与通用小工具 · 142 个工具全部本地实现</p>
+  <div class="wrap">
+    <h1>计量计算工具</h1>
+    <p>142 个工具全部本地实现，离线可用</p>
+  </div>
 </header>
 
 <main>
-  <section class="card">
-    <h2>工具入口</h2>
-
-    <a class="entry" href="./calibration.html">
-      <span class="badge">校准</span>
-      <span class="entry-body">
-        <span class="t">电磁水表流量点校准</span>
-        <span class="d">按零点与误差百分比换算各流量点校正值</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry gold" href="./gold.html">
-      <span class="badge">黄金</span>
-      <span class="entry-body">
-        <span class="t">黄金价格换算</span>
-        <span class="d">美元/盎司 ↔ 人民币/克 双向换算，汇率可自动获取</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry flow" href="./flow.html">
-      <span class="badge">流量</span>
-      <span class="entry-body">
-        <span class="t">瞬时流量与流速换算</span>
-        <span class="d">m³/h ↔ m/s 双向换算，按口径与缩进百分比折算</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry chk" href="./checksum.html">
-      <span class="badge">校验</span>
-      <span class="entry-body">
-        <span class="t">校验和计算</span>
-        <span class="d">CRC / 累加和 / 异或 / MD5，一次算全并给出校验字节</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry md5" href="./md5.html">
-      <span class="badge">MD5</span>
-      <span class="entry-body">
-        <span class="t">文件 / 文本 MD5 校验</span>
-        <span class="d">上传文件或输入文本算 MD5，文件分块流式计算，附 SHA 系列</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
+  <section class="lead">
+    <div class="stat"><b>142</b><span>个工具</span></div>
+    <div class="stat"><b>5</b><span>个分类</span></div>
+    <div class="stat"><b>25</b><span>张页面</span></div>
   </section>
 
-  <section class="card">
-    <h2>通用工具</h2>
+  <nav class="cats">
+    <a class="nav" href="#cat-master"><b>站长工具</b><span>24 项 · 5 页</span></a>
+    <a class="nav" href="#cat-code"><b>开发工具</b><span>30 项 · 9 页</span></a>
+    <a class="nav" href="#cat-learn"><b>学习工具</b><span>32 项 · 5 页</span></a>
+    <a class="nav" href="#cat-live"><b>生活工具</b><span>27 项 · 8 页</span></a>
+    <a class="nav" href="#cat-other"><b>小工具</b><span>29 项 · 11 页</span></a>
+  </nav>
 
-    <a class="entry tool" href="./tools.html">
-      <span class="badge">目录</span>
-      <span class="entry-body">
-        <span class="t">工具目录（142 个）</span>
-        <span class="d">metools.info 全站清单，142 个全部有本地实现，断网可用</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
+  <div class="search-row">
+    <input id="q" type="search" placeholder="搜索工具名称或说明，如 编码 / 换算 / 二维码">
+  </div>
 
-    <a class="entry clock" href="./clock.html">
-      <span class="badge">时钟</span>
-      <span class="entry-body">
-        <span class="t">在线时钟</span>
-        <span class="d">时钟（含毫秒）/ 秒表计次 / 计时器 / 倒计时 / 世界时间</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
+  <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
 
-    <a class="entry dev" href="./dev.html">
-      <span class="badge">开发</span>
-      <span class="entry-body">
-        <span class="t">开发工具</span>
-        <span class="d">JSON / SQL 格式化、文本对比（LCS）、JWT 解析</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
+  <div id="list">
+<section class="cat" id="cat-master">
+  <div class="cat-hd">
+    <h2>站长工具 <small>24 项</small></h2>
+    <p>域名解析、编码转换、HTTP 与网页相关</p>
+  </div>
+  <div class="items">
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">在线查看网页源代码</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./station2.html" data-page="station2.html"><span class="n">HTTP状态码</span><span class="c">站点诊断</span></a>
+    <a class="item" href="./text2.html" data-page="text2.html"><span class="n">抖音敏感词</span><span class="c">文本处理</span></a>
+    <a class="item" href="./text2.html" data-page="text2.html"><span class="n">小红书敏感词</span><span class="c">文本处理</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">URL编码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Url解码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./text2.html" data-page="text2.html"><span class="n">同义词转换器</span><span class="c">文本处理</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">在线Markdown编辑器</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">在线网页HTML编辑器</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./color.html" data-page="color.html"><span class="n">在线网页颜色取色器</span><span class="c">颜色转换</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">网页自动刷新_在线网址定时刷新工具</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">在线短网址生成_短网址在线生成</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">在线uuencode编码解码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Punycode编码_Punycode转换_中文域名转码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./station2.html" data-page="station2.html"><span class="n">UserAgent分析，UA查询、检测</span><span class="c">站点诊断</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">在线HTTP状态查询</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">短链接生成器</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Escape加密/UnEscape解密工具</span><span class="c">编码解码</span></a>
+    <a class="item" href="./station2.html" data-page="station2.html"><span class="n">在线端口扫描工具</span><span class="c">站点诊断</span></a>
+    <a class="item" href="./text2.html" data-page="text2.html"><span class="n">敏感词检测_在线敏感词检测</span><span class="c">文本处理</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">robots文件生成</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">网站备案查询</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">DNS查询/DNS解析</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">UrlEncode编码解码</span><span class="c">编码解码</span></a>
+  </div>
+</section>
+<section class="cat" id="cat-code">
+  <div class="cat-hd">
+    <h2>开发工具 <small>30 项</small></h2>
+    <p>编码解码、加解密、校验和、格式化</p>
+  </div>
+  <div class="items">
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Base64编码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Base64解码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Base62编码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Base58编码解码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./base.html" data-page="base.html"><span class="n">Base32解码</span><span class="c">编码解码</span></a>
+    <a class="item" href="./cipher.html" data-page="cipher.html"><span class="n">ROT13加密解密</span><span class="c">古典密码</span></a>
+    <a class="item" href="./hash.html" data-page="hash.html"><span class="n">adler32校验和计算器</span><span class="c">哈希与摘要</span></a>
+    <a class="item" href="./checksum.html" data-page="checksum.html"><span class="n">BCC异或校验和工具</span><span class="c">校验和计算</span></a>
+    <a class="item" href="./hash.html" data-page="hash.html"><span class="n">HMAC在线计算工具</span><span class="c">哈希与摘要</span></a>
+    <a class="item" href="./dev.html" data-page="dev.html"><span class="n">在线格式化JSON_生成格式化JSON工具</span><span class="c">开发工具</span></a>
+    <a class="item" href="./crypto2.html" data-page="crypto2.html"><span class="n">SSL证书校验_证书文件校验在线</span><span class="c">证书与密钥</span></a>
+    <a class="item" href="./crypto2.html" data-page="crypto2.html"><span class="n">在线https私有证书生成颁发工具</span><span class="c">证书与密钥</span></a>
+    <a class="item" href="./dev.html" data-page="dev.html"><span class="n">JWT解密解码</span><span class="c">开发工具</span></a>
+    <a class="item" href="./crypto2.html" data-page="crypto2.html"><span class="n">jwt签名验证</span><span class="c">证书与密钥</span></a>
+    <a class="item" href="./crypto2.html" data-page="crypto2.html"><span class="n">jwt在线生成</span><span class="c">证书与密钥</span></a>
+    <a class="item" href="./dev.html" data-page="dev.html"><span class="n">jwt在线解析</span><span class="c">开发工具</span></a>
+    <a class="item" href="./color.html" data-page="color.html"><span class="n">RGB颜色转换_RGB颜色转换器</span><span class="c">颜色转换</span></a>
+    <a class="item" href="./date.html" data-page="date.html"><span class="n">在线时间戳转换工具_时间戳转换</span><span class="c">日期与时间</span></a>
+    <a class="item" href="./dev.html" data-page="dev.html"><span class="n">在线文本对比_代码对比工具</span><span class="c">开发工具</span></a>
+    <a class="item" href="./dev.html" data-page="dev.html"><span class="n">SQL在线格式化工具</span><span class="c">开发工具</span></a>
+    <a class="item" href="./cipher.html" data-page="cipher.html"><span class="n">培根密码解密加密</span><span class="c">古典密码</span></a>
+    <a class="item" href="./cipher.html" data-page="cipher.html"><span class="n">栅栏密码解密【基础型】</span><span class="c">古典密码</span></a>
+    <a class="item" href="./crypto.html" data-page="crypto.html"><span class="n">在线Rabbit加密解密</span><span class="c">流密码</span></a>
+    <a class="item" href="./checksum.html" data-page="checksum.html"><span class="n">累加和在线计算</span><span class="c">校验和计算</span></a>
+    <a class="item" href="./crypto2.html" data-page="crypto2.html"><span class="n">在线RSA公私钥生成</span><span class="c">证书与密钥</span></a>
+    <a class="item" href="./checksum.html" data-page="checksum.html"><span class="n">CRC32在线校验工具</span><span class="c">校验和计算</span></a>
+    <a class="item" href="./cipher.html" data-page="cipher.html"><span class="n">维吉尼亚密码翻译器</span><span class="c">古典密码</span></a>
+    <a class="item" href="./cipher.html" data-page="cipher.html"><span class="n">凯撒密码转换器</span><span class="c">古典密码</span></a>
+    <a class="item" href="./cipher.html" data-page="cipher.html"><span class="n">摩尔斯电码转换器</span><span class="c">古典密码</span></a>
+    <a class="item" href="./crypto.html" data-page="crypto.html"><span class="n">在线RC4加密解密</span><span class="c">流密码</span></a>
+  </div>
+</section>
+<section class="cat" id="cat-learn">
+  <div class="cat-hd">
+    <h2>学习工具 <small>32 项</small></h2>
+    <p>数学几何、单位换算、物理电子</p>
+  </div>
+  <div class="items">
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">整除计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./media.html" data-page="media.html"><span class="n">经纬度拾取_高德经纬度拾取</span><span class="c">图片与坐标</span></a>
+    <a class="item" href="./media.html" data-page="media.html"><span class="n">经纬度转换度分秒_度分秒转换经纬度</span><span class="c">图片与坐标</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">等差数列求和公式计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">等比数列求和公式计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">字节数统计在线计算工具</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">舒尔特方格训练免费网页版</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">正方体表面积公式计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">平行四边形面积公式计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">正方形面积公式计算器_矩形面积公式计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">梯形周长公式计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./text2.html" data-page="text2.html"><span class="n">在线文字排版_文本排版工具</span><span class="c">文本处理</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">圆柱体表面积公式计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">存储单位换算</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">log计算器_log在线计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">圆锥表面积公式计算</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">长方体表面积公式计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">正弦计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">并联电阻分流计算</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">电阻分压计算器_电阻分压计算公式</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">串联电阻计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">电阻并联计算器_并联电阻计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">tan角度计算器_tan计算器</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">反正切函数计算器_反正切函数计算器在线</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">舒尔特方格在线测试游戏</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">大写转换器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">在线数独</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">N次方计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">整除数计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">开平方根计算器</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./geometry.html" data-page="geometry.html"><span class="n">arctan计算器在线</span><span class="c">几何与电子计算</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">log2为底计算器</span><span class="c">数字与单位</span></a>
+  </div>
+</section>
+<section class="cat" id="cat-live">
+  <div class="cat-hd">
+    <h2>生活工具 <small>27 项</small></h2>
+    <p>健康体征、财税、日期时间</p>
+  </div>
+  <div class="items">
+    <a class="item" href="./holiday.html" data-page="holiday.html"><span class="n">2026年放假安排</span><span class="c">放假安排</span></a>
+    <a class="item" href="./holiday.html" data-page="holiday.html"><span class="n">2025年放假安排</span><span class="c">放假安排</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">个人所得税计算器</span><span class="c">财税与健康</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">年终奖计算器_年终奖个税计算器</span><span class="c">财税与健康</span></a>
+    <a class="item" href="./media.html" data-page="media.html"><span class="n">在线尺子测量工具</span><span class="c">图片与坐标</span></a>
+    <a class="item" href="./clock.html" data-page="clock.html"><span class="n">在线毫秒时钟显示</span><span class="c">在线时钟</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">胎儿体重计算器在线</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">身份证号提取年龄</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">预产期计算器在线计算</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./life2.html" data-page="life2.html"><span class="n">10万国债一年多少利息_国债收益率计算</span><span class="c">日常计算</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">内衣尺码表_内衣尺码对照表</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">egfr计算器_egfr计算公式</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">百家姓排名_百家姓</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">体脂率在线计算器</span><span class="c">财税与健康</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">基础代谢率计算器</span><span class="c">财税与健康</span></a>
+    <a class="item" href="./date.html" data-page="date.html"><span class="n">年龄计算器在线计算</span><span class="c">日期与时间</span></a>
+    <a class="item" href="./life2.html" data-page="life2.html"><span class="n">退休倒计时计算器</span><span class="c">日常计算</span></a>
+    <a class="item" href="./date.html" data-page="date.html"><span class="n">时间间隔计算器</span><span class="c">日期与时间</span></a>
+    <a class="item" href="./life2.html" data-page="life2.html"><span class="n">退休年龄计算器</span><span class="c">日常计算</span></a>
+    <a class="item" href="./life2.html" data-page="life2.html"><span class="n">油耗计算器</span><span class="c">日常计算</span></a>
+    <a class="item" href="./tax2.html" data-page="tax2.html"><span class="n">劳务报酬所得税计算器</span><span class="c">税额计算</span></a>
+    <a class="item" href="./tax2.html" data-page="tax2.html"><span class="n">税额计算器</span><span class="c">税额计算</span></a>
+    <a class="item" href="./life2.html" data-page="life2.html"><span class="n">退休金计算器</span><span class="c">日常计算</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">个税专项扣除计算器</span><span class="c">财税与健康</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">个人所得税计算器在线</span><span class="c">财税与健康</span></a>
+    <a class="item" href="./life2.html" data-page="life2.html"><span class="n">延迟退休计算器2024</span><span class="c">日常计算</span></a>
+    <a class="item" href="./finance.html" data-page="finance.html"><span class="n">BMI计算器公式</span><span class="c">财税与健康</span></a>
+  </div>
+</section>
+<section class="cat" id="cat-other">
+  <div class="cat-hd">
+    <h2>小工具 <small>29 项</small></h2>
+    <p>随机生成、图片处理、趣味测试</p>
+  </div>
+  <div class="items">
+    <a class="item" href="./hash.html" data-page="hash.html"><span class="n">文件md5计算</span><span class="c">哈希与摘要</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">数字小游戏</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./random.html" data-page="random.html"><span class="n">密码生成器_在线密码生成</span><span class="c">随机生成</span></a>
+    <a class="item" href="./media.html" data-page="media.html"><span class="n">图片压缩_压缩图片在线工具</span><span class="c">图片与坐标</span></a>
+    <a class="item" href="./random.html" data-page="random.html"><span class="n">在线学生随机点名器</span><span class="c">随机生成</span></a>
+    <a class="item" href="./codec.html" data-page="codec.html"><span class="n">二维码识别_二维码在线识别</span><span class="c">二维码与条形码</span></a>
+    <a class="item" href="./random.html" data-page="random.html"><span class="n">随机密码生成器_生成随机密码</span><span class="c">随机生成</span></a>
+    <a class="item" href="./media.html" data-page="media.html"><span class="n">图片加水印_图片加水印在线</span><span class="c">图片与坐标</span></a>
+    <a class="item" href="./clock.html" data-page="clock.html"><span class="n">在线秒表毫秒计时器</span><span class="c">在线时钟</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">反应速度测试_测试反应速度</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./random.html" data-page="random.html"><span class="n">随机数生成器在线版</span><span class="c">随机生成</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">反应速度测试的网站</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">CPS测试手速测试</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./number.html" data-page="number.html"><span class="n">钢管重量计算器_计算公式</span><span class="c">数字与单位</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">计数器在线</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./game.html" data-page="game.html"><span class="n">种子转磁力</span><span class="c">趣味测试</span></a>
+    <a class="item" href="./date.html" data-page="date.html"><span class="n">今天是第几周_今天第几周</span><span class="c">日期与时间</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">教育网DNS</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">联通DNS</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">移动DNS</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">电信DNS</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./web.html" data-page="web.html"><span class="n">公共DNS</span><span class="c">网页与站长</span></a>
+    <a class="item" href="./net.html" data-page="net.html"><span class="n">子网掩码计算器</span><span class="c">网络计算</span></a>
+    <a class="item" href="./clock.html" data-page="clock.html"><span class="n">在线秒表</span><span class="c">在线时钟</span></a>
+    <a class="item" href="./codec.html" data-page="codec.html"><span class="n">二维码生成器</span><span class="c">二维码与条形码</span></a>
+    <a class="item" href="./codec.html" data-page="codec.html"><span class="n">条形码生成器</span><span class="c">二维码与条形码</span></a>
+    <a class="item" href="./codec.html" data-page="codec.html"><span class="n">UPC条形码生成器</span><span class="c">二维码与条形码</span></a>
+    <a class="item" href="./health2.html" data-page="health2.html"><span class="n">养老金计算器</span><span class="c">健康与证件</span></a>
+    <a class="item" href="./random.html" data-page="random.html"><span class="n">在线MAC地址生成器</span><span class="c">随机生成</span></a>
+  </div>
+</section>
+  </div>
 
-    <a class="entry geo" href="./geometry.html">
-      <span class="badge">几何</span>
-      <span class="entry-body">
-        <span class="t">几何与电子计算</span>
-        <span class="d">平面/立体图形面积体积、三角函数、串并联与分压分流</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry fin" href="./finance.html">
-      <span class="badge">财税</span>
-      <span class="entry-body">
-        <span class="t">个税与健康计算</span>
-        <span class="d">工资个税、年终奖（含跳档提醒）、BMI / 体脂、基础代谢</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./base.html">
-      <span class="badge">编码</span>
-      <span class="entry-body">
-        <span class="t">编码解码</span>
-        <span class="d">Base64 / Base32 / Base58 / URL / Hex / Unicode / Punycode</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./hash.html">
-      <span class="badge">摘要</span>
-      <span class="entry-body">
-        <span class="t">哈希与校验和</span>
-        <span class="d">MD5 / SHA / CRC / 累加和 / Adler-32 / HMAC</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./cipher.html">
-      <span class="badge">密码</span>
-      <span class="entry-body">
-        <span class="t">古典密码</span>
-        <span class="d">摩尔斯 / 凯撒 / ROT13 / 维吉尼亚 / 栅栏 / 培根</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./number.html">
-      <span class="badge">数字</span>
-      <span class="entry-body">
-        <span class="t">数字与单位</span>
-        <span class="d">金额大写 / 存储单位 / 幂与开方 / 因数 / 数列 / 钢管重量</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tool" href="./color.html">
-      <span class="badge">颜色</span>
-      <span class="entry-body">
-        <span class="t">颜色转换</span>
-        <span class="d">RGB / HEX / HSL / HSV / CMYK 互转，附对比度</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry random" href="./random.html">
-      <span class="badge">随机</span>
-      <span class="entry-body">
-        <span class="t">随机生成</span>
-        <span class="d">密码 / 随机数 / 随机点名 / MAC 地址</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry net" href="./net.html">
-      <span class="badge">网络</span>
-      <span class="entry-body">
-        <span class="t">网络计算</span>
-        <span class="d">IPv4 子网划分 / MAC 地址解析</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry date" href="./date.html">
-      <span class="badge">日期</span>
-      <span class="entry-body">
-        <span class="t">日期与时间</span>
-        <span class="d">年龄计算 / 日期间隔 / 第几周 / 时间戳转换</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry web" href="./web.html">
-      <span class="badge">网页</span>
-      <span class="entry-body">
-        <span class="t">网页与站长工具</span>
-        <span class="d">源码查看 / Markdown 与 HTML 编辑器 / 定时刷新 / 短链 / robots / 备案 / DNS</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry stat" href="./station2.html">
-      <span class="badge">站点</span>
-      <span class="entry-body">
-        <span class="t">站点诊断</span>
-        <span class="d">HTTP 状态码 66 条速查 / User-Agent 分析与伪造识别 / 端口风险清单</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry text" href="./text2.html">
-      <span class="badge">文本</span>
-      <span class="entry-body">
-        <span class="t">文本与敏感词</span>
-        <span class="d">敏感词检测（含间隔符与拼音变形）/ 同义词替换 / 字数统计 / 去重 / 排版</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry game" href="./game.html">
-      <span class="badge">趣味</span>
-      <span class="entry-body">
-        <span class="t">小游戏与趣味测试</span>
-        <span class="d">在线数独 / 舒尔特方格 / 反应速度 / CPS 手速 / 计数器 / 猜数字 / 种子转磁力</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry codec" href="./codec.html">
-      <span class="badge">条码</span>
-      <span class="entry-body">
-        <span class="t">二维码与条形码</span>
-        <span class="d">二维码生成与识别 / Code128、EAN、UPC、DataMatrix、PDF417 条码生成</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry pwd" href="./crypto.html">
-      <span class="badge">流密码</span>
-      <span class="entry-body">
-        <span class="t">流密码</span>
-        <span class="d">RC4 / Rabbit（RFC 4503），附 9 组标准向量当场自检</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry cert" href="./crypto2.html">
-      <span class="badge">证书</span>
-      <span class="entry-body">
-        <span class="t">证书与密钥</span>
-        <span class="d">SSL 证书解析与风险自查 / 自建 CA 签发 / RSA·EC 密钥与 CSR / JWT 签名验签</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry img" href="./media.html">
-      <span class="badge">图片</span>
-      <span class="entry-body">
-        <span class="t">图片与坐标</span>
-        <span class="d">图片压缩 / 加水印 / 经纬度拾取与 WGS84·GCJ02·BD09 互转 / 可校准的在线尺子</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry daily" href="./life2.html">
-      <span class="badge">日常</span>
-      <span class="entry-body">
-        <span class="t">日常计算</span>
-        <span class="d">油耗四种算法 / 渐进式延迟退休测算 / 国债利息</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry health" href="./health2.html">
-      <span class="badge">健康</span>
-      <span class="entry-body">
-        <span class="t">健康与证件</span>
-        <span class="d">eGFR 与 CKD 分期 / 胎儿体重与预产期 / 身份证解析 / 尺码对照 / 百家姓</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry tax" href="./tax2.html">
-      <span class="badge">税额</span>
-      <span class="entry-body">
-        <span class="t">税额计算</span>
-        <span class="d">增值税四件套互算 / 劳务报酬预扣税 / 年终奖跳档提醒</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
-
-    <a class="entry holiday" href="./holiday.html">
-      <span class="badge">假期</span>
-      <span class="entry-body">
-        <span class="t">放假安排</span>
-        <span class="d">2025 / 2026 法定节假日与调休日历，含补班日标注</span>
-      </span>
-      <span class="arrow">›</span>
-    </a>
+  <section class="special-box">
+    <div class="cat-hd">
+      <h2>专项工具</h2>
+      <p>本仓库自有的计算页，不在这 142 项清单内</p>
+    </div>
+    <div class="specials">
+      <a class="special" href="./calibration.html"><span class="sn">电磁水表流量点校准</span><span class="sd">按零点与误差百分比换算各流量点校正值</span></a>
+      <a class="special" href="./gold.html"><span class="sn">黄金价格换算</span><span class="sd">美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位</span></a>
+      <a class="special" href="./flow.html"><span class="sn">瞬时流量与流速换算</span><span class="sd">m³/h ↔ m/s 双向换算，按口径与有效内径占比折算</span></a>
+      <a class="special" href="./checksum.html"><span class="sn">校验和计算</span><span class="sd">CRC（60 种预设）/ 累加和 / 异或一次算全，给出校验字节</span></a>
+      <a class="special" href="./md5.html"><span class="sn">文件 / 文本 MD5 校验</span><span class="sd">文件分块流式计算不占内存，附 SHA 系列</span></a>
+    </div>
   </section>
-
-  <p class="hint">
-    点击任一工具即可进入对应计算页，各页之间也可互相切换。
-  </p>
 
   <footer>
-    计量计算工具集合 · 离线 H5 · 工具清单整理自 metools.info
+    全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。
   </footer>
 </main>
+
+<script>
+(function () {
+  'use strict';
+  var items = [].slice.call(document.querySelectorAll('#list .item'));
+  var cats = [].slice.call(document.querySelectorAll('#list .cat'));
+  var q = document.getElementById('q');
+  var empty = document.getElementById('empty');
+
+  function apply() {
+    var kw = q.value.trim().toLowerCase();
+    var shown = 0;
+    items.forEach(function (a) {
+      var hit = !kw || a.textContent.toLowerCase().indexOf(kw) >= 0;
+      a.hidden = !hit;
+      if (hit) shown++;
+    });
+    cats.forEach(function (c) {
+      c.hidden = !c.querySelector('.item:not([hidden])');
+    });
+    empty.hidden = shown > 0;
+  }
+
+  q.addEventListener('input', apply);
+})();
+</script>
 </body>
 </html>

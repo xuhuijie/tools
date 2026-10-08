@@ -3,15 +3,15 @@
 计量工具 H5 页面集合，直接用浏览器打开即可使用。
 
 **不依赖构建、不依赖网络。** 少数页面携带了第三方库（放在 `docs/lib/`，随仓库提交），
-但仍是「打开 HTML 就能跑」，不需要装环境、也不需要起服务。工具目录里的 142 个工具
+但仍是「打开 HTML 就能跑」，不需要装环境、也不需要起服务。首页收录的 142 个工具
 全部有本地实现。
 
 ## 页面清单
 
 | 页面 | 内容 |
 | --- | --- |
-| `docs/index.html` | 工具入口页 |
-| `docs/tools.html` | 工具目录（metools.info 全站 142 个工具，全部标了本地实现） |
+| `docs/index.html` | 首页：142 个工具按分类铺开，附搜索与专项工具入口 |
+| `docs/index.css` | 首页样式（手机单列，宽屏按容器宽度自适应多列） |
 | `docs/calibration.html` | 电磁水表流量点校准计算 |
 | `docs/gold.html` | 黄金价格换算与斐波那契回调计算 |
 | `docs/flow.html` | 瞬时流量与流速换算 |
@@ -253,13 +253,13 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 累加和 8 位    = 0x0E
 异或 8 位      = 0x08
 ```
-## 工具目录与通用工具
+## 首页与工具清单
 
-参考 [metools.info](https://www.metools.info/) 整理，`docs/tools.html` 收录该站全部 **142 个工具**，
-分站长 / 开发 / 学习 / 生活 / 小工具五类。每条给出官方入口，其中 **77 条**本仓库有等效实现，
-标「本地」可直接跳转，断网也能用。
+`docs/index.html` 是唯一入口：**142 个工具**分站长 / 开发 / 学习 / 生活 / 小工具五类全部铺在首页，
+桌面按容器宽度自适应多列铺满，手机单列；顶部有分类导航与搜索框，点任意条目直接进本地实现页。
+整站没有外链，标签页里也不出现外部站点名。
 
-本地实现按主题合并为 12 个页面，参数与结果都附代入过程便于复核：
+这 142 条按主题合并进 25 个实现页，参数与结果都附代入过程便于复核：
 
 | 页面 | 覆盖的工具 |
 | --- | --- |
@@ -278,7 +278,7 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 
 要点：
 
-- **目录可搜索可筛选**：支持按名称/说明搜索，可切分类，也可只筛「有本地实现」的条目
+- **首页可搜索可跳转**：支持按名称搜索，分类导航锚点直达对应分组
 - **与已有页面的分工**：CRC / 累加和 / 异或这三类清单项指向本仓库已有的 `checksum.html`，
   它按通信协议给预设、宽度与大小端、校验字节，比 `hash.html` 更贴实际组帧；
   `hash.html` 则偏向文件与文本摘要（MD5、SHA、HMAC、Adler-32）
@@ -291,9 +291,8 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
   不靠 tick 累加；页面切到后台被浏览器降频后回来，显示的仍是准确耗时
 - **个税口径写明按估算**：工资走累计预扣预缴，本页用按月等效税率表估算并标注；
   年终奖单独计税的「多发 1 元到手反降」跳档区间会主动提醒
-- 本地页与 metools 的计算口径若有差异，以本地页说明为准
-- `docs/tools.html` 由 `tools/gen_tools_page.py` 生成，数据在 `tools/catalog.json`（一次性抓取结果），
-  本地映射在 `tools/local_pages.json`；改完映射重跑脚本即可
+- 首页由 `tools/gen_index_page.py` 生成，条目数据在 `tools/catalog.json`，
+  条目到实现页的映射在 `tools/local_pages.json`；调整分类或映射后重跑脚本即可
 
 ### 校验
 
@@ -349,9 +348,8 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 ## 使用
 
-直接用浏览器打开 `docs/index.html` 进入工具入口页，再点击进入各计算页；
-`docs/tools.html` 是工具总目录。也可以直接打开任意页面，或通过静态托管发布
-（如仓库 Pages / 云原生构建）。
+直接用浏览器打开 `docs/index.html`：142 个工具按分类全在首页，点击即进对应计算页。
+也可以直接打开任意页面，或通过静态托管发布（如仓库 Pages / 云原生构建）。
 
 不需要构建、不需要装依赖、不需要起服务。少数页面会用 `<script src="./lib/xxx.js">`
 引入随仓库提交的第三方库（见 `docs/lib/README.md`），这些库是离线文件，不联网加载。
@@ -363,8 +361,7 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 ```bash
 python3 -m http.server 8899 --directory docs
-# 入口页   http://127.0.0.1:8899/index.html
-# 工具目录 http://127.0.0.1:8899/tools.html
+# 首页（全部分类） http://127.0.0.1:8899/index.html
 # 校准页   http://127.0.0.1:8899/calibration.html
 # 黄金页   http://127.0.0.1:8899/gold.html
 # 流量页   http://127.0.0.1:8899/flow.html
@@ -403,12 +400,12 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 
 ## 结构
 
-- `docs/index.html` — 工具入口页，列计量工具与通用工具入口（HTML + CSS 单文件，无外部依赖、无 JS）
-- `docs/tools.html` — 工具目录页（HTML + CSS + 少量 JS 单文件，用于搜索与筛选）
+- `docs/index.html` — 首页，142 个工具按分类铺开（HTML + 少量 JS，样式在 `docs/index.css`）
+- `docs/index.css` — 首页样式，含手机单列到桌面五列的响应式断点
 - `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（30 页共用，避免各写一份）
 - `docs/lib/` — 随仓库携带的第三方库（二维码、条码、证书、Markdown 净化），见该目录的 README
-- `tools/gen_catalog.py` — 从 metools.info 抓取工具清单，产出 `tools/catalog.json`
-- `tools/gen_tools_page.py` — 由 catalog 与本地映射渲染出 `docs/tools.html`
+- `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
+- `tools/gen_index_page.py` — 由 catalog 与本地映射渲染出 `docs/index.html`
 - `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验（797 条断言）
 - `tools/smoke.py` — 无头 Chrome 逐页点遍按钮，收集 JS 报错
 - `tools/vendor.sh` — 重新拉取 `docs/lib/` 下的第三方库（版本号写死，日常不需要跑）
