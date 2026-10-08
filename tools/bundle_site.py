@@ -71,6 +71,20 @@ def split(name: str) -> dict:
             'body': inner.strip(), 'styles': styles, 'scripts': own_scripts}
 
 
+# 首页头部的更新按钮：单文件整站里页头被去掉，但它得留着，挂到统一导航条上。
+# 否则 all.html 里就再也没有「更新」入口——而 all.html 恰恰是分发的那一份。
+UPDATE_BTN_RE = re.compile(r'<button[^>]*id="update"[^>]*>.*?</button>', re.S)
+
+
+def update_button() -> str:
+    """取首页头部那颗更新按钮；首页脚本在顶层，别页的 section 看不到它，所以搬到导航条。"""
+    text = (DOCS / 'index.html').read_text(encoding='utf-8')
+    m = UPDATE_BTN_RE.search(text)
+    if not m:
+        raise SystemExit('docs/index.html 里找不到更新按钮（id="update"）')
+    return m.group(0)
+
+
 def is_app_js(code: str) -> bool:
     """app.js 的特征：定义全局 T。"""
     return 'global.T = {' in code
@@ -111,7 +125,8 @@ def main() -> int:
            '<title>工具合集</title>',
            '<style>\n%s\n\n%s\n\n%s\n</style>' % (shared_css, index_css, '\n\n'.join(styles)),
            '</head>', '<body>',
-           '<nav id="site-nav"><a href="#" data-page="index.html">首页</a></nav>',
+           '<nav id="site-nav"><a href="#" data-page="index.html">首页</a>'
+           + update_button() + '</nav>',
            '<main>'] + secs + ['</main>',
            '<script>\n%s\n</script>' % app_js,
            '</body>', '</html>', '']

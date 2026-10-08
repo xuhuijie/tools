@@ -12,6 +12,7 @@ import html
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).parent
@@ -564,8 +565,13 @@ def main():
 
 <header>
   <div class="wrap">
-    <h1>工具合集</h1>
-    <p>共 %d 个工具，按分类铺开，搜索直达单项</p>
+    <div class="hd-row">
+      <div class="hd-t">
+        <h1>工具合集</h1>
+        <p>共 %d 个工具，按分类铺开，搜索直达单项</p>
+      </div>
+      <button type="button" id="update">更新</button>
+    </div>
   </div>
 </header>
 
@@ -630,11 +636,80 @@ def main():
 
   q.addEventListener('input', apply);
 })();
+
+// 更新按钮：内置页面不会自己变，所以按钮不刷新本地文件，而是去仓库拿最新的整站单文件
+// all.html（只读 raw 入口），拿到后直接换掉当前文档——新功能一键到手。
+// 版本用提交时间与短 SHA 做标记：浏览器缓存是跨域拿旧文件最常见的坑，标记一变即知。
+(function () {
+  'use strict';
+  var RAW = 'https://cnb.cool/xhj-2026/caculate/-/raw/main/docs/all.html';
+  var API = 'https://api.cnb.cool/xhj-2026/caculate/-/git/commits?path=docs/all.html&page_size=1';
+  var btn = document.getElementById('update');
+  if (!btn) return;
+  var text = btn.textContent;
+  // 本页自己的版本号写在 script 标签上；这个值只在脚本执行的当口取得到
+  // （document.currentScript 只在执行期间有效），所以先攥在手里，等下再比。
+  var here = (document.currentScript && document.currentScript.getAttribute('data-version')) || '';
+
+  function say(msg, sticky) {
+    btn.textContent = msg;
+    if (sticky) return;
+    setTimeout(function () { btn.textContent = text; }, 2600);
+  }
+
+  function stamp(sha, date) {
+    var at = new Date(date);
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    return (isNaN(at.getTime()) ? '' : at.getFullYear() + '-' + pad(at.getMonth() + 1) + '-' +
+      pad(at.getDate()) + ' ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' ') +
+      String(sha || '').slice(0, 7);
+  }
+
+  // 版本只作提示：页面自报的版本（打包时写进 data-version）与仓库最新提交比一下，
+  // 一致标成「已是最新」，不一致亮「有新版本」。查不到就安静跳过，按钮照常能用。
+  function checkVersion() {
+    if (!window.fetch) return;
+    fetch(API, { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (list) {
+        var c = list && list[0];
+        if (!c || !c.sha) return;
+        var latest = stamp(c.sha, c.commit && c.commit.committer && c.commit.committer.date);
+        console.log('[更新] 当前 ' + (here || '(pages 版本)') + '，仓库最新 ' + latest);
+        say(here === c.sha ? '已是最新' : '有新版本', false);
+      })
+      .catch(function (e) { console.warn('[更新] 版本查询失败：' + e.message); });
+  }
+
+  // 点击即把最新整站换到当前文档：不起 fetch（跨域读取还要 CORS 点头），
+  // 直接让浏览器把 raw 当文档加载最稳，顺带把地址固定到 raw，下次打开也是新版。
+  btn.addEventListener('click', function () {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    say('更新中…', true);
+    location.replace(RAW + (RAW.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now());
+  });
+
+  window.addEventListener('load', checkVersion);
+})();
 </script>
 </body>
 </html>
 ''' % (index_icons.sprite(), total, len(SPECIAL), specials, '\n    '.join(navs), '\n'.join(sections))
 
+    # 首页脚本的 <script> 打上版本（commit SHA）：页面的更新按钮靠它判断「已是最新」还是
+    # 「有新版本」。_src 是可编辑源（inline_pages.py 由它产出 docs/index.html），docs 是
+    # 打包产物；两处都写，且版本号先打好——否则 inline_pages 一跑就把产物盖回没版本的样子。
+    try:
+        rev = subprocess.check_output(
+            ['git', 'log', '-1', '--format=%H', '--', 'docs/all.html'],
+            cwd=str(DOCS.parent), text=True).strip() or 'unknown'
+    except Exception:
+        rev = 'unknown'
+    page = page.replace(
+        '<script>\n(function () {\n  \'use strict\';\n  var items',
+        '<script data-version="%s">\n(function () {\n  \'use strict\';\n  var items' % rev)
+    (DOCS / '_src' / 'index.html').write_text(page, encoding='utf-8')
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
     print('wrote docs/index.html', len(page), 'bytes;', total,
           'tools（去重 %d 条，分类重排 %d 条）,' % (dropped, moved),
