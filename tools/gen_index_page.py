@@ -20,10 +20,10 @@ sys.path.insert(0, str(HERE))
 import index_icons  # noqa: E402
 
 CATEGORIES = [
-    ('master', '站长工具', '域名解析、编码转换、HTTP 与网页相关'),
+    ('master', '站长工具', '域名解析、HTTP 与网页、站点诊断'),
     ('code', '开发工具', '编码解码、加解密、校验和、格式化'),
-    ('learn', '学习工具', '数学几何、单位换算、物理电子'),
-    ('live', '生活工具', '健康体征、财税、日期时间'),
+    ('learn', '学习工具', '数学几何、单位换算、物理电子、文本处理'),
+    ('live', '生活工具', '健康体征、财税、日期时间、图片与坐标'),
     ('other', '小工具', '随机生成、图片处理、趣味测试'),
 ]
 
@@ -101,6 +101,20 @@ DUP_ENTRIES = {
 }
 
 
+# 清单里的条目名带「站长 / 网页」字样，但功能其实属于别的分类，一直挂在站长工具下：
+#  - 同义词转换器、敏感词检测：文本处理，与「文本处理」页里的排版 / 大小写 / 去重是一组
+#  - 在线文字排版：同上
+#  - 经纬度拾取、在线尺子：图片与坐标
+# 值写分类键，条目搬到该分类末尾；分类键写错或条目已不在清单里会直接报错。
+CAT_MOVES = {
+    '同义词转换器': 'learn',
+    '敏感词检测_在线敏感词检测': 'learn',
+    '在线文字排版_文本排版工具': 'learn',
+    '经纬度拾取_高德经纬度拾取': 'live',
+    '在线尺子测量工具': 'live',
+}
+
+
 # 少数页面没有页签按钮，靠勾选框/分段器切工具，可用的 hash 单独列出
 HASH_TABS = {
     'checksum.html': {'crc', 'sum', 'xor'},
@@ -116,6 +130,17 @@ def page_tabs(page):
     if not box:
         return set()
     return set(re.findall(r'data-tab="([a-z0-9]+)"', box.group(1)))
+
+
+def check_search_alias(catalog):
+    """搜索别名表的键必须都能在清单里找到，否则清单改名后会静默失效。"""
+    names = set()
+    for items in catalog.values():
+        for url, meta in items:
+            names.add(meta['name'])
+    for name in SEARCH_ALIAS:
+        if name not in names and name not in {t[1] for t in SPECIAL}:
+            raise SystemExit('搜索别名指向的条目已不在清单：' + name)
 
 
 def check_entry_tabs(catalog, local):
@@ -138,6 +163,39 @@ def check_entry_tabs(catalog, local):
     unused = set(ENTRY_TABS) - seen
     if unused:
         raise SystemExit('映射里的条目已不在清单：' + '、'.join(sorted(unused)))
+
+
+def move_entries(catalog):
+    """把 CAT_MOVES 里的条目搬到目标分类，返回（新清单, 搬动条数）。
+
+    不搬的话它们会一直挂在原分类里——分类是抓清单时定的，
+    但「这个功能算哪一类」是人的判断，改清单不如在这里显式写一笔。
+    """
+    names = {}
+    for key, items in catalog.items():
+        for url, meta in items:
+            names.setdefault(meta['name'], (key, url))
+    moved = 0
+    for name, dest in CAT_MOVES.items():
+        if dest not in catalog:
+            raise SystemExit('分类重排指向了不存在的分类：' + dest)
+        if name not in names:
+            raise SystemExit('分类重排指向的条目已不在清单：' + name)
+        src, url = names[name]
+        if src == dest:
+            continue
+        catalog[dest].append((url, dict(names_url_meta(catalog, src, url))))
+        catalog[src] = [(u, m) for u, m in catalog[src] if u != url]
+        moved += 1
+    return catalog, moved
+
+
+def names_url_meta(catalog, key, url):
+    """取回某条目在原分类里的描述文本。"""
+    for u, m in catalog[key]:
+        if u == url:
+            return m
+    raise SystemExit('找不到条目：' + url)
 
 
 def collapse(catalog):
@@ -296,6 +354,130 @@ CHECKSUM_TABS = ('crc', 'sum', 'xor', 'md5')
 # 两个页面文件保留，仍可从 hash.html 与 checksum.html 互链进入
 
 
+# 清单条目名与页面生成的条目名对不上，或多半没人照全名搜时，补一组搜索别名。
+# 站长工具下的 18 条是抓清单时定名的，长这样：「敏感词检测_在线敏感词检测」「UserAgent分析，UA查询、检测」，
+# 简称覆盖率比开发 / 学习 / 生活几类低，搜「敏感」得先想到后半截「敏感词检测」。
+# 这里给每条补上人真正会敲的词，搜索按「别名 + 副标题 + 名称」匹配，任意命中即显示。
+SEARCH_ALIAS = {
+    '在线查看网页源代码': '源码 源代码 网页源码 查看源码 view source',
+    'HTTP状态码': 'http 状态码 状态码查询 404 500',
+    'URL编码': 'url url编码 url解码 urlencode urldecode 转义',
+    '同义词转换器': '同义词 近义词 替换 伪原创',
+    '在线Markdown编辑器': 'markdown md 编辑器 预览',
+    '在线网页HTML编辑器': 'html 网页编辑 富文本 可视化编辑',
+    '在线网页颜色取色器': '颜色 取色器 色板 色值 调色',
+    '网页自动刷新_在线网址定时刷新工具': '刷新 定时刷新 自动刷新 网页刷新',
+    '在线短网址生成_短网址在线生成': '短链 短网址 短url 压缩链接',
+    '在线uuencode编码解码': 'uuencode uudecode 编码 解码',
+    'Punycode编码_Punycode转换_中文域名转码': 'punycode 中文域名 域名转码',
+    'UserAgent分析，UA查询、检测': 'ua useragent 浏览器标识 设备识别',
+    'Escape加密/UnEscape解密工具': 'escape unescape 转义 unicode转义',
+    '在线端口扫描工具': '端口 端口扫描 开放端口 端口检测',
+    '敏感词检测_在线敏感词检测': '敏感 敏感词 违禁词 敏感词检测',
+    'robots文件生成': 'robots robots.txt 爬虫协议',
+    '网站备案查询': '备案 icp 备案号 备案查询',
+    'DNS查询/DNS解析': 'dns 域名解析 解析 ip查询 域名查询',
+    'Base64编码': 'base64 base 编码 解码',
+    'Base62编码': 'base62 base 编码',
+    'Base58编码解码': 'base58 base 编码 解码',
+    'Base32解码': 'base32 base 编码 解码',
+    'ROT13加密解密': 'rot13 rot 凯撒 位移',
+    'adler32校验和计算器': 'adler32 adler 校验和 checksum',
+    'BCC异或校验和工具': 'bcc 异或 xor 校验和',
+    'HMAC在线计算工具': 'hmac 签名 消息认证',
+    '在线格式化JSON_生成格式化JSON工具': 'json 格式化 校验 压缩',
+    'SSL证书校验_证书文件校验在线': 'ssl 证书 证书解析 证书校验 https',
+    '在线https私有证书生成颁发工具': 'ca 证书 自签 签发 私有证书 https',
+    'JWT解密解码': 'jwt token 解析 解码',
+    'jwt签名验证': 'jwt 签名 验签 校验',
+    'jwt在线生成': 'jwt 生成 token 签发',
+    'RGB颜色转换_RGB颜色转换器': 'rgb hex 颜色 色值 转换',
+    '在线时间戳转换工具_时间戳转换': '时间戳 unix timestamp 转换 毫秒',
+    '在线文本对比_代码对比工具': '对比 diff 文本对比 差异 代码对比',
+    'SQL在线格式化工具': 'sql 格式化 美化 压缩',
+    '培根密码解密加密': '培根 bacon 密码 加密',
+    '栅栏密码解密【基础型】': '栅栏 fence 密码 加密',
+    '在线Rabbit加密解密': 'rabbit 流密码 加密 解密',
+    '累加和在线计算': '累加和 求和 checksum 校验',
+    '在线RSA公私钥生成': 'rsa 公钥 私钥 密钥',
+    'CRC32在线校验工具': 'crc crc32 校验 crc16',
+    '维吉尼亚密码翻译器': '维吉尼亚 vigenere 密码 加密',
+    '凯撒密码转换器': '凯撒 caesar 密码 位移',
+    '摩尔斯电码转换器': '摩尔斯 摩斯 morse 电码',
+    '在线RC4加密解密': 'rc4 流密码 加密 解密',
+    '整除计算器': '整除 除法 商 余数',
+    '等差数列求和公式计算器': '等差 数列 求和 数列求和',
+    '等比数列求和公式计算器': '等比 数列 求和 数列求和',
+    '字节数统计在线计算工具': '字节 字数 byte 大小统计',
+    '正方体表面积公式计算器': '正方体 表面积 立方体',
+    '正方形面积公式计算器_矩形面积公式计算器': '面积 正方形 矩形 长方形 平行四边形',
+    '梯形周长公式计算器': '梯形 周长 面积',
+    '圆柱体表面积公式计算器': '圆柱 表面积 圆柱体',
+    '存储单位换算': '存储 单位换算 kb mb gb tb',
+    'log计算器_log在线计算器': 'log 对数 log2 lg',
+    '圆锥表面积公式计算': '圆锥 表面积 圆锥体',
+    '长方体表面积公式计算器': '长方体 表面积',
+    '正弦计算器': '正弦 正切 三角 sin cos tan',
+    '并联电阻分流计算': '电阻 并联 分流',
+    '电阻分压计算器_电阻分压计算公式': '电阻 分压 电压',
+    '串联电阻计算器': '电阻 串联',
+    '电阻并联计算器_并联电阻计算器': '电阻 并联',
+    '反正切函数计算器_反正切函数计算器在线': '反正切 arctan 反三角 三角函数',
+    '舒尔特方格在线测试游戏': '舒尔特 方格 注意力 专注力',
+    '大写转换器': '大写 金额大写 数字大写 人民币',
+    '在线数独': '数独 sudoku',
+    'N次方计算器': '次方 幂 开方 方根',
+    '整除数计算器': '整除 因数 约数 因子',
+    '开平方根计算器': '开方 平方根 sqrt 根号',
+    'log2为底计算器': 'log2 对数',
+    '个人所得税计算器': '个税 个税计算 工资 到手工资 个税专项',
+    '年终奖计算器_年终奖个税计算器': '年终奖 个税 奖金',
+    '在线尺子测量工具': '尺子 测量 长度 屏幕尺',
+    '在线毫秒时钟显示': '时钟 毫秒 时间',
+    '胎儿体重计算器在线': '胎儿 体重 孕检 胎儿体重',
+    '身份证号提取年龄': '身份证 年龄 证件 校验',
+    '预产期计算器在线计算': '预产期 怀孕 孕周',
+    '10万国债一年多少利息_国债收益率计算': '国债 利息 收益率',
+    '内衣尺码表_内衣尺码对照表': '内衣 尺码 胸围 罩杯',
+    'egfr计算器_egfr计算公式': 'egfr 肾小球 肾功能 肌酐',
+    '百家姓排名_百家姓': '百家姓 姓氏 排名',
+    '体脂率在线计算器': '体脂 体脂率 体脂率计算',
+    '基础代谢率计算器': '基础代谢 bmr 代谢',
+    '年龄计算器在线计算': '年龄 周岁 生日',
+    '退休倒计时计算器': '退休 倒计时',
+    '时间间隔计算器': '时间间隔 日期差 间隔天数',
+    '退休年龄计算器': '退休 退休年龄 延迟退休',
+    '油耗计算器': '油耗 百公里油耗 耗油',
+    '劳务报酬所得税计算器': '劳务报酬 劳务费 个税',
+    '税额计算器': '税 税额 增值税 税金',
+    '退休金计算器': '退休金 养老金 退休工资',
+    '个税专项扣除计算器': '个税 专项扣除 专项附加扣除',
+    'BMI计算器公式': 'bmi 体重指数 胖瘦',
+    '文件md5计算': 'md5 摘要 校验 文件校验',
+    '数字小游戏': '猜数字 小游戏 游戏',
+    '图片压缩_压缩图片在线工具': '图片 压缩 图片压缩 图片处理 水印',
+    '在线学生随机点名器': '点名 随机点名 抽人',
+    '二维码识别_二维码在线识别': '二维码 扫码 识别 解析',
+    '随机密码生成器_生成随机密码': '密码 随机密码 密码生成',
+    '在线秒表毫秒计时器': '秒表 计时 毫秒 计时器',
+    '反应速度测试_测试反应速度': '反应 反应速度 反应测试',
+    '随机数生成器在线版': '随机数 随机数字',
+    'CPS测试手速测试': 'cps 手速 点击速度',
+    '钢管重量计算器_计算公式': '钢管 重量 钢材',
+    '计数器在线': '计数器 计数',
+    '种子转磁力': '种子 磁力 bt 磁力链接',
+    '今天是第几周_今天第几周': '周 周数 第几周 星期',
+    '子网掩码计算器': '子网掩码 子网 ip 网段',
+    '在线秒表': '秒表 计时',
+    '二维码生成器': '二维码 生成 二维码生成',
+    '条形码生成器': '条形码 条码 code128 ean upc',
+    '在线MAC地址生成器': 'mac 物理地址 网卡地址',
+    '电磁水表流量点校准': '校准 电磁水表 流量点',
+    '黄金价格换算': '黄金 金价 盎司',
+    '瞬时流量与流速换算': '流量 流速 瞬时流量',
+}
+
+
 def esc(s):
     return html.escape(s, quote=True)
 
@@ -305,18 +487,20 @@ def icon_svg(key, cls='ico'):
     return '<svg class="%s" aria-hidden="true"><use href="#ic-%s"/></svg>' % (cls, key)
 
 
-def item_html(href, name, sub, icon_key, tab=None):
+def item_html(href, name, sub, icon_key, tab=None, keywords=''):
     """带图标的工具条目：左侧色块图标，右侧名称与副标题。
 
     带 tab 时链接写成 ./page.html#tab，点开直达该条工具自己的页签。
+    keywords 写进 data-kw，搜索时一并匹配——别名只给搜索用，不占版面。
     """
     color, soft = index_icons.color_of(icon_key)
     url = href + ('#' + tab if tab else '')
+    kw = (' data-kw="%s"' % esc(keywords)) if keywords else ''
     return (
-        '<a class="item" href="./%s" data-page="%s" style="--ic:%s;--ic-bg:%s">'
+        '<a class="item" href="./%s" data-page="%s"%s style="--ic:%s;--ic-bg:%s">'
         '<span class="thumb">%s</span>'
         '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>'
-        '</a>' % (esc(url), esc(href), color, soft, icon_svg(icon_key), esc(name), esc(sub))
+        '</a>' % (esc(url), esc(href), kw, color, soft, icon_svg(icon_key), esc(name), esc(sub))
     )
 
 
@@ -324,6 +508,8 @@ def main():
     catalog = json.loads((HERE / 'catalog.json').read_text(encoding='utf-8'))
     local = json.loads((HERE / 'local_pages.json').read_text(encoding='utf-8'))
     catalog, dropped = collapse(catalog)
+    catalog, moved = move_entries(catalog)
+    check_search_alias(catalog)
     check_entry_tabs(catalog, local)
 
     sections, navs = [], []
@@ -339,7 +525,10 @@ def main():
                 raise SystemExit('条目缺少本地实现映射：' + url)
             if page not in pages:
                 pages.append(page)
-            rows.append(item_html(page, meta['name'], PAGE_NAMES[page], index_icons.icon_of(meta['name']), ENTRY_TABS.get(meta['name'])))
+            rows.append(item_html(page, meta['name'], PAGE_NAMES[page],
+                                  index_icons.icon_of(meta['name']),
+                                  ENTRY_TABS.get(meta['name']),
+                                  SEARCH_ALIAS.get(meta['name'], '')))
         navs.append(
             '<a class="nav" href="#cat-%s"><b>%s</b><span>%d 项</span></a>'
             % (key, esc(title), len(items))
@@ -347,7 +536,7 @@ def main():
         sections.append(
             '<section class="cat" id="cat-%s">\n'
             '  <div class="cat-hd">\n'
-            '    <h2>%s <small>%d 项</small></h2>\n'
+            '    <h2>%s <small>%d 项 · 分类名称</small></h2>\n'
             '    <p>%s</p>\n'
             '  </div>\n'
             '  <div class="items">\n    %s\n  </div>\n'
@@ -356,7 +545,8 @@ def main():
         )
 
     specials = '\n      '.join(
-        item_html(page, name, desc, icon_key)
+        item_html(page, name, desc, icon_key,
+                  keywords=SEARCH_ALIAS.get(name, ''))
         for page, name, desc, icon_key in SPECIAL
     )
 
@@ -420,8 +610,10 @@ def main():
     var kw = q.value.trim().toLowerCase();
     var hits = 0;
     items.forEach(function (a) {
-      // 只按本条目自己的文字判定，命中即单独显示这一条
-      var hit = !kw || a.textContent.toLowerCase().indexOf(kw) >= 0;
+      // 只按本条目自己的文字判定，命中即单独显示这一条。
+      // 名称与副标题之外，再看 data-kw 里为搜索专写的别名。
+      var hit = !kw || ((a.textContent + ' ' + (a.getAttribute('data-kw') || ''))
+        .toLowerCase().indexOf(kw) >= 0);
       a.hidden = !hit;
       if (hit) hits++;
     });
@@ -444,8 +636,9 @@ def main():
 ''' % (index_icons.sprite(), total, len(SPECIAL), specials, '\n    '.join(navs), '\n'.join(sections))
 
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
-    print('wrote docs/index.html', len(page), 'bytes;', total, 'tools（去重 %d 条）,' %
-          dropped, len(PAGE_NAMES), 'pages')
+    print('wrote docs/index.html', len(page), 'bytes;', total,
+          'tools（去重 %d 条，分类重排 %d 条）,' % (dropped, moved),
+          len(PAGE_NAMES), 'pages')
 
 
 if __name__ == '__main__':
