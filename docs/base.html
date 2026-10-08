@@ -5,7 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>编码解码</title>
-<link rel="stylesheet" href="./app.css">
+<style>
+/* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1f2329;--sub:#8a9099;--line:#e8eaed;
+  --primary:#1668dc;--primary-press:#0f52b3;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --warn:#d4380d;--ok:#0f8f74;--radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+header h1{margin:0;font-size:17px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 0}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:14px 14px 2px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card h2{margin:0 0 10px;font-size:14px;font-weight:600}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.row label b{color:var(--text);font-weight:500}
+.input-wrap{position:relative;display:flex;align-items:center}
+input[type="number"],input[type="text"],input[type="datetime-local"],select{
+  width:100%;height:46px;padding:0 12px;
+  font-size:16px;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;font-family:inherit;
+}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus,select:focus{border-color:var(--primary);background:#fff}
+input.invalid{border-color:var(--warn);background:#fff2ef}
+.input-wrap .unit{position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none}
+.input-wrap input[type="number"]{padding-right:64px}
+textarea{
+  width:100%;min-height:130px;padding:10px 12px;
+  font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--primary);background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:10px;margin:2px 0 14px}
+.btns button{flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none}
+.btns button.primary{background:var(--primary);color:#fff}
+.btns button.primary:active{background:var(--primary-press)}
+.btns button.ghost{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+.btns.three button.ghost{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{
+  padding:0 12px;height:32px;font-size:13px;color:var(--primary);
+  background:var(--soft);border:1px solid var(--soft-line);border-radius:9px;
+}
+.chips button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hint{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.5}
+.hint.err{color:var(--warn)}
+.out{
+  font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;
+}
+.out:empty{display:none}
+.out.mono-lg{font-size:15px}
+.out.err{color:var(--warn);background:#fff2ef;border-color:#ffd6cf}
+.out.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.grid div{background:#fff;padding:10px 12px}
+.grid .k{font-size:12px;color:var(--sub)}
+.grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+.formula{
+  font-size:12px;color:var(--sub);line-height:1.6;
+  background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+  word-break:break-all;
+}
+.formula .t{color:var(--text);font-weight:600}
+.formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);word-break:break-all}
+th{color:var(--sub);font-weight:500}
+td.num{font-family:ui-monospace,Menlo,Consolas,monospace}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pick button{
+  padding:0 12px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--text);border:1px solid var(--line);
+}
+.pick button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.list{margin:0 0 12px;padding:0;list-style:none}
+.list li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.list li:last-child{border-bottom:none}
+.list a{color:var(--primary);text-decoration:none;font-weight:500}
+.list .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tabs button{
+  flex:0 0 auto;padding:0 14px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--sub);border:1px solid var(--line);
+}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+footer{max-width:1280px;margin:0 auto;padding:0 16px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+@media(max-width:360px){.grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header>
@@ -49,7 +160,460 @@
   </footer>
 </main>
 
-<script src="./app.js"></script>
-<script src="./base.js"></script>
+<script>
+/* 工具页共用小工具：取元素、格式化、复制、页签切换 */
+(function (global) {
+  'use strict';
+
+  // 复制到剪贴板：HTTPS/本地才用异步 API，其余回退到 execCommand
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(text); });
+    }
+    return Promise.resolve(legacy(text));
+  }
+
+  function legacy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  // 保留 digits 位小数并去掉长浮点尾巴
+  function fmt(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', { maximumFractionDigits: d });
+  }
+
+  // 写回输入框的数值，避免 0.30000000000000004 这类尾巴
+  function fmtInput(n, digits) {
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(digits == null ? 6 : digits)));
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // 在容器内渲染 label/value 网格
+  function cells(container, pairs) {
+    container.innerHTML = '';
+    pairs.forEach(function (p) {
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', p[0]));
+      cell.appendChild(el('div', 'v', p[1]));
+      container.appendChild(cell);
+    });
+  }
+
+  // 复制按钮通用绑定：btn 复制 target 的文本，成功后短暂改文案
+  function bindCopy(btn, getText, doneText) {
+    if (!btn) return;
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      var text = getText();
+      if (!text) return;
+      copy(text).then(function () {
+        btn.textContent = doneText || '已复制';
+        setTimeout(function () { btn.textContent = original; }, 1200);
+      });
+    });
+  }
+
+  // 页签：buttons 为一组按钮，onPick 收到 data-tab
+  function tabs(container, onPick) {
+    var btns = [].slice.call(container.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
+        onPick(b.dataset.tab, b);
+      });
+    });
+    return btns;
+  }
+
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
+})(window);
+</script>
+<script>
+/* 编码解码：Base64 / Base32 / Base58 / Base62 / URL / Hex / Unicode 转义 / Punycode */
+(function () {
+  'use strict';
+  var $ = T.$, input = $('input'), output = $('output'), hint = $('hint'), tab = 'base64';
+
+  var HINTS = {
+    base64: 'Base64 编码：文本 → UTF-8 字节 → 64 进制字符集，末尾用 = 补齐。解码时自动忽略换行与空格。',
+    base58: 'Base58/Base62：Base58 去掉了 0 O I l 等易混字符，常用于比特币地址；Base62 使用 0-9A-Za-z。',
+    base32: 'Base32：5 位一组映射到 A-Z2-7 共 32 个字符，末尾用 = 补齐，常用于 TOTP 密钥等场景。',
+    url: 'URL 编码（百分号编码）：把中文与 URL 特殊字符转成 %XX。解码时也认 + 为空格。',
+    hex: 'Hex：把文本按 UTF-8 字节转成十六进制，空格分隔便于阅读；解码时忽略空格与换行。',
+    unicode: 'Unicode 转义：中文转 \\uXXXX 形式（JS 转义）；也支持 \\u{1F600} 与 HTML 实体 &#xXXXX; 的解码。',
+    punycode: 'Punycode：中文域名转 ACE 形式（如 中国.cn → xn--fiqs8s.cn），用于 DNS 解析。'
+  };
+
+  // ---------- UTF-8 字节 <-> 字符串 ----------
+  function toBytes(s) { return new TextEncoder().encode(s); }
+  function fromBytes(b) { return new TextDecoder('utf-8', { fatal: false }).decode(b); }
+
+  function bytesToBin(bytes) {
+    var out = '';
+    for (var i = 0; i < bytes.length; i++) out += String.fromCharCode(bytes[i]);
+    return out;
+  }
+  function binToBytes(bin) {
+    var b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i) & 0xff;
+    return b;
+  }
+
+  // ---------- Base64 ----------
+  function b64Encode(s) { return btoa(bytesToBin(toBytes(s))); }
+  function b64Decode(s) {
+    var clean = s.replace(/[\s=]+$/, '').replace(/\s/g, '');
+    return fromBytes(binToBytes(atob(clean)));
+  }
+
+  // ---------- Base32 (RFC 4648) ----------
+  var B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  function b32Encode(s) {
+    var bytes = toBytes(s), bits = '', out = '';
+    for (var i = 0; i < bytes.length; i++) bits += bytes[i].toString(2).padStart(8, '0');
+    for (var j = 0; j < bits.length; j += 5) {
+      var chunk = bits.substr(j, 5);
+      out += B32[parseInt(chunk.padEnd(5, '0'), 2)];
+    }
+    while (out.length % 8) out += '=';
+    return out;
+  }
+  function b32Decode(s) {
+    var clean = s.replace(/[\s=]/g, '').toUpperCase(), bits = '';
+    for (var i = 0; i < clean.length; i++) {
+      var idx = B32.indexOf(clean[i]);
+      if (idx < 0) throw new Error('Base32 含非法字符：' + clean[i]);
+      bits += idx.toString(2).padStart(5, '0');
+    }
+    var bytes = [];
+    for (var j = 0; j + 8 <= bits.length; j += 8) bytes.push(parseInt(bits.substr(j, 8), 2));
+    return fromBytes(new Uint8Array(bytes));
+  }
+
+  // ---------- Base58 / Base62 ----------
+  var B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  var B62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+  // 任意进制编码：把字节当大端大整数处理
+  function radixEncode(s, alphabet) {
+    var bytes = toBytes(s), zeros = 0;
+    while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
+    var digits = [0];
+    for (var i = zeros; i < bytes.length; i++) {
+      var carry = bytes[i];
+      for (var j = 0; j < digits.length; j++) {
+        carry += digits[j] << 8;
+        digits[j] = carry % alphabet.length;
+        carry = (carry / alphabet.length) | 0;
+      }
+      while (carry) { digits.push(carry % alphabet.length); carry = (carry / alphabet.length) | 0; }
+    }
+    var out = alphabet[0].repeat(zeros);
+    for (var d = digits.length - 1; d >= 0; d--) out += alphabet[digits[d]];
+    return out;
+  }
+
+  function radixDecode(str, alphabet) {
+    var bytes = [0];
+    for (var i = 0; i < str.length; i++) {
+      var val = alphabet.indexOf(str[i]);
+      if (val < 0) throw new Error('含非法字符：' + str[i]);
+      var carry = val;
+      for (var j = 0; j < bytes.length; j++) {
+        carry += bytes[j] * alphabet.length;
+        bytes[j] = carry & 0xff;
+        carry >>= 8;
+      }
+      while (carry) { bytes.push(carry & 0xff); carry >>= 8; }
+    }
+    for (var k = 0; k < str.length && str[k] === alphabet[0]; k++) bytes.push(0);
+    bytes.reverse();
+    return fromBytes(new Uint8Array(bytes));
+  }
+
+  // ---------- URL ----------
+  function urlEncode(s) { return encodeURIComponent(s); }
+  function urlDecode(s) {
+    return decodeURIComponent(s.replace(/\+/g, '%20'));
+  }
+
+  // ---------- Hex ----------
+  function hexEncode(s) {
+    return Array.prototype.map.call(toBytes(s), function (b) {
+      return b.toString(16).padStart(2, '0');
+    }).join(' ');
+  }
+  function hexDecode(s) {
+    var clean = s.replace(/0x/gi, '').replace(/[^0-9a-fA-F]/g, '');
+    if (clean.length % 2) throw new Error('十六进制位数需为偶数，当前 ' + clean.length + ' 位');
+    var bytes = [];
+    for (var i = 0; i < clean.length; i += 2) bytes.push(parseInt(clean.substr(i, 2), 16));
+    return fromBytes(new Uint8Array(bytes));
+  }
+
+  // ---------- Unicode 转义 ----------
+  function unicodeEncode(s) {
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var cp = s.codePointAt(i);
+      if (cp > 0xffff) {
+        out += '\\u{' + cp.toString(16).toUpperCase() + '}';
+        i++; // 代理对占两个 code unit
+      } else {
+        out += '\\u' + cp.toString(16).toUpperCase().padStart(4, '0');
+      }
+    }
+    return out;
+  }
+  function unicodeDecode(s) {
+    return s
+      .replace(/\\u\{([0-9a-fA-F]+)\}/g, function (_, h) { return String.fromCodePoint(parseInt(h, 16)); })
+      .replace(/\\u([0-9a-fA-F]{4})/g, function (_, h) { return String.fromCharCode(parseInt(h, 16)); })
+      .replace(/&#x([0-9a-fA-F]+);/g, function (_, h) { return String.fromCodePoint(parseInt(h, 16)); })
+      .replace(/&#(\d+);/g, function (_, d) { return String.fromCodePoint(Number(d)); });
+  }
+
+  // ---------- Punycode (RFC 3492) ----------
+  var PBASE = 36, TMIN = 1, TMAX = 26, SKEW = 38, DAMP = 700, INITIAL_BIAS = 72, INITIAL_N = 128;
+  function adapt(delta, numPoints, firstTime) {
+    delta = firstTime ? Math.floor(delta / DAMP) : delta >> 1;
+    delta += Math.floor(delta / numPoints);
+    var k = 0;
+    while (delta > ((PBASE - TMIN) * TMAX) >> 1) { delta = Math.floor(delta / (PBASE - TMIN)); k += PBASE; }
+    return k + Math.floor((PBASE - TMIN + 1) * delta / (delta + SKEW));
+  }
+  function digitToChar(d) { return String.fromCharCode(d < 26 ? d + 97 : d + 22); }
+  function charToDigit(c) { return c.charCodeAt(0) - 48 < 10 ? c.charCodeAt(0) - 22 : c.charCodeAt(0) - 65 < 26 ? c.charCodeAt(0) - 65 : c.charCodeAt(0) - 97; }
+
+  function punycodeEncode(input) {
+    var n = INITIAL_N, delta = 0, bias = INITIAL_BIAS, output = [];
+    var codePoints = Array.from(input);
+    var basic = codePoints.filter(function (c) { return c.codePointAt(0) < 0x80; });
+    var handled = basic.length;
+    output = output.concat(basic);
+    if (handled) output.push('-');
+    while (handled < codePoints.length) {
+      var m = Infinity;
+      codePoints.forEach(function (c) { var cp = c.codePointAt(0); if (cp >= n && cp < m) m = cp; });
+      if (m === Infinity) throw new Error('Punycode 编码失败：无法推进');
+      delta += (m - n) * (handled + 1);
+      n = m;
+      codePoints.forEach(function (c) {
+        var cp = c.codePointAt(0);
+        if (cp < n) delta++;
+        if (cp === n) {
+          var q = delta, k;
+          for (k = PBASE; ; k += PBASE) {
+            var t = k <= bias ? TMIN : (k >= bias + TMAX ? TMAX : k - bias);
+            if (q < t) break;
+            output.push(digitToChar(t + (q - t) % (PBASE - t)));
+            q = Math.floor((q - t) / (PBASE - t));
+          }
+          output.push(digitToChar(q));
+          bias = adapt(delta, handled + 1, handled === basic.length);
+          delta = 0;
+          handled++;
+        }
+      });
+      delta++;
+      n++;
+    }
+    return output.join('');
+  }
+
+  function punycodeDecode(input) {
+    var n = INITIAL_N, i = 0, bias = INITIAL_BIAS, output = [];
+    var delim = input.lastIndexOf('-');
+    var basic = delim >= 0 ? input.slice(0, delim) : '';
+    var rest = delim >= 0 ? input.slice(delim + 1) : input;
+    for (var b = 0; b < basic.length; b++) output.push(basic.charCodeAt(b));
+    var idx = 0;
+    while (idx < rest.length) {
+      var oldi = i, w = 1, k;
+      for (k = PBASE; ; k += PBASE) {
+        if (idx >= rest.length) throw new Error('Punycode 编码不完整');
+        var digit = charToDigit(rest[idx++]);
+        i += digit * w;
+        var t = k <= bias ? TMIN : (k >= bias + TMAX ? TMAX : k - bias);
+        if (digit < t) break;
+        w *= PBASE - t;
+      }
+      var len = output.length + 1;
+      bias = adapt(i - oldi, len, oldi === 0);
+      n += Math.floor(i / len);
+      i %= len;
+      output.splice(i++, 0, n);
+    }
+    return String.fromCodePoint.apply(String, output);
+  }
+
+  // 域名整体转换：逐段（label）转 Punycode，保留端口与路径
+  function domainToAscii(domain) {
+    var m = domain.match(/^([^/]*)([\s\S]*)$/);
+    var hostPart = m[1], tail = m[2];
+    return hostPart.split('.').map(function (label) {
+      if (!label || /^[\x00-\x7f]*$/.test(label)) return label.toLowerCase();
+      return 'xn--' + punycodeEncode(label.toLowerCase());
+    }).join('.') + tail;
+  }
+  function domainToUnicode(domain) {
+    var m = domain.match(/^([^/]*)([\s\S]*)$/);
+    var hostPart = m[1], tail = m[2];
+    return hostPart.split('.').map(function (label) {
+      if (!/^xn--/i.test(label)) return label;
+      try { return punycodeDecode(label.slice(4).toLowerCase()); } catch (e) { return label; }
+    }).join('.') + tail;
+  }
+
+  // ---------- 调度 ----------
+  var OPS = {
+    base64: { enc: b64Encode, dec: b64Decode, decLabel: 'Base64 解码' },
+    base58: { enc: function (s) { return radixEncode(s, B58); }, dec: function (s) { return radixDecode(s.trim(), B58); } },
+    base62: { enc: function (s) { return radixEncode(s, B62); }, dec: function (s) { return radixDecode(s.trim(), B62); } },
+    base32: { enc: b32Encode, dec: b32Decode },
+    url: { enc: urlEncode, dec: urlDecode },
+    hex: { enc: hexEncode, dec: hexDecode },
+    unicode: { enc: unicodeEncode, dec: unicodeDecode },
+    punycode: {
+      enc: domainToAscii,
+      dec: domainToUnicode,
+      placeholder: '例如 中国.cn 或 xn--fiqs8s.cn'
+    }
+  };
+
+  var current = 'base64';
+  var ENC_LABEL = { base58: 'Base58 编码', base62: 'Base62 编码', punycode: '域名 → Punycode' };
+  var DEC_LABEL = { base58: 'Base58 解码', base62: 'Base62 解码', punycode: 'Punycode → 域名' };
+
+  function activeOp() { return OPS[current] || OPS.base64; }
+
+  function setTab(name) {
+    T.markTab(name);
+    current = name;
+    var op = activeOp();
+    hint.className = 'hint';
+    hint.textContent = HINTS[name] || '';
+    input.placeholder = op.placeholder || '在此粘贴待处理内容';
+    output.className = 'out mono-lg';
+    output.textContent = '';
+    $('encode').textContent = ENC_LABEL[name] || '编码';
+    $('decode').textContent = DEC_LABEL[name] || '解码';
+    // Base58/62 同一套实现，统称显示
+    if (name === 'base58') {
+      $('encode').textContent = 'Base58 编码';
+      $('decode').textContent = 'Base58 解码';
+    }
+  }
+
+  function run(mode) {
+    var text = input.value;
+    hint.className = 'hint';
+    if (text === '') { hint.className = 'hint err'; hint.textContent = '请先输入内容'; return; }
+    try {
+      var op = activeOp();
+      var res = mode === 'enc' ? op.enc(text) : op.dec(text);
+      output.className = 'out mono-lg';
+      output.textContent = res;
+    } catch (e) {
+      output.className = 'out mono-lg err';
+      output.textContent = '处理失败：' + e.message;
+    }
+  }
+
+  T.tabs($('tabs'), function (name) {
+    if (name === 'base58' || name === 'base62') {
+      // Base58 / Base62 放在一个页签下，用第二行切换字母表
+      chooser.style.display = 'flex';
+      setTab(chooser.dataset.pick || 'base58');
+      return;
+    }
+    chooser.style.display = 'none';
+    setTab(name);
+  });
+
+  // Base58/62 子切换
+  var chooser = document.createElement('div');
+  chooser.className = 'pick';
+  chooser.style.display = 'none';
+  chooser.dataset.pick = 'base58';
+  ['base58', 'base62'].forEach(function (k) {
+    var b = T.el('button', k === 'base58' ? 'on' : null, k === 'base58' ? 'Base58（比特币风格）' : 'Base62（0-9A-Za-z）');
+    b.dataset.tab = k;
+    b.addEventListener('click', function () {
+      chooser.dataset.pick = k;
+      [].forEach.call(chooser.querySelectorAll('button'), function (o) { o.classList.toggle('on', o === b); });
+      current = k;
+      setTab(k);
+    });
+    chooser.appendChild(b);
+  });
+  $('tabs').parentNode.insertBefore(chooser, $('tabs').nextSibling);
+
+  $('encode').addEventListener('click', function () { run('enc'); });
+  $('decode').addEventListener('click', function () { run('dec'); });
+  $('swap').addEventListener('click', function () {
+    // 交换：把结果放回输入，方便连续验证
+    if (output.textContent && !output.classList.contains('err')) {
+      input.value = output.textContent;
+      output.textContent = '';
+    }
+  });
+  T.bindCopy($('copy'), function () { return output.classList.contains('err') ? '' : output.textContent; });
+
+  input.addEventListener('input', function () { hint.className = 'hint'; hint.textContent = HINTS[current] || ''; });
+
+  setTab(T.firstTab('base64'));
+})();
+</script>
 </body>
 </html>

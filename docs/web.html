@@ -5,7 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>网页与站长工具</title>
-<link rel="stylesheet" href="./app.css">
+<style>
+/* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1f2329;--sub:#8a9099;--line:#e8eaed;
+  --primary:#1668dc;--primary-press:#0f52b3;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --warn:#d4380d;--ok:#0f8f74;--radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+header h1{margin:0;font-size:17px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 0}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:14px 14px 2px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card h2{margin:0 0 10px;font-size:14px;font-weight:600}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.row label b{color:var(--text);font-weight:500}
+.input-wrap{position:relative;display:flex;align-items:center}
+input[type="number"],input[type="text"],input[type="datetime-local"],select{
+  width:100%;height:46px;padding:0 12px;
+  font-size:16px;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;font-family:inherit;
+}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus,select:focus{border-color:var(--primary);background:#fff}
+input.invalid{border-color:var(--warn);background:#fff2ef}
+.input-wrap .unit{position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none}
+.input-wrap input[type="number"]{padding-right:64px}
+textarea{
+  width:100%;min-height:130px;padding:10px 12px;
+  font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--primary);background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:10px;margin:2px 0 14px}
+.btns button{flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none}
+.btns button.primary{background:var(--primary);color:#fff}
+.btns button.primary:active{background:var(--primary-press)}
+.btns button.ghost{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+.btns.three button.ghost{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{
+  padding:0 12px;height:32px;font-size:13px;color:var(--primary);
+  background:var(--soft);border:1px solid var(--soft-line);border-radius:9px;
+}
+.chips button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hint{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.5}
+.hint.err{color:var(--warn)}
+.out{
+  font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;
+}
+.out:empty{display:none}
+.out.mono-lg{font-size:15px}
+.out.err{color:var(--warn);background:#fff2ef;border-color:#ffd6cf}
+.out.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.grid div{background:#fff;padding:10px 12px}
+.grid .k{font-size:12px;color:var(--sub)}
+.grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+.formula{
+  font-size:12px;color:var(--sub);line-height:1.6;
+  background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+  word-break:break-all;
+}
+.formula .t{color:var(--text);font-weight:600}
+.formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);word-break:break-all}
+th{color:var(--sub);font-weight:500}
+td.num{font-family:ui-monospace,Menlo,Consolas,monospace}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pick button{
+  padding:0 12px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--text);border:1px solid var(--line);
+}
+.pick button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.list{margin:0 0 12px;padding:0;list-style:none}
+.list li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.list li:last-child{border-bottom:none}
+.list a{color:var(--primary);text-decoration:none;font-weight:500}
+.list .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tabs button{
+  flex:0 0 auto;padding:0 14px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--sub);border:1px solid var(--line);
+}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+footer{max-width:1280px;margin:0 auto;padding:0 16px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+@media(max-width:360px){.grid2{grid-template-columns:1fr}}
+</style>
 <style>
   .area{width:100%;min-height:220px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
     color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
@@ -286,9 +397,780 @@
   </footer>
 </main>
 
-<script src="./app.js"></script>
-<script src="./lib/dompurify.js"></script>
-<script src="./lib/marked.js"></script>
-<script src="./web.js"></script>
+<script>
+/* 工具页共用小工具：取元素、格式化、复制、页签切换 */
+(function (global) {
+  'use strict';
+
+  // 复制到剪贴板：HTTPS/本地才用异步 API，其余回退到 execCommand
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(text); });
+    }
+    return Promise.resolve(legacy(text));
+  }
+
+  function legacy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  // 保留 digits 位小数并去掉长浮点尾巴
+  function fmt(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', { maximumFractionDigits: d });
+  }
+
+  // 写回输入框的数值，避免 0.30000000000000004 这类尾巴
+  function fmtInput(n, digits) {
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(digits == null ? 6 : digits)));
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // 在容器内渲染 label/value 网格
+  function cells(container, pairs) {
+    container.innerHTML = '';
+    pairs.forEach(function (p) {
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', p[0]));
+      cell.appendChild(el('div', 'v', p[1]));
+      container.appendChild(cell);
+    });
+  }
+
+  // 复制按钮通用绑定：btn 复制 target 的文本，成功后短暂改文案
+  function bindCopy(btn, getText, doneText) {
+    if (!btn) return;
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      var text = getText();
+      if (!text) return;
+      copy(text).then(function () {
+        btn.textContent = doneText || '已复制';
+        setTimeout(function () { btn.textContent = original; }, 1200);
+      });
+    });
+  }
+
+  // 页签：buttons 为一组按钮，onPick 收到 data-tab
+  function tabs(container, onPick) {
+    var btns = [].slice.call(container.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
+        onPick(b.dataset.tab, b);
+      });
+    });
+    return btns;
+  }
+
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
+})(window);
+</script>
+<script>
+/*! @license DOMPurify 3.1.7 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.1.7/LICENSE */
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e="undefined"!=typeof globalThis?globalThis:e||self).DOMPurify=t()}(this,(function(){"use strict";const{entries:e,setPrototypeOf:t,isFrozen:n,getPrototypeOf:o,getOwnPropertyDescriptor:r}=Object;let{freeze:i,seal:a,create:l}=Object,{apply:c,construct:s}="undefined"!=typeof Reflect&&Reflect;i||(i=function(e){return e}),a||(a=function(e){return e}),c||(c=function(e,t,n){return e.apply(t,n)}),s||(s=function(e,t){return new e(...t)});const u=b(Array.prototype.forEach),m=b(Array.prototype.pop),p=b(Array.prototype.push),f=b(String.prototype.toLowerCase),d=b(String.prototype.toString),h=b(String.prototype.match),g=b(String.prototype.replace),T=b(String.prototype.indexOf),y=b(String.prototype.trim),E=b(Object.prototype.hasOwnProperty),_=b(RegExp.prototype.test),A=(N=TypeError,function(){for(var e=arguments.length,t=new Array(e),n=0;n<e;n++)t[n]=arguments[n];return s(N,t)});var N;function b(e){return function(t){for(var n=arguments.length,o=new Array(n>1?n-1:0),r=1;r<n;r++)o[r-1]=arguments[r];return c(e,t,o)}}function S(e,o){let r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:f;t&&t(e,null);let i=o.length;for(;i--;){let t=o[i];if("string"==typeof t){const e=r(t);e!==t&&(n(o)||(o[i]=e),t=e)}e[t]=!0}return e}function R(e){for(let t=0;t<e.length;t++){E(e,t)||(e[t]=null)}return e}function w(t){const n=l(null);for(const[o,r]of e(t)){E(t,o)&&(Array.isArray(r)?n[o]=R(r):r&&"object"==typeof r&&r.constructor===Object?n[o]=w(r):n[o]=r)}return n}function C(e,t){for(;null!==e;){const n=r(e,t);if(n){if(n.get)return b(n.get);if("function"==typeof n.value)return b(n.value)}e=o(e)}return function(){return null}}const L=i(["a","abbr","acronym","address","area","article","aside","audio","b","bdi","bdo","big","blink","blockquote","body","br","button","canvas","caption","center","cite","code","col","colgroup","content","data","datalist","dd","decorator","del","details","dfn","dialog","dir","div","dl","dt","element","em","fieldset","figcaption","figure","font","footer","form","h1","h2","h3","h4","h5","h6","head","header","hgroup","hr","html","i","img","input","ins","kbd","label","legend","li","main","map","mark","marquee","menu","menuitem","meter","nav","nobr","ol","optgroup","option","output","p","picture","pre","progress","q","rp","rt","ruby","s","samp","section","select","shadow","small","source","spacer","span","strike","strong","style","sub","summary","sup","table","tbody","td","template","textarea","tfoot","th","thead","time","tr","track","tt","u","ul","var","video","wbr"]),v=i(["svg","a","altglyph","altglyphdef","altglyphitem","animatecolor","animatemotion","animatetransform","circle","clippath","defs","desc","ellipse","filter","font","g","glyph","glyphref","hkern","image","line","lineargradient","marker","mask","metadata","mpath","path","pattern","polygon","polyline","radialgradient","rect","stop","style","switch","symbol","text","textpath","title","tref","tspan","view","vkern"]),D=i(["feBlend","feColorMatrix","feComponentTransfer","feComposite","feConvolveMatrix","feDiffuseLighting","feDisplacementMap","feDistantLight","feDropShadow","feFlood","feFuncA","feFuncB","feFuncG","feFuncR","feGaussianBlur","feImage","feMerge","feMergeNode","feMorphology","feOffset","fePointLight","feSpecularLighting","feSpotLight","feTile","feTurbulence"]),O=i(["animate","color-profile","cursor","discard","font-face","font-face-format","font-face-name","font-face-src","font-face-uri","foreignobject","hatch","hatchpath","mesh","meshgradient","meshpatch","meshrow","missing-glyph","script","set","solidcolor","unknown","use"]),x=i(["math","menclose","merror","mfenced","mfrac","mglyph","mi","mlabeledtr","mmultiscripts","mn","mo","mover","mpadded","mphantom","mroot","mrow","ms","mspace","msqrt","mstyle","msub","msup","msubsup","mtable","mtd","mtext","mtr","munder","munderover","mprescripts"]),k=i(["maction","maligngroup","malignmark","mlongdiv","mscarries","mscarry","msgroup","mstack","msline","msrow","semantics","annotation","annotation-xml","mprescripts","none"]),M=i(["#text"]),I=i(["accept","action","align","alt","autocapitalize","autocomplete","autopictureinpicture","autoplay","background","bgcolor","border","capture","cellpadding","cellspacing","checked","cite","class","clear","color","cols","colspan","controls","controlslist","coords","crossorigin","datetime","decoding","default","dir","disabled","disablepictureinpicture","disableremoteplayback","download","draggable","enctype","enterkeyhint","face","for","headers","height","hidden","high","href","hreflang","id","inputmode","integrity","ismap","kind","label","lang","list","loading","loop","low","max","maxlength","media","method","min","minlength","multiple","muted","name","nonce","noshade","novalidate","nowrap","open","optimum","pattern","placeholder","playsinline","popover","popovertarget","popovertargetaction","poster","preload","pubdate","radiogroup","readonly","rel","required","rev","reversed","role","rows","rowspan","spellcheck","scope","selected","shape","size","sizes","span","srclang","start","src","srcset","step","style","summary","tabindex","title","translate","type","usemap","valign","value","width","wrap","xmlns","slot"]),U=i(["accent-height","accumulate","additive","alignment-baseline","amplitude","ascent","attributename","attributetype","azimuth","basefrequency","baseline-shift","begin","bias","by","class","clip","clippathunits","clip-path","clip-rule","color","color-interpolation","color-interpolation-filters","color-profile","color-rendering","cx","cy","d","dx","dy","diffuseconstant","direction","display","divisor","dur","edgemode","elevation","end","exponent","fill","fill-opacity","fill-rule","filter","filterunits","flood-color","flood-opacity","font-family","font-size","font-size-adjust","font-stretch","font-style","font-variant","font-weight","fx","fy","g1","g2","glyph-name","glyphref","gradientunits","gradienttransform","height","href","id","image-rendering","in","in2","intercept","k","k1","k2","k3","k4","kerning","keypoints","keysplines","keytimes","lang","lengthadjust","letter-spacing","kernelmatrix","kernelunitlength","lighting-color","local","marker-end","marker-mid","marker-start","markerheight","markerunits","markerwidth","maskcontentunits","maskunits","max","mask","media","method","mode","min","name","numoctaves","offset","operator","opacity","order","orient","orientation","origin","overflow","paint-order","path","pathlength","patterncontentunits","patterntransform","patternunits","points","preservealpha","preserveaspectratio","primitiveunits","r","rx","ry","radius","refx","refy","repeatcount","repeatdur","restart","result","rotate","scale","seed","shape-rendering","slope","specularconstant","specularexponent","spreadmethod","startoffset","stddeviation","stitchtiles","stop-color","stop-opacity","stroke-dasharray","stroke-dashoffset","stroke-linecap","stroke-linejoin","stroke-miterlimit","stroke-opacity","stroke","stroke-width","style","surfacescale","systemlanguage","tabindex","tablevalues","targetx","targety","transform","transform-origin","text-anchor","text-decoration","text-rendering","textlength","type","u1","u2","unicode","values","viewbox","visibility","version","vert-adv-y","vert-origin-x","vert-origin-y","width","word-spacing","wrap","writing-mode","xchannelselector","ychannelselector","x","x1","x2","xmlns","y","y1","y2","z","zoomandpan"]),P=i(["accent","accentunder","align","bevelled","close","columnsalign","columnlines","columnspan","denomalign","depth","dir","display","displaystyle","encoding","fence","frame","height","href","id","largeop","length","linethickness","lspace","lquote","mathbackground","mathcolor","mathsize","mathvariant","maxsize","minsize","movablelimits","notation","numalign","open","rowalign","rowlines","rowspacing","rowspan","rspace","rquote","scriptlevel","scriptminsize","scriptsizemultiplier","selection","separator","separators","stretchy","subscriptshift","supscriptshift","symmetric","voffset","width","xmlns"]),F=i(["xlink:href","xml:id","xlink:title","xml:space","xmlns:xlink"]),H=a(/\{\{[\w\W]*|[\w\W]*\}\}/gm),z=a(/<%[\w\W]*|[\w\W]*%>/gm),B=a(/\${[\w\W]*}/gm),W=a(/^data-[\-\w.\u00B7-\uFFFF]/),G=a(/^aria-[\-\w]+$/),Y=a(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i),j=a(/^(?:\w+script|data):/i),X=a(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g),q=a(/^html$/i),$=a(/^[a-z][.\w]*(-[.\w]+)+$/i);var K=Object.freeze({__proto__:null,MUSTACHE_EXPR:H,ERB_EXPR:z,TMPLIT_EXPR:B,DATA_ATTR:W,ARIA_ATTR:G,IS_ALLOWED_URI:Y,IS_SCRIPT_OR_DATA:j,ATTR_WHITESPACE:X,DOCTYPE_NAME:q,CUSTOM_ELEMENT:$});const V=1,Z=3,J=7,Q=8,ee=9,te=function(){return"undefined"==typeof window?null:window};var ne=function t(){let n=arguments.length>0&&void 0!==arguments[0]?arguments[0]:te();const o=e=>t(e);if(o.version="3.1.7",o.removed=[],!n||!n.document||n.document.nodeType!==ee)return o.isSupported=!1,o;let{document:r}=n;const a=r,c=a.currentScript,{DocumentFragment:s,HTMLTemplateElement:N,Node:b,Element:R,NodeFilter:H,NamedNodeMap:z=n.NamedNodeMap||n.MozNamedAttrMap,HTMLFormElement:B,DOMParser:W,trustedTypes:G}=n,j=R.prototype,X=C(j,"cloneNode"),$=C(j,"remove"),ne=C(j,"nextSibling"),oe=C(j,"childNodes"),re=C(j,"parentNode");if("function"==typeof N){const e=r.createElement("template");e.content&&e.content.ownerDocument&&(r=e.content.ownerDocument)}let ie,ae="";const{implementation:le,createNodeIterator:ce,createDocumentFragment:se,getElementsByTagName:ue}=r,{importNode:me}=a;let pe={};o.isSupported="function"==typeof e&&"function"==typeof re&&le&&void 0!==le.createHTMLDocument;const{MUSTACHE_EXPR:fe,ERB_EXPR:de,TMPLIT_EXPR:he,DATA_ATTR:ge,ARIA_ATTR:Te,IS_SCRIPT_OR_DATA:ye,ATTR_WHITESPACE:Ee,CUSTOM_ELEMENT:_e}=K;let{IS_ALLOWED_URI:Ae}=K,Ne=null;const be=S({},[...L,...v,...D,...x,...M]);let Se=null;const Re=S({},[...I,...U,...P,...F]);let we=Object.seal(l(null,{tagNameCheck:{writable:!0,configurable:!1,enumerable:!0,value:null},attributeNameCheck:{writable:!0,configurable:!1,enumerable:!0,value:null},allowCustomizedBuiltInElements:{writable:!0,configurable:!1,enumerable:!0,value:!1}})),Ce=null,Le=null,ve=!0,De=!0,Oe=!1,xe=!0,ke=!1,Me=!0,Ie=!1,Ue=!1,Pe=!1,Fe=!1,He=!1,ze=!1,Be=!0,We=!1,Ge=!0,Ye=!1,je={},Xe=null;const qe=S({},["annotation-xml","audio","colgroup","desc","foreignobject","head","iframe","math","mi","mn","mo","ms","mtext","noembed","noframes","noscript","plaintext","script","style","svg","template","thead","title","video","xmp"]);let $e=null;const Ke=S({},["audio","video","img","source","image","track"]);let Ve=null;const Ze=S({},["alt","class","for","id","label","name","pattern","placeholder","role","summary","title","value","style","xmlns"]),Je="http://www.w3.org/1998/Math/MathML",Qe="http://www.w3.org/2000/svg",et="http://www.w3.org/1999/xhtml";let tt=et,nt=!1,ot=null;const rt=S({},[Je,Qe,et],d);let it=null;const at=["application/xhtml+xml","text/html"];let lt=null,ct=null;const st=r.createElement("form"),ut=function(e){return e instanceof RegExp||e instanceof Function},mt=function(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{};if(!ct||ct!==e){if(e&&"object"==typeof e||(e={}),e=w(e),it=-1===at.indexOf(e.PARSER_MEDIA_TYPE)?"text/html":e.PARSER_MEDIA_TYPE,lt="application/xhtml+xml"===it?d:f,Ne=E(e,"ALLOWED_TAGS")?S({},e.ALLOWED_TAGS,lt):be,Se=E(e,"ALLOWED_ATTR")?S({},e.ALLOWED_ATTR,lt):Re,ot=E(e,"ALLOWED_NAMESPACES")?S({},e.ALLOWED_NAMESPACES,d):rt,Ve=E(e,"ADD_URI_SAFE_ATTR")?S(w(Ze),e.ADD_URI_SAFE_ATTR,lt):Ze,$e=E(e,"ADD_DATA_URI_TAGS")?S(w(Ke),e.ADD_DATA_URI_TAGS,lt):Ke,Xe=E(e,"FORBID_CONTENTS")?S({},e.FORBID_CONTENTS,lt):qe,Ce=E(e,"FORBID_TAGS")?S({},e.FORBID_TAGS,lt):{},Le=E(e,"FORBID_ATTR")?S({},e.FORBID_ATTR,lt):{},je=!!E(e,"USE_PROFILES")&&e.USE_PROFILES,ve=!1!==e.ALLOW_ARIA_ATTR,De=!1!==e.ALLOW_DATA_ATTR,Oe=e.ALLOW_UNKNOWN_PROTOCOLS||!1,xe=!1!==e.ALLOW_SELF_CLOSE_IN_ATTR,ke=e.SAFE_FOR_TEMPLATES||!1,Me=!1!==e.SAFE_FOR_XML,Ie=e.WHOLE_DOCUMENT||!1,Fe=e.RETURN_DOM||!1,He=e.RETURN_DOM_FRAGMENT||!1,ze=e.RETURN_TRUSTED_TYPE||!1,Pe=e.FORCE_BODY||!1,Be=!1!==e.SANITIZE_DOM,We=e.SANITIZE_NAMED_PROPS||!1,Ge=!1!==e.KEEP_CONTENT,Ye=e.IN_PLACE||!1,Ae=e.ALLOWED_URI_REGEXP||Y,tt=e.NAMESPACE||et,we=e.CUSTOM_ELEMENT_HANDLING||{},e.CUSTOM_ELEMENT_HANDLING&&ut(e.CUSTOM_ELEMENT_HANDLING.tagNameCheck)&&(we.tagNameCheck=e.CUSTOM_ELEMENT_HANDLING.tagNameCheck),e.CUSTOM_ELEMENT_HANDLING&&ut(e.CUSTOM_ELEMENT_HANDLING.attributeNameCheck)&&(we.attributeNameCheck=e.CUSTOM_ELEMENT_HANDLING.attributeNameCheck),e.CUSTOM_ELEMENT_HANDLING&&"boolean"==typeof e.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements&&(we.allowCustomizedBuiltInElements=e.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements),ke&&(De=!1),He&&(Fe=!0),je&&(Ne=S({},M),Se=[],!0===je.html&&(S(Ne,L),S(Se,I)),!0===je.svg&&(S(Ne,v),S(Se,U),S(Se,F)),!0===je.svgFilters&&(S(Ne,D),S(Se,U),S(Se,F)),!0===je.mathMl&&(S(Ne,x),S(Se,P),S(Se,F))),e.ADD_TAGS&&(Ne===be&&(Ne=w(Ne)),S(Ne,e.ADD_TAGS,lt)),e.ADD_ATTR&&(Se===Re&&(Se=w(Se)),S(Se,e.ADD_ATTR,lt)),e.ADD_URI_SAFE_ATTR&&S(Ve,e.ADD_URI_SAFE_ATTR,lt),e.FORBID_CONTENTS&&(Xe===qe&&(Xe=w(Xe)),S(Xe,e.FORBID_CONTENTS,lt)),Ge&&(Ne["#text"]=!0),Ie&&S(Ne,["html","head","body"]),Ne.table&&(S(Ne,["tbody"]),delete Ce.tbody),e.TRUSTED_TYPES_POLICY){if("function"!=typeof e.TRUSTED_TYPES_POLICY.createHTML)throw A('TRUSTED_TYPES_POLICY configuration option must provide a "createHTML" hook.');if("function"!=typeof e.TRUSTED_TYPES_POLICY.createScriptURL)throw A('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');ie=e.TRUSTED_TYPES_POLICY,ae=ie.createHTML("")}else void 0===ie&&(ie=function(e,t){if("object"!=typeof e||"function"!=typeof e.createPolicy)return null;let n=null;const o="data-tt-policy-suffix";t&&t.hasAttribute(o)&&(n=t.getAttribute(o));const r="dompurify"+(n?"#"+n:"");try{return e.createPolicy(r,{createHTML:e=>e,createScriptURL:e=>e})}catch(e){return console.warn("TrustedTypes policy "+r+" could not be created."),null}}(G,c)),null!==ie&&"string"==typeof ae&&(ae=ie.createHTML(""));i&&i(e),ct=e}},pt=S({},["mi","mo","mn","ms","mtext"]),ft=S({},["annotation-xml"]),dt=S({},["title","style","font","a","script"]),ht=S({},[...v,...D,...O]),gt=S({},[...x,...k]),Tt=function(e){p(o.removed,{element:e});try{re(e).removeChild(e)}catch(t){$(e)}},yt=function(e,t){try{p(o.removed,{attribute:t.getAttributeNode(e),from:t})}catch(e){p(o.removed,{attribute:null,from:t})}if(t.removeAttribute(e),"is"===e&&!Se[e])if(Fe||He)try{Tt(t)}catch(e){}else try{t.setAttribute(e,"")}catch(e){}},Et=function(e){let t=null,n=null;if(Pe)e="<remove></remove>"+e;else{const t=h(e,/^[\r\n\t ]+/);n=t&&t[0]}"application/xhtml+xml"===it&&tt===et&&(e='<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>'+e+"</body></html>");const o=ie?ie.createHTML(e):e;if(tt===et)try{t=(new W).parseFromString(o,it)}catch(e){}if(!t||!t.documentElement){t=le.createDocument(tt,"template",null);try{t.documentElement.innerHTML=nt?ae:o}catch(e){}}const i=t.body||t.documentElement;return e&&n&&i.insertBefore(r.createTextNode(n),i.childNodes[0]||null),tt===et?ue.call(t,Ie?"html":"body")[0]:Ie?t.documentElement:i},_t=function(e){return ce.call(e.ownerDocument||e,e,H.SHOW_ELEMENT|H.SHOW_COMMENT|H.SHOW_TEXT|H.SHOW_PROCESSING_INSTRUCTION|H.SHOW_CDATA_SECTION,null)},At=function(e){return e instanceof B&&("string"!=typeof e.nodeName||"string"!=typeof e.textContent||"function"!=typeof e.removeChild||!(e.attributes instanceof z)||"function"!=typeof e.removeAttribute||"function"!=typeof e.setAttribute||"string"!=typeof e.namespaceURI||"function"!=typeof e.insertBefore||"function"!=typeof e.hasChildNodes)},Nt=function(e){return"function"==typeof b&&e instanceof b},bt=function(e,t,n){pe[e]&&u(pe[e],(e=>{e.call(o,t,n,ct)}))},St=function(e){let t=null;if(bt("beforeSanitizeElements",e,null),At(e))return Tt(e),!0;const n=lt(e.nodeName);if(bt("uponSanitizeElement",e,{tagName:n,allowedTags:Ne}),e.hasChildNodes()&&!Nt(e.firstElementChild)&&_(/<[/\w]/g,e.innerHTML)&&_(/<[/\w]/g,e.textContent))return Tt(e),!0;if(e.nodeType===J)return Tt(e),!0;if(Me&&e.nodeType===Q&&_(/<[/\w]/g,e.data))return Tt(e),!0;if(!Ne[n]||Ce[n]){if(!Ce[n]&&wt(n)){if(we.tagNameCheck instanceof RegExp&&_(we.tagNameCheck,n))return!1;if(we.tagNameCheck instanceof Function&&we.tagNameCheck(n))return!1}if(Ge&&!Xe[n]){const t=re(e)||e.parentNode,n=oe(e)||e.childNodes;if(n&&t){for(let o=n.length-1;o>=0;--o){const r=X(n[o],!0);r.__removalCount=(e.__removalCount||0)+1,t.insertBefore(r,ne(e))}}}return Tt(e),!0}return e instanceof R&&!function(e){let t=re(e);t&&t.tagName||(t={namespaceURI:tt,tagName:"template"});const n=f(e.tagName),o=f(t.tagName);return!!ot[e.namespaceURI]&&(e.namespaceURI===Qe?t.namespaceURI===et?"svg"===n:t.namespaceURI===Je?"svg"===n&&("annotation-xml"===o||pt[o]):Boolean(ht[n]):e.namespaceURI===Je?t.namespaceURI===et?"math"===n:t.namespaceURI===Qe?"math"===n&&ft[o]:Boolean(gt[n]):e.namespaceURI===et?!(t.namespaceURI===Qe&&!ft[o])&&!(t.namespaceURI===Je&&!pt[o])&&!gt[n]&&(dt[n]||!ht[n]):!("application/xhtml+xml"!==it||!ot[e.namespaceURI]))}(e)?(Tt(e),!0):"noscript"!==n&&"noembed"!==n&&"noframes"!==n||!_(/<\/no(script|embed|frames)/i,e.innerHTML)?(ke&&e.nodeType===Z&&(t=e.textContent,u([fe,de,he],(e=>{t=g(t,e," ")})),e.textContent!==t&&(p(o.removed,{element:e.cloneNode()}),e.textContent=t)),bt("afterSanitizeElements",e,null),!1):(Tt(e),!0)},Rt=function(e,t,n){if(Be&&("id"===t||"name"===t)&&(n in r||n in st))return!1;if(De&&!Le[t]&&_(ge,t));else if(ve&&_(Te,t));else if(!Se[t]||Le[t]){if(!(wt(e)&&(we.tagNameCheck instanceof RegExp&&_(we.tagNameCheck,e)||we.tagNameCheck instanceof Function&&we.tagNameCheck(e))&&(we.attributeNameCheck instanceof RegExp&&_(we.attributeNameCheck,t)||we.attributeNameCheck instanceof Function&&we.attributeNameCheck(t))||"is"===t&&we.allowCustomizedBuiltInElements&&(we.tagNameCheck instanceof RegExp&&_(we.tagNameCheck,n)||we.tagNameCheck instanceof Function&&we.tagNameCheck(n))))return!1}else if(Ve[t]);else if(_(Ae,g(n,Ee,"")));else if("src"!==t&&"xlink:href"!==t&&"href"!==t||"script"===e||0!==T(n,"data:")||!$e[e]){if(Oe&&!_(ye,g(n,Ee,"")));else if(n)return!1}else;return!0},wt=function(e){return"annotation-xml"!==e&&h(e,_e)},Ct=function(e){bt("beforeSanitizeAttributes",e,null);const{attributes:t}=e;if(!t)return;const n={attrName:"",attrValue:"",keepAttr:!0,allowedAttributes:Se};let r=t.length;for(;r--;){const i=t[r],{name:a,namespaceURI:l,value:c}=i,s=lt(a);let p="value"===a?c:y(c);if(n.attrName=s,n.attrValue=p,n.keepAttr=!0,n.forceKeepAttr=void 0,bt("uponSanitizeAttribute",e,n),p=n.attrValue,n.forceKeepAttr)continue;if(yt(a,e),!n.keepAttr)continue;if(!xe&&_(/\/>/i,p)){yt(a,e);continue}ke&&u([fe,de,he],(e=>{p=g(p,e," ")}));const f=lt(e.nodeName);if(Rt(f,s,p))if(!We||"id"!==s&&"name"!==s||(yt(a,e),p="user-content-"+p),Me&&_(/((--!?|])>)|<\/(style|title)/i,p))yt(a,e);else{if(ie&&"object"==typeof G&&"function"==typeof G.getAttributeType)if(l);else switch(G.getAttributeType(f,s)){case"TrustedHTML":p=ie.createHTML(p);break;case"TrustedScriptURL":p=ie.createScriptURL(p)}try{l?e.setAttributeNS(l,a,p):e.setAttribute(a,p),At(e)?Tt(e):m(o.removed)}catch(e){}}}bt("afterSanitizeAttributes",e,null)},Lt=function e(t){let n=null;const o=_t(t);for(bt("beforeSanitizeShadowDOM",t,null);n=o.nextNode();)bt("uponSanitizeShadowNode",n,null),St(n)||(n.content instanceof s&&e(n.content),Ct(n));bt("afterSanitizeShadowDOM",t,null)};return o.sanitize=function(e){let t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},n=null,r=null,i=null,l=null;if(nt=!e,nt&&(e="\x3c!--\x3e"),"string"!=typeof e&&!Nt(e)){if("function"!=typeof e.toString)throw A("toString is not a function");if("string"!=typeof(e=e.toString()))throw A("dirty is not a string, aborting")}if(!o.isSupported)return e;if(Ue||mt(t),o.removed=[],"string"==typeof e&&(Ye=!1),Ye){if(e.nodeName){const t=lt(e.nodeName);if(!Ne[t]||Ce[t])throw A("root node is forbidden and cannot be sanitized in-place")}}else if(e instanceof b)n=Et("\x3c!----\x3e"),r=n.ownerDocument.importNode(e,!0),r.nodeType===V&&"BODY"===r.nodeName||"HTML"===r.nodeName?n=r:n.appendChild(r);else{if(!Fe&&!ke&&!Ie&&-1===e.indexOf("<"))return ie&&ze?ie.createHTML(e):e;if(n=Et(e),!n)return Fe?null:ze?ae:""}n&&Pe&&Tt(n.firstChild);const c=_t(Ye?e:n);for(;i=c.nextNode();)St(i)||(i.content instanceof s&&Lt(i.content),Ct(i));if(Ye)return e;if(Fe){if(He)for(l=se.call(n.ownerDocument);n.firstChild;)l.appendChild(n.firstChild);else l=n;return(Se.shadowroot||Se.shadowrootmode)&&(l=me.call(a,l,!0)),l}let m=Ie?n.outerHTML:n.innerHTML;return Ie&&Ne["!doctype"]&&n.ownerDocument&&n.ownerDocument.doctype&&n.ownerDocument.doctype.name&&_(q,n.ownerDocument.doctype.name)&&(m="<!DOCTYPE "+n.ownerDocument.doctype.name+">\n"+m),ke&&u([fe,de,he],(e=>{m=g(m,e," ")})),ie&&ze?ie.createHTML(m):m},o.setConfig=function(){mt(arguments.length>0&&void 0!==arguments[0]?arguments[0]:{}),Ue=!0},o.clearConfig=function(){ct=null,Ue=!1},o.isValidAttribute=function(e,t,n){ct||mt({});const o=lt(e),r=lt(t);return Rt(o,r,n)},o.addHook=function(e,t){"function"==typeof t&&(pe[e]=pe[e]||[],p(pe[e],t))},o.removeHook=function(e){if(pe[e])return m(pe[e])},o.removeHooks=function(e){pe[e]&&(pe[e]=[])},o.removeAllHooks=function(){pe={}},o}();return ne}));
+//# sourceMappingURL=purify.min.js.map
+</script>
+<script>
+/**
+ * marked v12.0.2 - a markdown parser
+ * Copyright (c) 2011-2024, Christopher Jeffrey. (MIT Licensed)
+ * https://github.com/markedjs/marked
+ */
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).marked={})}(this,(function(e){"use strict";function t(){return{async:!1,breaks:!1,extensions:null,gfm:!0,hooks:null,pedantic:!1,renderer:null,silent:!1,tokenizer:null,walkTokens:null}}function n(t){e.defaults=t}e.defaults={async:!1,breaks:!1,extensions:null,gfm:!0,hooks:null,pedantic:!1,renderer:null,silent:!1,tokenizer:null,walkTokens:null};const s=/[&<>"']/,r=new RegExp(s.source,"g"),i=/[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/,l=new RegExp(i.source,"g"),o={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"},a=e=>o[e];function c(e,t){if(t){if(s.test(e))return e.replace(r,a)}else if(i.test(e))return e.replace(l,a);return e}const h=/&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/gi;function p(e){return e.replace(h,((e,t)=>"colon"===(t=t.toLowerCase())?":":"#"===t.charAt(0)?"x"===t.charAt(1)?String.fromCharCode(parseInt(t.substring(2),16)):String.fromCharCode(+t.substring(1)):""))}const u=/(^|[^\[])\^/g;function k(e,t){let n="string"==typeof e?e:e.source;t=t||"";const s={replace:(e,t)=>{let r="string"==typeof t?t:t.source;return r=r.replace(u,"$1"),n=n.replace(e,r),s},getRegex:()=>new RegExp(n,t)};return s}function g(e){try{e=encodeURI(e).replace(/%25/g,"%")}catch(e){return null}return e}const f={exec:()=>null};function d(e,t){const n=e.replace(/\|/g,((e,t,n)=>{let s=!1,r=t;for(;--r>=0&&"\\"===n[r];)s=!s;return s?"|":" |"})).split(/ \|/);let s=0;if(n[0].trim()||n.shift(),n.length>0&&!n[n.length-1].trim()&&n.pop(),t)if(n.length>t)n.splice(t);else for(;n.length<t;)n.push("");for(;s<n.length;s++)n[s]=n[s].trim().replace(/\\\|/g,"|");return n}function x(e,t,n){const s=e.length;if(0===s)return"";let r=0;for(;r<s;){const i=e.charAt(s-r-1);if(i!==t||n){if(i===t||!n)break;r++}else r++}return e.slice(0,s-r)}function b(e,t,n,s){const r=t.href,i=t.title?c(t.title):null,l=e[1].replace(/\\([\[\]])/g,"$1");if("!"!==e[0].charAt(0)){s.state.inLink=!0;const e={type:"link",raw:n,href:r,title:i,text:l,tokens:s.inlineTokens(l)};return s.state.inLink=!1,e}return{type:"image",raw:n,href:r,title:i,text:c(l)}}class w{options;rules;lexer;constructor(t){this.options=t||e.defaults}space(e){const t=this.rules.block.newline.exec(e);if(t&&t[0].length>0)return{type:"space",raw:t[0]}}code(e){const t=this.rules.block.code.exec(e);if(t){const e=t[0].replace(/^ {1,4}/gm,"");return{type:"code",raw:t[0],codeBlockStyle:"indented",text:this.options.pedantic?e:x(e,"\n")}}}fences(e){const t=this.rules.block.fences.exec(e);if(t){const e=t[0],n=function(e,t){const n=e.match(/^(\s+)(?:```)/);if(null===n)return t;const s=n[1];return t.split("\n").map((e=>{const t=e.match(/^\s+/);if(null===t)return e;const[n]=t;return n.length>=s.length?e.slice(s.length):e})).join("\n")}(e,t[3]||"");return{type:"code",raw:e,lang:t[2]?t[2].trim().replace(this.rules.inline.anyPunctuation,"$1"):t[2],text:n}}}heading(e){const t=this.rules.block.heading.exec(e);if(t){let e=t[2].trim();if(/#$/.test(e)){const t=x(e,"#");this.options.pedantic?e=t.trim():t&&!/ $/.test(t)||(e=t.trim())}return{type:"heading",raw:t[0],depth:t[1].length,text:e,tokens:this.lexer.inline(e)}}}hr(e){const t=this.rules.block.hr.exec(e);if(t)return{type:"hr",raw:t[0]}}blockquote(e){const t=this.rules.block.blockquote.exec(e);if(t){let e=t[0].replace(/\n {0,3}((?:=+|-+) *)(?=\n|$)/g,"\n    $1");e=x(e.replace(/^ *>[ \t]?/gm,""),"\n");const n=this.lexer.state.top;this.lexer.state.top=!0;const s=this.lexer.blockTokens(e);return this.lexer.state.top=n,{type:"blockquote",raw:t[0],tokens:s,text:e}}}list(e){let t=this.rules.block.list.exec(e);if(t){let n=t[1].trim();const s=n.length>1,r={type:"list",raw:"",ordered:s,start:s?+n.slice(0,-1):"",loose:!1,items:[]};n=s?`\\d{1,9}\\${n.slice(-1)}`:`\\${n}`,this.options.pedantic&&(n=s?n:"[*+-]");const i=new RegExp(`^( {0,3}${n})((?:[\t ][^\\n]*)?(?:\\n|$))`);let l="",o="",a=!1;for(;e;){let n=!1;if(!(t=i.exec(e)))break;if(this.rules.block.hr.test(e))break;l=t[0],e=e.substring(l.length);let s=t[2].split("\n",1)[0].replace(/^\t+/,(e=>" ".repeat(3*e.length))),c=e.split("\n",1)[0],h=0;this.options.pedantic?(h=2,o=s.trimStart()):(h=t[2].search(/[^ ]/),h=h>4?1:h,o=s.slice(h),h+=t[1].length);let p=!1;if(!s&&/^ *$/.test(c)&&(l+=c+"\n",e=e.substring(c.length+1),n=!0),!n){const t=new RegExp(`^ {0,${Math.min(3,h-1)}}(?:[*+-]|\\d{1,9}[.)])((?:[ \t][^\\n]*)?(?:\\n|$))`),n=new RegExp(`^ {0,${Math.min(3,h-1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`),r=new RegExp(`^ {0,${Math.min(3,h-1)}}(?:\`\`\`|~~~)`),i=new RegExp(`^ {0,${Math.min(3,h-1)}}#`);for(;e;){const a=e.split("\n",1)[0];if(c=a,this.options.pedantic&&(c=c.replace(/^ {1,4}(?=( {4})*[^ ])/g,"  ")),r.test(c))break;if(i.test(c))break;if(t.test(c))break;if(n.test(e))break;if(c.search(/[^ ]/)>=h||!c.trim())o+="\n"+c.slice(h);else{if(p)break;if(s.search(/[^ ]/)>=4)break;if(r.test(s))break;if(i.test(s))break;if(n.test(s))break;o+="\n"+c}p||c.trim()||(p=!0),l+=a+"\n",e=e.substring(a.length+1),s=c.slice(h)}}r.loose||(a?r.loose=!0:/\n *\n *$/.test(l)&&(a=!0));let u,k=null;this.options.gfm&&(k=/^\[[ xX]\] /.exec(o),k&&(u="[ ] "!==k[0],o=o.replace(/^\[[ xX]\] +/,""))),r.items.push({type:"list_item",raw:l,task:!!k,checked:u,loose:!1,text:o,tokens:[]}),r.raw+=l}r.items[r.items.length-1].raw=l.trimEnd(),r.items[r.items.length-1].text=o.trimEnd(),r.raw=r.raw.trimEnd();for(let e=0;e<r.items.length;e++)if(this.lexer.state.top=!1,r.items[e].tokens=this.lexer.blockTokens(r.items[e].text,[]),!r.loose){const t=r.items[e].tokens.filter((e=>"space"===e.type)),n=t.length>0&&t.some((e=>/\n.*\n/.test(e.raw)));r.loose=n}if(r.loose)for(let e=0;e<r.items.length;e++)r.items[e].loose=!0;return r}}html(e){const t=this.rules.block.html.exec(e);if(t){return{type:"html",block:!0,raw:t[0],pre:"pre"===t[1]||"script"===t[1]||"style"===t[1],text:t[0]}}}def(e){const t=this.rules.block.def.exec(e);if(t){const e=t[1].toLowerCase().replace(/\s+/g," "),n=t[2]?t[2].replace(/^<(.*)>$/,"$1").replace(this.rules.inline.anyPunctuation,"$1"):"",s=t[3]?t[3].substring(1,t[3].length-1).replace(this.rules.inline.anyPunctuation,"$1"):t[3];return{type:"def",tag:e,raw:t[0],href:n,title:s}}}table(e){const t=this.rules.block.table.exec(e);if(!t)return;if(!/[:|]/.test(t[2]))return;const n=d(t[1]),s=t[2].replace(/^\||\| *$/g,"").split("|"),r=t[3]&&t[3].trim()?t[3].replace(/\n[ \t]*$/,"").split("\n"):[],i={type:"table",raw:t[0],header:[],align:[],rows:[]};if(n.length===s.length){for(const e of s)/^ *-+: *$/.test(e)?i.align.push("right"):/^ *:-+: *$/.test(e)?i.align.push("center"):/^ *:-+ *$/.test(e)?i.align.push("left"):i.align.push(null);for(const e of n)i.header.push({text:e,tokens:this.lexer.inline(e)});for(const e of r)i.rows.push(d(e,i.header.length).map((e=>({text:e,tokens:this.lexer.inline(e)}))));return i}}lheading(e){const t=this.rules.block.lheading.exec(e);if(t)return{type:"heading",raw:t[0],depth:"="===t[2].charAt(0)?1:2,text:t[1],tokens:this.lexer.inline(t[1])}}paragraph(e){const t=this.rules.block.paragraph.exec(e);if(t){const e="\n"===t[1].charAt(t[1].length-1)?t[1].slice(0,-1):t[1];return{type:"paragraph",raw:t[0],text:e,tokens:this.lexer.inline(e)}}}text(e){const t=this.rules.block.text.exec(e);if(t)return{type:"text",raw:t[0],text:t[0],tokens:this.lexer.inline(t[0])}}escape(e){const t=this.rules.inline.escape.exec(e);if(t)return{type:"escape",raw:t[0],text:c(t[1])}}tag(e){const t=this.rules.inline.tag.exec(e);if(t)return!this.lexer.state.inLink&&/^<a /i.test(t[0])?this.lexer.state.inLink=!0:this.lexer.state.inLink&&/^<\/a>/i.test(t[0])&&(this.lexer.state.inLink=!1),!this.lexer.state.inRawBlock&&/^<(pre|code|kbd|script)(\s|>)/i.test(t[0])?this.lexer.state.inRawBlock=!0:this.lexer.state.inRawBlock&&/^<\/(pre|code|kbd|script)(\s|>)/i.test(t[0])&&(this.lexer.state.inRawBlock=!1),{type:"html",raw:t[0],inLink:this.lexer.state.inLink,inRawBlock:this.lexer.state.inRawBlock,block:!1,text:t[0]}}link(e){const t=this.rules.inline.link.exec(e);if(t){const e=t[2].trim();if(!this.options.pedantic&&/^</.test(e)){if(!/>$/.test(e))return;const t=x(e.slice(0,-1),"\\");if((e.length-t.length)%2==0)return}else{const e=function(e,t){if(-1===e.indexOf(t[1]))return-1;let n=0;for(let s=0;s<e.length;s++)if("\\"===e[s])s++;else if(e[s]===t[0])n++;else if(e[s]===t[1]&&(n--,n<0))return s;return-1}(t[2],"()");if(e>-1){const n=(0===t[0].indexOf("!")?5:4)+t[1].length+e;t[2]=t[2].substring(0,e),t[0]=t[0].substring(0,n).trim(),t[3]=""}}let n=t[2],s="";if(this.options.pedantic){const e=/^([^'"]*[^\s])\s+(['"])(.*)\2/.exec(n);e&&(n=e[1],s=e[3])}else s=t[3]?t[3].slice(1,-1):"";return n=n.trim(),/^</.test(n)&&(n=this.options.pedantic&&!/>$/.test(e)?n.slice(1):n.slice(1,-1)),b(t,{href:n?n.replace(this.rules.inline.anyPunctuation,"$1"):n,title:s?s.replace(this.rules.inline.anyPunctuation,"$1"):s},t[0],this.lexer)}}reflink(e,t){let n;if((n=this.rules.inline.reflink.exec(e))||(n=this.rules.inline.nolink.exec(e))){const e=t[(n[2]||n[1]).replace(/\s+/g," ").toLowerCase()];if(!e){const e=n[0].charAt(0);return{type:"text",raw:e,text:e}}return b(n,e,n[0],this.lexer)}}emStrong(e,t,n=""){let s=this.rules.inline.emStrongLDelim.exec(e);if(!s)return;if(s[3]&&n.match(/[\p{L}\p{N}]/u))return;if(!(s[1]||s[2]||"")||!n||this.rules.inline.punctuation.exec(n)){const n=[...s[0]].length-1;let r,i,l=n,o=0;const a="*"===s[0][0]?this.rules.inline.emStrongRDelimAst:this.rules.inline.emStrongRDelimUnd;for(a.lastIndex=0,t=t.slice(-1*e.length+n);null!=(s=a.exec(t));){if(r=s[1]||s[2]||s[3]||s[4]||s[5]||s[6],!r)continue;if(i=[...r].length,s[3]||s[4]){l+=i;continue}if((s[5]||s[6])&&n%3&&!((n+i)%3)){o+=i;continue}if(l-=i,l>0)continue;i=Math.min(i,i+l+o);const t=[...s[0]][0].length,a=e.slice(0,n+s.index+t+i);if(Math.min(n,i)%2){const e=a.slice(1,-1);return{type:"em",raw:a,text:e,tokens:this.lexer.inlineTokens(e)}}const c=a.slice(2,-2);return{type:"strong",raw:a,text:c,tokens:this.lexer.inlineTokens(c)}}}}codespan(e){const t=this.rules.inline.code.exec(e);if(t){let e=t[2].replace(/\n/g," ");const n=/[^ ]/.test(e),s=/^ /.test(e)&&/ $/.test(e);return n&&s&&(e=e.substring(1,e.length-1)),e=c(e,!0),{type:"codespan",raw:t[0],text:e}}}br(e){const t=this.rules.inline.br.exec(e);if(t)return{type:"br",raw:t[0]}}del(e){const t=this.rules.inline.del.exec(e);if(t)return{type:"del",raw:t[0],text:t[2],tokens:this.lexer.inlineTokens(t[2])}}autolink(e){const t=this.rules.inline.autolink.exec(e);if(t){let e,n;return"@"===t[2]?(e=c(t[1]),n="mailto:"+e):(e=c(t[1]),n=e),{type:"link",raw:t[0],text:e,href:n,tokens:[{type:"text",raw:e,text:e}]}}}url(e){let t;if(t=this.rules.inline.url.exec(e)){let e,n;if("@"===t[2])e=c(t[0]),n="mailto:"+e;else{let s;do{s=t[0],t[0]=this.rules.inline._backpedal.exec(t[0])?.[0]??""}while(s!==t[0]);e=c(t[0]),n="www."===t[1]?"http://"+t[0]:t[0]}return{type:"link",raw:t[0],text:e,href:n,tokens:[{type:"text",raw:e,text:e}]}}}inlineText(e){const t=this.rules.inline.text.exec(e);if(t){let e;return e=this.lexer.state.inRawBlock?t[0]:c(t[0]),{type:"text",raw:t[0],text:e}}}}const m=/^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/,y=/(?:[*+-]|\d{1,9}[.)])/,$=k(/^(?!bull |blockCode|fences|blockquote|heading|html)((?:.|\n(?!\s*?\n|bull |blockCode|fences|blockquote|heading|html))+?)\n {0,3}(=+|-+) *(?:\n+|$)/).replace(/bull/g,y).replace(/blockCode/g,/ {4}/).replace(/fences/g,/ {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g,/ {0,3}>/).replace(/heading/g,/ {0,3}#{1,6}/).replace(/html/g,/ {0,3}<[^\n>]+>\n/).getRegex(),z=/^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html|table| +\n)[^\n]+)*)/,T=/(?!\s*\])(?:\\.|[^\[\]\\])+/,R=k(/^ {0,3}\[(label)\]: *(?:\n *)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\n *)?| *\n *)(title))? *(?:\n+|$)/).replace("label",T).replace("title",/(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/).getRegex(),_=k(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g,y).getRegex(),A="address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul",S=/<!--(?:-?>|[\s\S]*?(?:-->|$))/,I=k("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n *)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n *)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n *)+\\n|$))","i").replace("comment",S).replace("tag",A).replace("attribute",/ +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex(),E=k(z).replace("hr",m).replace("heading"," {0,3}#{1,6}(?:\\s|$)").replace("|lheading","").replace("|table","").replace("blockquote"," {0,3}>").replace("fences"," {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list"," {0,3}(?:[*+-]|1[.)]) ").replace("html","</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag",A).getRegex(),q={blockquote:k(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph",E).getRegex(),code:/^( {4}[^\n]+(?:\n(?: *(?:\n|$))*)?)+/,def:R,fences:/^ {0,3}(`{3,}(?=[^`\n]*(?:\n|$))|~{3,})([^\n]*)(?:\n|$)(?:|([\s\S]*?)(?:\n|$))(?: {0,3}\1[~`]* *(?=\n|$)|$)/,heading:/^ {0,3}(#{1,6})(?=\s|$)(.*)(?:\n+|$)/,hr:m,html:I,lheading:$,list:_,newline:/^(?: *(?:\n|$))+/,paragraph:E,table:f,text:/^[^\n]+/},Z=k("^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)").replace("hr",m).replace("heading"," {0,3}#{1,6}(?:\\s|$)").replace("blockquote"," {0,3}>").replace("code"," {4}[^\\n]").replace("fences"," {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list"," {0,3}(?:[*+-]|1[.)]) ").replace("html","</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag",A).getRegex(),L={...q,table:Z,paragraph:k(z).replace("hr",m).replace("heading"," {0,3}#{1,6}(?:\\s|$)").replace("|lheading","").replace("table",Z).replace("blockquote"," {0,3}>").replace("fences"," {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list"," {0,3}(?:[*+-]|1[.)]) ").replace("html","</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag",A).getRegex()},P={...q,html:k("^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:\"[^\"]*\"|'[^']*'|\\s[^'\"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))").replace("comment",S).replace(/tag/g,"(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(),def:/^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/,heading:/^(#{1,6})(.*)(?:\n+|$)/,fences:f,lheading:/^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/,paragraph:k(z).replace("hr",m).replace("heading"," *#{1,6} *[^\n]").replace("lheading",$).replace("|table","").replace("blockquote"," {0,3}>").replace("|fences","").replace("|list","").replace("|html","").replace("|tag","").getRegex()},Q=/^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/,v=/^( {2,}|\\)\n(?!\s*$)/,B="\\p{P}\\p{S}",C=k(/^((?![*_])[\spunctuation])/,"u").replace(/punctuation/g,B).getRegex(),M=k(/^(?:\*+(?:((?!\*)[punct])|[^\s*]))|^_+(?:((?!_)[punct])|([^\s_]))/,"u").replace(/punct/g,B).getRegex(),O=k("^[^_*]*?__[^_*]*?\\*[^_*]*?(?=__)|[^*]+(?=[^*])|(?!\\*)[punct](\\*+)(?=[\\s]|$)|[^punct\\s](\\*+)(?!\\*)(?=[punct\\s]|$)|(?!\\*)[punct\\s](\\*+)(?=[^punct\\s])|[\\s](\\*+)(?!\\*)(?=[punct])|(?!\\*)[punct](\\*+)(?!\\*)(?=[punct])|[^punct\\s](\\*+)(?=[^punct\\s])","gu").replace(/punct/g,B).getRegex(),D=k("^[^_*]*?\\*\\*[^_*]*?_[^_*]*?(?=\\*\\*)|[^_]+(?=[^_])|(?!_)[punct](_+)(?=[\\s]|$)|[^punct\\s](_+)(?!_)(?=[punct\\s]|$)|(?!_)[punct\\s](_+)(?=[^punct\\s])|[\\s](_+)(?!_)(?=[punct])|(?!_)[punct](_+)(?!_)(?=[punct])","gu").replace(/punct/g,B).getRegex(),j=k(/\\([punct])/,"gu").replace(/punct/g,B).getRegex(),H=k(/^<(scheme:[^\s\x00-\x1f<>]*|email)>/).replace("scheme",/[a-zA-Z][a-zA-Z0-9+.-]{1,31}/).replace("email",/[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/).getRegex(),U=k(S).replace("(?:--\x3e|$)","--\x3e").getRegex(),X=k("^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>").replace("comment",U).replace("attribute",/\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex(),F=/(?:\[(?:\\.|[^\[\]\\])*\]|\\.|`[^`]*`|[^\[\]\\`])*?/,N=k(/^!?\[(label)\]\(\s*(href)(?:\s+(title))?\s*\)/).replace("label",F).replace("href",/<(?:\\.|[^\n<>\\])+>|[^\s\x00-\x1f]*/).replace("title",/"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/).getRegex(),G=k(/^!?\[(label)\]\[(ref)\]/).replace("label",F).replace("ref",T).getRegex(),J=k(/^!?\[(ref)\](?:\[\])?/).replace("ref",T).getRegex(),K={_backpedal:f,anyPunctuation:j,autolink:H,blockSkip:/\[[^[\]]*?\]\([^\(\)]*?\)|`[^`]*?`|<[^<>]*?>/g,br:v,code:/^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/,del:f,emStrongLDelim:M,emStrongRDelimAst:O,emStrongRDelimUnd:D,escape:Q,link:N,nolink:J,punctuation:C,reflink:G,reflinkSearch:k("reflink|nolink(?!\\()","g").replace("reflink",G).replace("nolink",J).getRegex(),tag:X,text:/^(`+|[^`])(?:(?= {2,}\n)|[\s\S]*?(?:(?=[\\<!\[`*_]|\b_|$)|[^ ](?= {2,}\n)))/,url:f},V={...K,link:k(/^!?\[(label)\]\((.*?)\)/).replace("label",F).getRegex(),reflink:k(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label",F).getRegex()},W={...K,escape:k(Q).replace("])","~|])").getRegex(),url:k(/^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/,"i").replace("email",/[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(),_backpedal:/(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/,del:/^(~~?)(?=[^\s~])([\s\S]*?[^\s~])\1(?=[^~]|$)/,text:/^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/},Y={...W,br:k(v).replace("{2,}","*").getRegex(),text:k(W.text).replace("\\b_","\\b_| {2,}\\n").replace(/\{2,\}/g,"*").getRegex()},ee={normal:q,gfm:L,pedantic:P},te={normal:K,gfm:W,breaks:Y,pedantic:V};class ne{tokens;options;state;tokenizer;inlineQueue;constructor(t){this.tokens=[],this.tokens.links=Object.create(null),this.options=t||e.defaults,this.options.tokenizer=this.options.tokenizer||new w,this.tokenizer=this.options.tokenizer,this.tokenizer.options=this.options,this.tokenizer.lexer=this,this.inlineQueue=[],this.state={inLink:!1,inRawBlock:!1,top:!0};const n={block:ee.normal,inline:te.normal};this.options.pedantic?(n.block=ee.pedantic,n.inline=te.pedantic):this.options.gfm&&(n.block=ee.gfm,this.options.breaks?n.inline=te.breaks:n.inline=te.gfm),this.tokenizer.rules=n}static get rules(){return{block:ee,inline:te}}static lex(e,t){return new ne(t).lex(e)}static lexInline(e,t){return new ne(t).inlineTokens(e)}lex(e){e=e.replace(/\r\n|\r/g,"\n"),this.blockTokens(e,this.tokens);for(let e=0;e<this.inlineQueue.length;e++){const t=this.inlineQueue[e];this.inlineTokens(t.src,t.tokens)}return this.inlineQueue=[],this.tokens}blockTokens(e,t=[]){let n,s,r,i;for(e=this.options.pedantic?e.replace(/\t/g,"    ").replace(/^ +$/gm,""):e.replace(/^( *)(\t+)/gm,((e,t,n)=>t+"    ".repeat(n.length)));e;)if(!(this.options.extensions&&this.options.extensions.block&&this.options.extensions.block.some((s=>!!(n=s.call({lexer:this},e,t))&&(e=e.substring(n.raw.length),t.push(n),!0)))))if(n=this.tokenizer.space(e))e=e.substring(n.raw.length),1===n.raw.length&&t.length>0?t[t.length-1].raw+="\n":t.push(n);else if(n=this.tokenizer.code(e))e=e.substring(n.raw.length),s=t[t.length-1],!s||"paragraph"!==s.type&&"text"!==s.type?t.push(n):(s.raw+="\n"+n.raw,s.text+="\n"+n.text,this.inlineQueue[this.inlineQueue.length-1].src=s.text);else if(n=this.tokenizer.fences(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.heading(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.hr(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.blockquote(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.list(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.html(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.def(e))e=e.substring(n.raw.length),s=t[t.length-1],!s||"paragraph"!==s.type&&"text"!==s.type?this.tokens.links[n.tag]||(this.tokens.links[n.tag]={href:n.href,title:n.title}):(s.raw+="\n"+n.raw,s.text+="\n"+n.raw,this.inlineQueue[this.inlineQueue.length-1].src=s.text);else if(n=this.tokenizer.table(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.lheading(e))e=e.substring(n.raw.length),t.push(n);else{if(r=e,this.options.extensions&&this.options.extensions.startBlock){let t=1/0;const n=e.slice(1);let s;this.options.extensions.startBlock.forEach((e=>{s=e.call({lexer:this},n),"number"==typeof s&&s>=0&&(t=Math.min(t,s))})),t<1/0&&t>=0&&(r=e.substring(0,t+1))}if(this.state.top&&(n=this.tokenizer.paragraph(r)))s=t[t.length-1],i&&"paragraph"===s.type?(s.raw+="\n"+n.raw,s.text+="\n"+n.text,this.inlineQueue.pop(),this.inlineQueue[this.inlineQueue.length-1].src=s.text):t.push(n),i=r.length!==e.length,e=e.substring(n.raw.length);else if(n=this.tokenizer.text(e))e=e.substring(n.raw.length),s=t[t.length-1],s&&"text"===s.type?(s.raw+="\n"+n.raw,s.text+="\n"+n.text,this.inlineQueue.pop(),this.inlineQueue[this.inlineQueue.length-1].src=s.text):t.push(n);else if(e){const t="Infinite loop on byte: "+e.charCodeAt(0);if(this.options.silent){console.error(t);break}throw new Error(t)}}return this.state.top=!0,t}inline(e,t=[]){return this.inlineQueue.push({src:e,tokens:t}),t}inlineTokens(e,t=[]){let n,s,r,i,l,o,a=e;if(this.tokens.links){const e=Object.keys(this.tokens.links);if(e.length>0)for(;null!=(i=this.tokenizer.rules.inline.reflinkSearch.exec(a));)e.includes(i[0].slice(i[0].lastIndexOf("[")+1,-1))&&(a=a.slice(0,i.index)+"["+"a".repeat(i[0].length-2)+"]"+a.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex))}for(;null!=(i=this.tokenizer.rules.inline.blockSkip.exec(a));)a=a.slice(0,i.index)+"["+"a".repeat(i[0].length-2)+"]"+a.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);for(;null!=(i=this.tokenizer.rules.inline.anyPunctuation.exec(a));)a=a.slice(0,i.index)+"++"+a.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);for(;e;)if(l||(o=""),l=!1,!(this.options.extensions&&this.options.extensions.inline&&this.options.extensions.inline.some((s=>!!(n=s.call({lexer:this},e,t))&&(e=e.substring(n.raw.length),t.push(n),!0)))))if(n=this.tokenizer.escape(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.tag(e))e=e.substring(n.raw.length),s=t[t.length-1],s&&"text"===n.type&&"text"===s.type?(s.raw+=n.raw,s.text+=n.text):t.push(n);else if(n=this.tokenizer.link(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.reflink(e,this.tokens.links))e=e.substring(n.raw.length),s=t[t.length-1],s&&"text"===n.type&&"text"===s.type?(s.raw+=n.raw,s.text+=n.text):t.push(n);else if(n=this.tokenizer.emStrong(e,a,o))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.codespan(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.br(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.del(e))e=e.substring(n.raw.length),t.push(n);else if(n=this.tokenizer.autolink(e))e=e.substring(n.raw.length),t.push(n);else if(this.state.inLink||!(n=this.tokenizer.url(e))){if(r=e,this.options.extensions&&this.options.extensions.startInline){let t=1/0;const n=e.slice(1);let s;this.options.extensions.startInline.forEach((e=>{s=e.call({lexer:this},n),"number"==typeof s&&s>=0&&(t=Math.min(t,s))})),t<1/0&&t>=0&&(r=e.substring(0,t+1))}if(n=this.tokenizer.inlineText(r))e=e.substring(n.raw.length),"_"!==n.raw.slice(-1)&&(o=n.raw.slice(-1)),l=!0,s=t[t.length-1],s&&"text"===s.type?(s.raw+=n.raw,s.text+=n.text):t.push(n);else if(e){const t="Infinite loop on byte: "+e.charCodeAt(0);if(this.options.silent){console.error(t);break}throw new Error(t)}}else e=e.substring(n.raw.length),t.push(n);return t}}class se{options;constructor(t){this.options=t||e.defaults}code(e,t,n){const s=(t||"").match(/^\S*/)?.[0];return e=e.replace(/\n$/,"")+"\n",s?'<pre><code class="language-'+c(s)+'">'+(n?e:c(e,!0))+"</code></pre>\n":"<pre><code>"+(n?e:c(e,!0))+"</code></pre>\n"}blockquote(e){return`<blockquote>\n${e}</blockquote>\n`}html(e,t){return e}heading(e,t,n){return`<h${t}>${e}</h${t}>\n`}hr(){return"<hr>\n"}list(e,t,n){const s=t?"ol":"ul";return"<"+s+(t&&1!==n?' start="'+n+'"':"")+">\n"+e+"</"+s+">\n"}listitem(e,t,n){return`<li>${e}</li>\n`}checkbox(e){return"<input "+(e?'checked="" ':"")+'disabled="" type="checkbox">'}paragraph(e){return`<p>${e}</p>\n`}table(e,t){return t&&(t=`<tbody>${t}</tbody>`),"<table>\n<thead>\n"+e+"</thead>\n"+t+"</table>\n"}tablerow(e){return`<tr>\n${e}</tr>\n`}tablecell(e,t){const n=t.header?"th":"td";return(t.align?`<${n} align="${t.align}">`:`<${n}>`)+e+`</${n}>\n`}strong(e){return`<strong>${e}</strong>`}em(e){return`<em>${e}</em>`}codespan(e){return`<code>${e}</code>`}br(){return"<br>"}del(e){return`<del>${e}</del>`}link(e,t,n){const s=g(e);if(null===s)return n;let r='<a href="'+(e=s)+'"';return t&&(r+=' title="'+t+'"'),r+=">"+n+"</a>",r}image(e,t,n){const s=g(e);if(null===s)return n;let r=`<img src="${e=s}" alt="${n}"`;return t&&(r+=` title="${t}"`),r+=">",r}text(e){return e}}class re{strong(e){return e}em(e){return e}codespan(e){return e}del(e){return e}html(e){return e}text(e){return e}link(e,t,n){return""+n}image(e,t,n){return""+n}br(){return""}}class ie{options;renderer;textRenderer;constructor(t){this.options=t||e.defaults,this.options.renderer=this.options.renderer||new se,this.renderer=this.options.renderer,this.renderer.options=this.options,this.textRenderer=new re}static parse(e,t){return new ie(t).parse(e)}static parseInline(e,t){return new ie(t).parseInline(e)}parse(e,t=!0){let n="";for(let s=0;s<e.length;s++){const r=e[s];if(this.options.extensions&&this.options.extensions.renderers&&this.options.extensions.renderers[r.type]){const e=r,t=this.options.extensions.renderers[e.type].call({parser:this},e);if(!1!==t||!["space","hr","heading","code","table","blockquote","list","html","paragraph","text"].includes(e.type)){n+=t||"";continue}}switch(r.type){case"space":continue;case"hr":n+=this.renderer.hr();continue;case"heading":{const e=r;n+=this.renderer.heading(this.parseInline(e.tokens),e.depth,p(this.parseInline(e.tokens,this.textRenderer)));continue}case"code":{const e=r;n+=this.renderer.code(e.text,e.lang,!!e.escaped);continue}case"table":{const e=r;let t="",s="";for(let t=0;t<e.header.length;t++)s+=this.renderer.tablecell(this.parseInline(e.header[t].tokens),{header:!0,align:e.align[t]});t+=this.renderer.tablerow(s);let i="";for(let t=0;t<e.rows.length;t++){const n=e.rows[t];s="";for(let t=0;t<n.length;t++)s+=this.renderer.tablecell(this.parseInline(n[t].tokens),{header:!1,align:e.align[t]});i+=this.renderer.tablerow(s)}n+=this.renderer.table(t,i);continue}case"blockquote":{const e=r,t=this.parse(e.tokens);n+=this.renderer.blockquote(t);continue}case"list":{const e=r,t=e.ordered,s=e.start,i=e.loose;let l="";for(let t=0;t<e.items.length;t++){const n=e.items[t],s=n.checked,r=n.task;let o="";if(n.task){const e=this.renderer.checkbox(!!s);i?n.tokens.length>0&&"paragraph"===n.tokens[0].type?(n.tokens[0].text=e+" "+n.tokens[0].text,n.tokens[0].tokens&&n.tokens[0].tokens.length>0&&"text"===n.tokens[0].tokens[0].type&&(n.tokens[0].tokens[0].text=e+" "+n.tokens[0].tokens[0].text)):n.tokens.unshift({type:"text",text:e+" "}):o+=e+" "}o+=this.parse(n.tokens,i),l+=this.renderer.listitem(o,r,!!s)}n+=this.renderer.list(l,t,s);continue}case"html":{const e=r;n+=this.renderer.html(e.text,e.block);continue}case"paragraph":{const e=r;n+=this.renderer.paragraph(this.parseInline(e.tokens));continue}case"text":{let i=r,l=i.tokens?this.parseInline(i.tokens):i.text;for(;s+1<e.length&&"text"===e[s+1].type;)i=e[++s],l+="\n"+(i.tokens?this.parseInline(i.tokens):i.text);n+=t?this.renderer.paragraph(l):l;continue}default:{const e='Token with "'+r.type+'" type was not found.';if(this.options.silent)return console.error(e),"";throw new Error(e)}}}return n}parseInline(e,t){t=t||this.renderer;let n="";for(let s=0;s<e.length;s++){const r=e[s];if(this.options.extensions&&this.options.extensions.renderers&&this.options.extensions.renderers[r.type]){const e=this.options.extensions.renderers[r.type].call({parser:this},r);if(!1!==e||!["escape","html","link","image","strong","em","codespan","br","del","text"].includes(r.type)){n+=e||"";continue}}switch(r.type){case"escape":{const e=r;n+=t.text(e.text);break}case"html":{const e=r;n+=t.html(e.text);break}case"link":{const e=r;n+=t.link(e.href,e.title,this.parseInline(e.tokens,t));break}case"image":{const e=r;n+=t.image(e.href,e.title,e.text);break}case"strong":{const e=r;n+=t.strong(this.parseInline(e.tokens,t));break}case"em":{const e=r;n+=t.em(this.parseInline(e.tokens,t));break}case"codespan":{const e=r;n+=t.codespan(e.text);break}case"br":n+=t.br();break;case"del":{const e=r;n+=t.del(this.parseInline(e.tokens,t));break}case"text":{const e=r;n+=t.text(e.text);break}default:{const e='Token with "'+r.type+'" type was not found.';if(this.options.silent)return console.error(e),"";throw new Error(e)}}}return n}}class le{options;constructor(t){this.options=t||e.defaults}static passThroughHooks=new Set(["preprocess","postprocess","processAllTokens"]);preprocess(e){return e}postprocess(e){return e}processAllTokens(e){return e}}class oe{defaults={async:!1,breaks:!1,extensions:null,gfm:!0,hooks:null,pedantic:!1,renderer:null,silent:!1,tokenizer:null,walkTokens:null};options=this.setOptions;parse=this.#e(ne.lex,ie.parse);parseInline=this.#e(ne.lexInline,ie.parseInline);Parser=ie;Renderer=se;TextRenderer=re;Lexer=ne;Tokenizer=w;Hooks=le;constructor(...e){this.use(...e)}walkTokens(e,t){let n=[];for(const s of e)switch(n=n.concat(t.call(this,s)),s.type){case"table":{const e=s;for(const s of e.header)n=n.concat(this.walkTokens(s.tokens,t));for(const s of e.rows)for(const e of s)n=n.concat(this.walkTokens(e.tokens,t));break}case"list":{const e=s;n=n.concat(this.walkTokens(e.items,t));break}default:{const e=s;this.defaults.extensions?.childTokens?.[e.type]?this.defaults.extensions.childTokens[e.type].forEach((s=>{const r=e[s].flat(1/0);n=n.concat(this.walkTokens(r,t))})):e.tokens&&(n=n.concat(this.walkTokens(e.tokens,t)))}}return n}use(...e){const t=this.defaults.extensions||{renderers:{},childTokens:{}};return e.forEach((e=>{const n={...e};if(n.async=this.defaults.async||n.async||!1,e.extensions&&(e.extensions.forEach((e=>{if(!e.name)throw new Error("extension name required");if("renderer"in e){const n=t.renderers[e.name];t.renderers[e.name]=n?function(...t){let s=e.renderer.apply(this,t);return!1===s&&(s=n.apply(this,t)),s}:e.renderer}if("tokenizer"in e){if(!e.level||"block"!==e.level&&"inline"!==e.level)throw new Error("extension level must be 'block' or 'inline'");const n=t[e.level];n?n.unshift(e.tokenizer):t[e.level]=[e.tokenizer],e.start&&("block"===e.level?t.startBlock?t.startBlock.push(e.start):t.startBlock=[e.start]:"inline"===e.level&&(t.startInline?t.startInline.push(e.start):t.startInline=[e.start]))}"childTokens"in e&&e.childTokens&&(t.childTokens[e.name]=e.childTokens)})),n.extensions=t),e.renderer){const t=this.defaults.renderer||new se(this.defaults);for(const n in e.renderer){if(!(n in t))throw new Error(`renderer '${n}' does not exist`);if("options"===n)continue;const s=n,r=e.renderer[s],i=t[s];t[s]=(...e)=>{let n=r.apply(t,e);return!1===n&&(n=i.apply(t,e)),n||""}}n.renderer=t}if(e.tokenizer){const t=this.defaults.tokenizer||new w(this.defaults);for(const n in e.tokenizer){if(!(n in t))throw new Error(`tokenizer '${n}' does not exist`);if(["options","rules","lexer"].includes(n))continue;const s=n,r=e.tokenizer[s],i=t[s];t[s]=(...e)=>{let n=r.apply(t,e);return!1===n&&(n=i.apply(t,e)),n}}n.tokenizer=t}if(e.hooks){const t=this.defaults.hooks||new le;for(const n in e.hooks){if(!(n in t))throw new Error(`hook '${n}' does not exist`);if("options"===n)continue;const s=n,r=e.hooks[s],i=t[s];le.passThroughHooks.has(n)?t[s]=e=>{if(this.defaults.async)return Promise.resolve(r.call(t,e)).then((e=>i.call(t,e)));const n=r.call(t,e);return i.call(t,n)}:t[s]=(...e)=>{let n=r.apply(t,e);return!1===n&&(n=i.apply(t,e)),n}}n.hooks=t}if(e.walkTokens){const t=this.defaults.walkTokens,s=e.walkTokens;n.walkTokens=function(e){let n=[];return n.push(s.call(this,e)),t&&(n=n.concat(t.call(this,e))),n}}this.defaults={...this.defaults,...n}})),this}setOptions(e){return this.defaults={...this.defaults,...e},this}lexer(e,t){return ne.lex(e,t??this.defaults)}parser(e,t){return ie.parse(e,t??this.defaults)}#e(e,t){return(n,s)=>{const r={...s},i={...this.defaults,...r};!0===this.defaults.async&&!1===r.async&&(i.silent||console.warn("marked(): The async option was set to true by an extension. The async: false option sent to parse will be ignored."),i.async=!0);const l=this.#t(!!i.silent,!!i.async);if(null==n)return l(new Error("marked(): input parameter is undefined or null"));if("string"!=typeof n)return l(new Error("marked(): input parameter is of type "+Object.prototype.toString.call(n)+", string expected"));if(i.hooks&&(i.hooks.options=i),i.async)return Promise.resolve(i.hooks?i.hooks.preprocess(n):n).then((t=>e(t,i))).then((e=>i.hooks?i.hooks.processAllTokens(e):e)).then((e=>i.walkTokens?Promise.all(this.walkTokens(e,i.walkTokens)).then((()=>e)):e)).then((e=>t(e,i))).then((e=>i.hooks?i.hooks.postprocess(e):e)).catch(l);try{i.hooks&&(n=i.hooks.preprocess(n));let s=e(n,i);i.hooks&&(s=i.hooks.processAllTokens(s)),i.walkTokens&&this.walkTokens(s,i.walkTokens);let r=t(s,i);return i.hooks&&(r=i.hooks.postprocess(r)),r}catch(e){return l(e)}}}#t(e,t){return n=>{if(n.message+="\nPlease report this to https://github.com/markedjs/marked.",e){const e="<p>An error occurred:</p><pre>"+c(n.message+"",!0)+"</pre>";return t?Promise.resolve(e):e}if(t)return Promise.reject(n);throw n}}}const ae=new oe;function ce(e,t){return ae.parse(e,t)}ce.options=ce.setOptions=function(e){return ae.setOptions(e),ce.defaults=ae.defaults,n(ce.defaults),ce},ce.getDefaults=t,ce.defaults=e.defaults,ce.use=function(...e){return ae.use(...e),ce.defaults=ae.defaults,n(ce.defaults),ce},ce.walkTokens=function(e,t){return ae.walkTokens(e,t)},ce.parseInline=ae.parseInline,ce.Parser=ie,ce.parser=ie.parse,ce.Renderer=se,ce.TextRenderer=re,ce.Lexer=ne,ce.lexer=ne.lex,ce.Tokenizer=w,ce.Hooks=le,ce.parse=ce;const he=ce.options,pe=ce.setOptions,ue=ce.use,ke=ce.walkTokens,ge=ce.parseInline,fe=ce,de=ie.parse,xe=ne.lex;e.Hooks=le,e.Lexer=ne,e.Marked=oe,e.Parser=ie,e.Renderer=se,e.TextRenderer=re,e.Tokenizer=w,e.getDefaults=t,e.lexer=xe,e.marked=ce,e.options=he,e.parse=fe,e.parseInline=ge,e.parser=de,e.setOptions=pe,e.use=ue,e.walkTokens=ke}));
+</script>
+<script>
+/* 网页与站长工具：源码查看 / Markdown / HTML 编辑器 / 定时刷新 / 短链 / robots / 备案 / DNS
+   需要联网的两个功能（抓源码、短链）都做了降级提示，且失败不假装成功。
+   其余全部纯本地：解析与生成逻辑不碰网络，也不把输入发出去。 */
+(function () {
+  'use strict';
+  var $ = T.$;
+
+  /* ================= 1. 网页源码 ================= */
+
+  // 公开只读代理。浏览器直连别的站点会被 CORS 拦，只有 https 的公开代理能兜底。
+  var PROXIES = [
+    { name: '直连', url: function (u) { return u; } },
+    { name: 'r.jina.ai', url: function (u) { return 'https://r.jina.ai/' + u; } },
+    { name: 'allorigins', url: function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); } }
+  ];
+
+  function normalizeUrl(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return null;
+    // 已有协议头时先验协议，别把 ftp:// 之类补成 https://ftp//
+    var scheme = /^([a-z][a-z0-9+.-]*):/i.exec(s);
+    if (scheme) {
+      if (!/^https?$/i.test(scheme[1])) return null;
+    } else {
+      s = 'https://' + s;
+    }
+    try {
+      var u = new URL(s);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+      return u.href;
+    } catch (e) { return null; }
+  }
+
+  function fetchSource(url, timeoutMs) {
+    timeoutMs = timeoutMs || 15000;
+    var i = 0;
+    function next() {
+      if (i >= PROXIES.length) return Promise.reject(new Error('所有通道都拿不到内容（多为对方站点或网络环境限制）'));
+      var p = PROXIES[i++];
+      var ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, timeoutMs);
+      return fetch(p.url(url), { signal: ctl ? ctl.signal : undefined, redirect: 'follow', cache: 'no-store' })
+        .then(function (r) {
+          clearTimeout(timer);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text().then(function (t) {
+            if (!t) throw new Error('返回内容为空');
+            return { text: t, via: p.name, status: r.status };
+          });
+        })
+        .catch(function () { clearTimeout(timer); return next(); });
+    }
+    return next();
+  }
+
+  var srcMsg = $('src-msg'), srcOut = $('src-out'), srcFrame = $('src-frame');
+
+  function srcRun() {
+    var url = normalizeUrl($('src-url').value);
+    srcOut.textContent = '';
+    srcFrame.removeAttribute('srcdoc');
+    if (!url) { srcMsg.textContent = '网址格式不对，请输入 http(s):// 开头的地址。'; return; }
+    srcMsg.className = 'hint';
+    srcMsg.textContent = '正在获取…';
+    $('src-run').disabled = true;
+    fetchSource(url).then(function (r) {
+      srcOut.textContent = r.text;
+      srcFrame.setAttribute('srcdoc', r.text);
+      srcMsg.className = 'hint';
+      srcMsg.textContent = '已获取 ' + r.text.length + ' 个字符，通道：' + r.via +
+        '（共 ' + r.text.split('\n').length + ' 行）。预览在内嵌沙箱中渲染。';
+    }).catch(function (e) {
+      srcMsg.className = 'hint err';
+      srcMsg.textContent = '获取失败：' + e.message + '。可改用「下载后用浏览器查看源码」，或把源码粘贴到 Markdown 页签里看。';
+    }).then(function () { $('src-run').disabled = false; });
+  }
+
+  $('src-run').addEventListener('click', srcRun);
+  $('src-clear').addEventListener('click', function () {
+    srcOut.textContent = ''; $('src-url').value = ''; srcFrame.removeAttribute('srcdoc');
+    srcMsg.className = 'hint'; srcMsg.textContent = '';
+  });
+  $('src-url').addEventListener('keydown', function (e) { if (e.key === 'Enter') srcRun(); });
+
+  /* ================= 2. Markdown ================= */
+
+  var MD_SAMPLES = {
+    basic: [
+      '# 一级标题', '',
+      '## 二级标题', '',
+      '正文支持 **加粗**、*斜体*、~~删除线~~、`行内代码`，以及 [链接](https://cnb.cool)。', '',
+      '> 引用要写在一行的开头。', '',
+      '- 无序列表', '- 第二项', '', '1. 有序列表', '2. 第二项', '',
+      '---', '', '结尾段落。'
+    ].join('\n'),
+    table: [
+      '## 表格', '',
+      '| 工具 | 依赖 | 说明 |',
+      '| --- | --- | --- |',
+      '| 编码解码 | 无 | Base64 / URL / Hex |',
+      '| 二维码 | qrcode-generator | 本地渲染 |', '',
+      '## 代码块', '',
+      '```js',
+      'function add(a, b) {',
+      '  return a + b;',
+      '}',
+      '```', '',
+      '行内代码：`npm test`。'
+    ].join('\n'),
+    xss: [
+      '## XSS 载荷（应被全部剥掉）', '',
+      '<script>alert("script 标签")<\/script>', '',
+      '<img src=x onerror="alert(\'onerror\')">', '',
+      '<a href="javascript:alert(\'href\')">javascript: 链接</a>', '',
+      '<iframe src="https://example.com"></iframe>', '',
+      '<svg onload="alert(1)"></svg>', '',
+      'Markdown 注入：<a href="#" onclick="alert(1)">onclick</a>', '',
+      '正常内容应当保留：**加粗**、[安全链接](https://cnb.cool)。'
+    ].join('\n')
+  };
+
+  var mdIn = $('md-in'), mdOut = $('md-out');
+  var lastHtml = '';
+
+  function sanitize(html) {
+    if (typeof DOMPurify === 'undefined') return '';
+    return DOMPurify.sanitize(html, {
+      FORBID_TAGS: ['style', 'form', 'input', 'button'],
+      FORBID_ATTR: ['style'],
+      ALLOW_DATA_ATTR: false
+    });
+  }
+
+  function mdRender() {
+    var src = mdIn.value;
+    if (!src.trim()) { mdOut.innerHTML = ''; lastHtml = ''; return; }
+    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+      mdOut.textContent = 'Markdown 解析库未加载（docs/lib/marked.js、docs/lib/dompurify.js 需与本页同目录部署）。';
+      return;
+    }
+    var raw;
+    try {
+      raw = marked.parse(src, { gfm: true, breaks: true });
+    } catch (e) {
+      mdOut.textContent = '解析失败：' + e.message;
+      return;
+    }
+    var clean = sanitize(raw);
+    mdOut.innerHTML = clean;
+    lastHtml = clean;
+  }
+
+  function mdDownload() {
+    if (!lastHtml) { mdRender(); }
+    var doc = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+      '<title>Markdown 导出</title>\n<style>\n' +
+      'body{max-width:720px;margin:0 auto;padding:24px 16px;color:#1f2329;' +
+      'font:15px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}\n' +
+      'pre{background:#f5f6f8;border-radius:8px;padding:10px 12px;overflow:auto}\n' +
+      'code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#f0f1f3;border-radius:4px;padding:1px 4px}\n' +
+      'pre code{background:none;padding:0}\n' +
+      'table{border-collapse:collapse;width:100%}\n' +
+      'th,td{border:1px solid #e8eaed;padding:6px 8px}\n' +
+      'blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #e8eaed;color:#8a9099}\n' +
+      '</style>\n</head>\n<body>\n' + lastHtml + '\n</body>\n</html>\n';
+    download('markdown.html', doc, 'text/html');
+  }
+
+  var mdBtns = $('md-demo').querySelectorAll('button');
+  [].forEach.call(mdBtns, function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(mdBtns, function (o) { o.classList.toggle('on', o === b); });
+      mdIn.value = MD_SAMPLES[b.dataset.demo];
+      mdRender();
+    });
+  });
+  $('md-run').addEventListener('click', mdRender);
+  $('md-clear').addEventListener('click', function () {
+    mdIn.value = ''; mdOut.innerHTML = ''; lastHtml = '';
+    [].forEach.call(mdBtns, function (o) { o.classList.remove('on'); });
+  });
+  $('md-sample').addEventListener('click', function () {
+    mdIn.value = MD_SAMPLES.basic; mdRender();
+  });
+  $('md-file').addEventListener('click', mdDownload);
+  mdIn.addEventListener('input', mdRender);
+
+  function download(name, text, mime) {
+    var blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  /* ================= 3. HTML 编辑器 ================= */
+
+  var heEdit = $('he-edit'), heOut = $('he-out');
+  var heSource = false;
+
+  function heHtml() { return heSource ? heOut.textContent : heEdit.innerHTML; }
+
+  var cmdBtns = $('he-tools').querySelectorAll('button');
+  [].forEach.call(cmdBtns, function (b) {
+    b.addEventListener('click', function () {
+      if (heSource) return;
+      [].forEach.call(cmdBtns, function (o) { o.classList.toggle('on', o === b); });
+      heEdit.focus();
+      try { document.execCommand(b.dataset.cmd, false, null); } catch (e) { /* 老浏览器不支持该命令就忽略 */ }
+    });
+  });
+
+  var colBtns = $('he-colors').querySelectorAll('button');
+  [].forEach.call(colBtns, function (b) {
+    b.addEventListener('click', function () {
+      if (heSource) return;
+      [].forEach.call(colBtns, function (o) { o.classList.toggle('on', o === b); });
+      heEdit.focus();
+      // 后两个参数：useCSS=false 让浏览器直接写 <font style> 之外的行内样式，便于复制
+      try { document.execCommand('foreColor', false, b.dataset.color); } catch (e) { /* 忽略 */ }
+    });
+  });
+
+  $('he-preview').addEventListener('click', function () {
+    heSource = !heSource;
+    if (heSource) {
+      heOut.textContent = heEdit.innerHTML;
+      heOut.hidden = false;
+      heEdit.hidden = true;
+      this.textContent = '写回并预览';
+    } else {
+      heEdit.innerHTML = heOut.textContent;
+      heOut.hidden = true;
+      heEdit.hidden = false;
+      this.textContent = '切换源码 / 预览';
+    }
+  });
+
+  $('he-copy').addEventListener('click', function () {
+    T.copy(heHtml());
+    this.textContent = '已复制';
+    var btn = this;
+    setTimeout(function () { btn.textContent = '复制 HTML'; }, 1200);
+  });
+
+  $('he-file').addEventListener('click', function () {
+    var doc = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">\n<title>编辑器导出</title>\n' +
+      '</head>\n<body>\n' + heHtml() + '\n</body>\n</html>\n';
+    download('editor.html', doc, 'text/html');
+  });
+
+  /* ================= 4. 网址定时刷新 ================= */
+
+  var rfTimer = null, rfLeft = 0, rfCount = 0;
+  var rfUrl = $('rf-url'), rfSec = $('rf-sec'), rfFrame = $('rf-frame');
+
+  function rfPaint() {
+    $('rf-count').textContent = rfCount + ' 次';
+    $('rf-next').textContent = rfTimer ? rfLeft + ' 秒' : '—';
+  }
+
+  function rfStop(reason) {
+    if (rfTimer) { clearInterval(rfTimer); rfTimer = null; }
+    $('rf-toggle').textContent = '开始刷新';
+    $('rf-state').textContent = reason || '已停止';
+    rfPaint();
+  }
+
+  function rfOpen() {
+    var url = normalizeUrl(rfUrl.value);
+    if (!url) { $('rf-state').textContent = '网址格式不对'; return false; }
+    // 每次重设 src 都是整页重新加载，属于无缓存刷新
+    rfFrame.setAttribute('src', url);
+    return true;
+  }
+
+  function rfTick() {
+    rfLeft -= 1;
+    if (rfLeft <= 0) {
+      rfCount += 1;
+      var url = normalizeUrl(rfUrl.value);
+      if (url) {
+        // 加时间参数绕开浏览器缓存，保证拿到的是新内容
+        rfFrame.setAttribute('src', url + (url.indexOf('?') >= 0 ? '&' : '?') + '_t=' + Date.now());
+      }
+      rfLeft = Math.max(5, Math.round(Number(rfSec.value) || 30));
+    }
+    rfPaint();
+  }
+
+  $('rf-open').addEventListener('click', function () {
+    if (rfOpen()) { $('rf-state').textContent = '已加载，未开始定时刷新'; }
+  });
+
+  $('rf-toggle').addEventListener('click', function () {
+    if (rfTimer) { rfStop('已暂停'); return; }
+    if (!$('rf-frame').getAttribute('src')) { if (!rfOpen()) return; }
+    var sec = Math.max(5, Math.round(Number(rfSec.value) || 30));
+    rfSec.value = String(sec);
+    rfLeft = sec;
+    rfTimer = setInterval(rfTick, 1000);
+    this.textContent = '暂停刷新';
+    $('rf-state').textContent = '刷新中，每 ' + sec + ' 秒一次';
+    rfPaint();
+  });
+
+  $('rf-stop').addEventListener('click', function () { rfStop('已停止'); rfCount = 0; rfPaint(); });
+
+  var rfPresets = $('rf-presets').querySelectorAll('button');
+  [].forEach.call(rfPresets, function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(rfPresets, function (o) { o.classList.toggle('on', o === b); });
+      rfSec.value = b.dataset.sec;
+      if (rfTimer) { rfStop('已按新间隔停止，请重新开始'); }
+    });
+  });
+
+  /* ================= 5. 短链 ================= */
+
+  var SHORT_API = {
+    isgd: { name: 'is.gd', make: function (u) { return 'https://is.gd/create.php?format=json&url=' + encodeURIComponent(u); }, pick: function (d) { return d.shorturl; } },
+    vgd: { name: 'v.gd', make: function (u) { return 'https://v.gd/create.php?format=json&url=' + encodeURIComponent(u); }, pick: function (d) { return d.shorturl; } },
+    tinyurl: { name: 'tinyurl.com', make: function (u) { return 'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(u); }, pick: function (d) { return d; } }
+  };
+
+  var shWay = 'isgd';
+
+  // 本地兜底：不是一个真短链，只把长 URL 折成可分享的短参数形式，明确标注不缩址
+  function localShort(url) {
+    var b = '';
+    for (var i = 0; i < url.length; i++) {
+      b += url.charCodeAt(i).toString(36) + '.';
+    }
+    return b.replace(/\.$/, '');
+  }
+
+  function shOut(code, msg) {
+    $('sh-out').textContent = code || '';
+    $('sh-msg').className = msg && msg.err ? 'hint err' : 'hint';
+    $('sh-msg').textContent = msg ? msg.text : '';
+  }
+
+  $('sh-run').addEventListener('click', function () {
+    var url = normalizeUrl($('sh-url').value);
+    if (!url) { shOut('', { text: '网址格式不对。', err: true }); return; }
+    if (shWay === 'local') {
+      shOut(localShort(url), {
+        text: '本地短参已生成。注意：这不是真正的短链服务，参数仍然很长，只是把原地址编码成可粘贴的形式；' +
+          '要真正缩短请选上面的在线服务。'
+      });
+      return;
+    }
+    var svc = SHORT_API[shWay];
+    shOut('', { text: '正在请求 ' + svc.name + '…' });
+    var ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
+    fetch(svc.make(url), { signal: ctl ? ctl.signal : undefined, cache: 'no-store' })
+      .then(function (r) {
+        clearTimeout(timer);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var ct = r.headers.get('content-type') || '';
+        return ct.indexOf('json') >= 0 ? r.json().then(svc.pick) : r.text();
+      })
+      .then(function (short) {
+        short = String(short || '').trim();
+        if (!/^https?:\/\//i.test(short)) throw new Error('接口没返回短链');
+        shOut(short, { text: '由 ' + svc.name + ' 生成：' + short });
+      })
+      .catch(function (e) {
+        shOut('', {
+          text: '生成失败：' + e.message + '。短链服务需要联网且可能限流；可换一个服务商再试，或选「本地短参」用不联网的兜底形式。',
+          err: true
+        });
+      });
+  });
+
+  $('sh-clear').addEventListener('click', function () { shOut('', null); });
+
+  var shWays = $('sh-ways').querySelectorAll('button');
+  [].forEach.call(shWays, function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(shWays, function (o) { o.classList.toggle('on', o === b); });
+      shWay = b.dataset.way;
+      shOut('', null);
+    });
+  });
+
+  /* ================= 6. robots.txt ================= */
+
+  function robotsBuild(o) {
+    var agents = String(o.agent || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!agents.length) agents = ['*'];
+    var disallow = lines(o.disallow);
+    var allow = lines(o.allow);
+    var sitemaps = lines(o.sitemap);
+    var delay = String(o.delay == null ? '' : o.delay).trim();
+
+    var out = [];
+    out.push('# robots.txt generated by 计量计算工具 · 网页与站长工具');
+    out.push('# 语法参考 https://www.rfc-editor.org/rfc/rfc9309');
+    out.push('');
+    out.push('User-agent: ' + agents.join('\nUser-agent: '));
+    // RFC 9309：同一组内 Allow 与 Disallow 的先后不影响匹配（最长匹配优先），这里先写 Allow 便于阅读
+    allow.forEach(function (p) { out.push('Allow: ' + p); });
+    disallow.forEach(function (p) { out.push('Disallow: ' + p); });
+    if (!allow.length && !disallow.length) out.push('Disallow:');
+    if (delay) out.push('Crawl-delay: ' + delay);
+    if (sitemaps.length) {
+      out.push('');
+      sitemaps.forEach(function (s) { out.push('Sitemap: ' + s); });
+    }
+    return out.join('\n') + '\n';
+  }
+
+  function lines(v) {
+    return String(v == null ? '' : v).split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+
+  function robotsRun() {
+    var text = robotsBuild({
+      agent: $('rb-agent').value,
+      disallow: $('rb-disallow').value,
+      allow: $('rb-allow').value,
+      delay: $('rb-delay').value,
+      sitemap: $('rb-sitemap').value
+    });
+    $('rb-out').textContent = text;
+    return text;
+  }
+
+  var RB_DEFAULTS = { agent: '*', disallow: '/admin/\n/tmp/\n/*.pdf$', allow: '/admin/public/', delay: '1', sitemap: 'https://example.com/sitemap.xml' };
+  $('rb-run').addEventListener('click', robotsRun);
+  $('rb-reset').addEventListener('click', function () {
+    Object.keys(RB_DEFAULTS).forEach(function (k) { $(k === 'agent' ? 'rb-agent' : 'rb-' + k).value = RB_DEFAULTS[k]; });
+    robotsRun();
+  });
+  $('rb-copy').addEventListener('click', function () { T.copy(robotsRun()); });
+  $('rb-file').addEventListener('click', function () { download('robots.txt', robotsRun(), 'text/plain'); });
+  ['rb-agent', 'rb-disallow', 'rb-allow', 'rb-delay', 'rb-sitemap'].forEach(function (id) {
+    $(id).addEventListener('input', robotsRun);
+  });
+
+  /* ================= 7. 备案号解析 ================= */
+
+  // 省级行政区简称，备案号首字用的就是这一套。认不出来说明首字写错了。
+  var PROVINCES = ['京', '津', '冀', '晋', '蒙', '辽', '吉', '黑', '沪', '苏', '浙', '皖', '闽', '赣',
+    '鲁', '豫', '鄂', '湘', '粤', '桂', '琼', '渝', '川', '黔', '滇', '藏', '陕', '甘', '青', '宁', '新'];
+
+  var ICP_TYPES = [
+    { key: 'ICP备', desc: '经营性/非经营性网站备案（最常见）' },
+    { key: 'ICP证', desc: '经营性互联网信息服务许可（增值电信业务经营许可证）' },
+    { key: '公网安备', desc: '公安网备（公安部网络安全保卫局）' }
+  ];
+
+  function icpParse(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return { err: '请输入备案号' };
+    s = s.replace(/\s+/g, '');
+
+    var province = null, type = null, num = null, seq = null;
+
+    var m = /^([\u4e00-\u9fa5]{1,3})?(ICP备|ICP证|公网安备)(\d+)(?:号)?(?:-(\d+))?$/.exec(s);
+    if (!m) {
+      // 也允许只给数字部分（用户常常只记得编号）
+      var only = /^(\d+)(?:号)?(?:-(\d+))?$/.exec(s);
+      if (!only) return { err: '看不懂这个写法，示例：京ICP备12345678号-1、沪ICP证000000号、京公网安备11010502000000号' };
+      return {
+        province: null, type: null, number: only[1], seq: only[2] || null,
+        partial: true,
+        note: '只识别到编号，没有省份简称与备案类型，无法判断省局与主体性质。'
+      };
+    }
+
+    province = m[1] || null;
+    type = m[2];
+    num = m[3];
+    seq = m[4] || null;
+
+    var known = !province || PROVINCES.indexOf(province) >= 0;
+    var typeInfo = ICP_TYPES.filter(function (t) { return t.key === type; })[0] || null;
+
+    var rows = [];
+    rows.push(['省份简称', province || '（缺失）']);
+    rows.push(['备案类型', type]);
+    rows.push(['类型含义', typeInfo ? typeInfo.desc : '未知']);
+    rows.push(['备案编号', num]);
+    rows.push(['网站序号', seq || '（无，通常表示主体备案号或唯一网站）']);
+    rows.push(['编号位数', String(num.length) + ' 位']);
+    rows.push(['格式检查', known ? '通过' : '省份简称「' + province + '」不在常见简称表内，请核对']);
+
+    var link = '';
+    if (type === '公网安备') {
+      link = '全国互联网安全管理服务平台：https://beian.mps.gov.cn/#/query/webSearch';
+    } else {
+      link = '工信部备案查询：https://beian.miit.gov.cn/#/Integrated/recordQuery';
+    }
+
+    return {
+      province: province, type: type, number: num, seq: seq,
+      rows: rows, known: known,
+      link: link,
+      query: province && type === 'ICP备' ? 'https://beian.miit.gov.cn/#/Integrated/recordQuery' : link
+    };
+  }
+
+  function icpRun() {
+    var r = icpParse($('icp-in').value);
+    var out = $('icp-out'), msg = $('icp-msg'), linkBox = $('icp-link');
+    out.innerHTML = '';
+    linkBox.textContent = '';
+    if (r.err) {
+      msg.className = 'hint err';
+      msg.textContent = r.err;
+      return null;
+    }
+    msg.className = r.known === false ? 'hint err' : 'hint';
+    msg.textContent = r.partial ? r.note : '解析按格式进行，不代表该备案号真实存在，需到官方入口核验。';
+    var rows = r.rows || [];
+    rows.forEach(function (row) {
+      var d = document.createElement('div');
+      var k = document.createElement('div'); k.className = 'k'; k.textContent = row[0];
+      var v = document.createElement('div'); v.className = 'v'; v.textContent = row[1];
+      d.appendChild(k); d.appendChild(v);
+      out.appendChild(d);
+    });
+    linkBox.textContent = '官方查询入口：' + r.link;
+    return r;
+  }
+
+  $('icp-run').addEventListener('click', icpRun);
+  $('icp-clear').addEventListener('click', function () {
+    $('icp-in').value = ''; $('icp-out').innerHTML = ''; $('icp-link').textContent = '';
+    $('icp-msg').className = 'hint'; $('icp-msg').textContent = '';
+  });
+
+  /* ================= 8. DNS 清单 ================= */
+
+  // 静态清单：运营商公开的递归解析地址，不联网查询。实测可用性随地域与时间变化。
+  var DNS_LIST = [
+    { op: '公共', org: '阿里云公共 DNS', p: '223.5.5.5', s: '223.6.6.6', note: '免注册，国内多节点' },
+    { op: '公共', org: 'DNSPod / 腾讯', p: '119.29.29.29', s: '182.254.116.116', note: '国内解析速度快' },
+    { op: '公共', org: '114 DNS', p: '114.114.114.114', s: '114.114.115.115', note: '南京信风，老牌公共 DNS' },
+    { op: '公共', org: '114 DNS（安全版）', p: '114.114.114.119', s: '114.114.115.119', note: '拦截钓鱼、木马站点' },
+    { op: '公共', org: '百度公共 DNS', p: '180.76.76.76', s: '—', note: '免费公共解析' },
+    { op: '公共', org: 'CNNIC sDNS', p: '1.2.4.8', s: '210.2.4.8', note: '国家授时与解析节点' },
+    { op: '公共', org: 'Google Public DNS', p: '8.8.8.8', s: '8.8.4.4', note: '境外，国内访问可能不稳定' },
+    { op: '公共', org: 'Cloudflare', p: '1.1.1.1', s: '1.0.0.1', note: '境外，隐私优先，不记录查询内容' },
+    { op: '公共', org: 'Quad9', p: '9.9.9.9', s: '149.112.112.112', note: '境外，自动屏蔽已知恶意域名' },
+    { op: '公共', org: 'OpenDNS', p: '208.67.222.222', s: '208.67.220.220', note: '境外，可自选家长控制策略' },
+    { op: '公共', org: 'IPv6 公共解析（阿里）', p: '2400:3200::1', s: '2400:3200:baba::1', note: 'IPv6 单栈环境用' },
+    { op: '公共', org: 'IPv6 公共解析（Cloudflare）', p: '2606:4700:4700::1111', s: '2606:4700:4700::1001', note: '境外 IPv6' },
+    { op: '电信', org: '中国电信（全国通用）', p: '219.141.136.10', s: '219.141.140.10', note: '北京节点' },
+    { op: '电信', org: '中国电信（华东）', p: '202.96.209.133', s: '202.96.209.5', note: '上海节点' },
+    { op: '电信', org: '中国电信（华南）', p: '202.96.128.86', s: '202.96.128.166', note: '广东节点' },
+    { op: '电信', org: '中国电信（华中）', p: '202.103.24.68', s: '202.103.0.68', note: '湖北节点' },
+    { op: '电信', org: '中国电信（西南）', p: '61.139.2.69', s: '61.139.2.70', note: '四川节点' },
+    { op: '联通', org: '中国联通（全国通用）', p: '123.123.123.123', s: '123.123.123.124', note: '北京节点，老牌联通 DNS' },
+    { op: '联通', org: '中国联通（华北）', p: '202.106.0.20', s: '202.106.196.115', note: '北京节点' },
+    { op: '联通', org: '中国联通（华东）', p: '210.22.70.3', s: '210.22.84.3', note: '上海节点' },
+    { op: '联通', org: '中国联通（华南）', p: '221.5.88.88', s: '210.21.196.6', note: '广东节点' },
+    { op: '移动', org: '中国移动（全国通用）', p: '211.136.192.6', s: '211.138.180.2', note: '移动自有递归' },
+    { op: '移动', org: '中国移动（华东）', p: '211.140.13.188', s: '211.140.188.188', note: '浙江节点' },
+    { op: '移动', org: '中国移动（华南）', p: '211.136.192.6', s: '211.136.112.200', note: '广东节点' },
+    { op: '移动', org: '中国移动（华北）', p: '211.137.160.185', s: '211.137.160.188', note: '北京节点' },
+    { op: '移动', org: '中国移动（西南）', p: '211.137.96.205', s: '211.137.96.206', note: '四川节点' },
+    { op: '教育网', org: 'CERNET（清华）', p: '101.6.6.6', s: '101.6.6.7', note: '教育网主干，校园网首选' },
+    { op: '教育网', org: 'CERNET（备用）', p: '202.112.0.33', s: '202.112.0.34', note: '教育网传统节点' },
+    { op: '教育网', org: 'CERNET2（IPv6）', p: '2001:da8::666', s: '2001:da8:1:2::1', note: '教育网 IPv6' },
+    { op: '安全', org: '腾讯 DNSPod 家庭防护', p: '119.29.29.29', s: '119.29.29.29', note: '同时屏蔽恶意域名，可用 Norton ConnectSafe 替代（境外）' },
+    { op: '安全', org: 'OpenDNS FamilyShield', p: '208.67.222.123', s: '208.67.220.123', note: '境外，默认拦截成人内容' },
+    { op: '安全', org: 'Quad9（安全）', p: '9.9.9.10', s: '149.112.112.10', note: '境外，不记录 IP 的变体' },
+    { op: '安全', org: '114 DNS（家庭版）', p: '114.114.114.110', s: '114.114.115.110', note: '拦截色情与不良站点' },
+    { op: '安全', org: 'AdGuard DNS', p: '94.140.14.14', s: '94.140.15.15', note: '境外，默认去广告与追踪' }
+  ];
+
+  var dnsFilter = 'all';
+
+  function dnsRender() {
+    var kw = $('dns-q').value.trim().toLowerCase();
+    var rows = DNS_LIST.filter(function (r) {
+      var inOp = dnsFilter === 'all' || r.op === dnsFilter;
+      var text = (r.org + r.p + r.s + r.note + r.op).toLowerCase();
+      var inKw = !kw || text.indexOf(kw) >= 0;
+      return inOp && inKw;
+    });
+    var body = $('dns-body');
+    body.innerHTML = '';
+    rows.forEach(function (r) {
+      var tr = document.createElement('tr');
+      [r.org, r.p, r.s, r.note].forEach(function (v, i) {
+        var td = document.createElement('td');
+        td.textContent = v;
+        if (i === 1 || i === 2) td.className = 'num';
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    $('dns-count').textContent = '共 ' + rows.length + ' 条（清单总计 ' + DNS_LIST.length + ' 条）';
+  }
+
+  var dnsBtns = $('dns-filter').querySelectorAll('button');
+  [].forEach.call(dnsBtns, function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(dnsBtns, function (o) { o.classList.toggle('on', o === b); });
+      dnsFilter = b.dataset.op;
+      dnsRender();
+    });
+  });
+  $('dns-q').addEventListener('input', dnsRender);
+
+  /* ================= 页签 ================= */
+
+  var PANELS = ['source', 'markdown', 'html', 'refresh', 'short', 'robots', 'icp', 'dns'];
+
+  function setTab(name) {
+    T.markTab(name);
+    PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
+    if (name !== 'refresh') rfStop('未开始');
+  }
+
+  T.tabs($('tabs'), setTab);
+
+  /* ================= 初始化 ================= */
+
+  mdIn.value = MD_SAMPLES.basic;
+  mdRender();
+  robotsRun();
+  icpRun();
+  dnsRender();
+  setTab(T.firstTab('source'));
+
+  // 供测试脚本直接调用，不污染页面行为
+  window.__web = {
+    normalizeUrl: normalizeUrl, PROXIES: PROXIES,
+    robotsBuild: robotsBuild, icpParse: icpParse, DNS_LIST: DNS_LIST,
+    localShort: localShort, sanitize: sanitize, mdSamples: MD_SAMPLES
+  };
+})();
+</script>
 </body>
 </html>

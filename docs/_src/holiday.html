@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>放假安排</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .seg{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .fest{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+  .fest .hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .fest .name{font-size:15px;font-weight:600}
+  .fest .days{font-size:12px;color:var(--primary);background:var(--soft);border-radius:7px;padding:2px 7px}
+  .fest .range{font-size:13px;color:var(--text);margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .fest .work{font-size:12px;color:var(--warn);margin-top:5px}
+  .fest .desc{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.6}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:12px}
+  .cal .h{text-align:center;font-size:11px;color:var(--sub);padding:4px 0}
+  .cal .d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;
+    font-size:13px;background:#fff;border:1px solid var(--line);position:relative}
+  .cal .d.empty{background:transparent;border:none}
+  .cal .d.rest{background:#e7f8f1;border-color:#b7e6d8;color:#0a7a5f;font-weight:600}
+  .cal .d.fest{background:#fdeeea;border-color:#f6c9c0;color:#a8291a;font-weight:600}
+  .cal .d.work{background:#fff5e0;border-color:#f3ddb0;color:#8a5b00;font-weight:600}
+  .cal .d .t{position:absolute;bottom:2px;font-size:8px;font-weight:400;color:inherit;opacity:.8}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--sub);margin-bottom:12px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:middle}
+  .count{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .count div{background:#fff;padding:10px 6px;text-align:center}
+  .count b{display:block;font-size:19px;font-weight:700;color:var(--primary)}
+  .count span{display:block;font-size:11px;color:var(--sub);margin-top:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>放假安排</h1>
+  <p>2025 / 2026 法定节假日 · 调休与补班日历</p>
+</header>
+
+<main>
+
+  <div class="seg" id="year-seg">
+    <button data-year="2025" class="on">2025 年</button>
+    <button data-year="2026">2026 年</button>
+  </div>
+
+  <div class="count" id="count"></div>
+
+  <section class="card">
+    <h2>日历</h2>
+    <div class="seg" id="month-seg"></div>
+    <div class="cal" id="cal-head"></div>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span><i style="background:#fdeeea"></i>法定节假日</span>
+      <span><i style="background:#e7f8f1"></i>周末休息</span>
+      <span><i style="background:#fff5e0"></i>调休上班</span>
+      <span><i style="background:#fff;border:1px solid var(--line)"></i>正常工作日</span>
+    </div>
+    <p class="hint">
+      日历按国务院办公厅每年公布的放假安排生成（数据内置在页面里，不联网）。
+      格子右下角小字是节日简称。
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>放假明细</h2>
+    <div id="list"></div>
+  </section>
+
+  <div class="note">
+    <b>口径说明。</b>本页收录 2025 与 2026 年国务院办公厅公布的放假安排。
+    法定节假日当天加班按 300% 计薪，调休日与周末加班按 200%（或安排补休）；
+    具体到你的工资怎么算，还受工时制（标准/综合/不定时）影响。
+    港澳台与部分少数民族地区有各自的假期安排，不在本页范围内。
+  </div>
+
+  <footer>
+    数据为内置静态表，离线可用；以国务院办公厅当年通知为准<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./holiday.js"></script>
+</body>
+</html>

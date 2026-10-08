@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>证书与密钥</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:150px;padding:10px 12px;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .pem{font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#f7f8fa;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;max-height:260px;overflow:auto}
+  .ok{color:var(--ok);font-weight:600}
+  .bad{color:var(--warn);font-weight:600}
+  .warnbox{font-size:13px;line-height:1.7;background:#fff8e6;border:1px solid #f3ddb0;border-radius:10px;
+    padding:10px 12px;margin-bottom:12px}
+  .warnbox b{color:#8a5b00}
+  .stat2{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .stat2 div{background:#fff;padding:10px 8px;text-align:center}
+  .stat2 b{display:block;font-size:17px;font-weight:700;color:var(--primary)}
+  .stat2 span{display:block;font-size:11px;color:var(--sub);margin-top:2px}
+  .days{font:700 30px/1.2 ui-monospace,Menlo,Consolas,monospace;text-align:center;margin:4px 0 12px}
+  .days.ok{color:var(--ok)}
+  .days.bad{color:var(--warn)}
+  .days small{font-size:13px;font-weight:400;color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>证书与密钥</h1>
+  <p>SSL 证书校验 · 私有 CA 签发 · RSA/EC 密钥生成 · JWT 签名验签</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="ssl" class="on">SSL 证书校验</button>
+    <button data-tab="ca">私有证书生成</button>
+    <button data-tab="rsa">RSA / EC 密钥</button>
+    <button data-tab="jwt">JWT 签名验签</button>
+  </div>
+
+  <!-- SSL 证书校验 -->
+  <section class="card" id="panel-ssl">
+    <h2>粘贴 PEM 证书</h2>
+    <textarea class="area" id="sl-in" placeholder="-----BEGIN CERTIFICATE-----&#10;MIIF...&#10;-----END CERTIFICATE-----"></textarea>
+    <div class="btns">
+      <button type="button" class="ghost" id="sl-clear">清空</button>
+      <button type="button" class="primary" id="sl-run">解析</button>
+    </div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="sl-sample">载入示例证书</button>
+      <button type="button" class="ghost" id="sl-file">读取 .pem / .crt</button>
+    </div>
+    <input id="sl-filein" type="file" accept=".pem,.crt,.cer,.txt" hidden>
+    <p class="hint err" id="sl-msg"></p>
+    <div class="days" id="sl-days"></div>
+    <div class="warnbox" id="sl-warn" hidden></div>
+    <div class="stat2" id="sl-stat"></div>
+    <div class="grid" id="sl-grid"></div>
+    <table id="sl-table">
+      <thead><tr><th>项</th><th>值</th></tr></thead>
+      <tbody id="sl-body"></tbody>
+    </table>
+    <p class="hint">
+      解析用 <code>node-forge</code>：读 DER 结构，自己算 SHA-1 / SHA-256 指纹，比对有效期、SAN、密钥用法、KeyUsage、扩展密钥用法。
+      注意：本页只解析你粘贴的这张证书，<b>不做链式校验</b>——没有中间证书时无法证明它真由某个根签发，也不会联网去站点取证书。
+      要验证某个域名真正的线上证书，用 <code>openssl s_client -connect 域名:443 -showcerts</code> 或浏览器的证书面板。
+    </p>
+  </section>
+
+  <!-- 私有证书生成 -->
+  <section class="card" id="panel-ca" hidden>
+    <h2>自建 CA 并签发证书</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="ca-name"><b>CA 通用名（CN）</b></label>
+        <input id="ca-name" type="text" value="我的本地开发 CA">
+      </div>
+      <div class="row">
+        <label for="ca-days"><b>CA 有效期</b></label>
+        <div class="input-wrap"><input id="ca-days" type="number" inputmode="numeric" min="1" max="3650" value="3650"><span class="unit">天</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <label for="ca-keytype"><b>CA 密钥算法</b></label>
+      <select id="ca-keytype">
+        <option value="2048" selected>RSA 2048</option>
+        <option value="3072">RSA 3072</option>
+        <option value="4096">RSA 4096（较慢）</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="ca-cn"><b>要签发的域名 / 主机名</b>（多个用逗号分隔，支持 *.example.com）</label>
+      <input id="ca-cn" type="text" value="localhost, *.local.test">
+    </div>
+    <div class="row2">
+      <div class="row">
+        <label for="ca-leaf-days"><b>证书有效期</b></label>
+        <div class="input-wrap"><input id="ca-leaf-days" type="number" inputmode="numeric" min="1" max="825" value="825"><span class="unit">天</span></div>
+      </div>
+      <div class="row">
+        <label for="ca-serial"><b>起始序列号</b></label>
+        <div class="input-wrap"><input id="ca-serial" type="number" inputmode="numeric" min="1" value="4096"></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="ca-clear">清空结果</button>
+      <button type="button" class="primary" id="ca-run">生成 CA 与证书</button>
+    </div>
+    <p class="hint" id="ca-msg"></p>
+    <div class="warnbox" id="ca-warn">
+      <b>密钥在浏览器里生成，请当成测试数据。</b>
+      浏览器 JS 的随机源与运行环境（扩展、缓存、跨域脚本）不像本机 OpenSSL 那样可控，
+      生成的私钥只适合本地开发与内网测试，不要用于对外服务或任何需要长期信任的场景。
+    </div>
+    <div class="tabs" id="ca-tabs">
+      <button data-part="cakey" class="on">CA 私钥</button>
+      <button data-part="cacert">CA 证书</button>
+      <button data-part="key">站点私钥</button>
+      <button data-part="cert">站点证书</button>
+      <button data-part="chain">完整链</button>
+      <button data-part="steps">使用步骤</button>
+    </div>
+    <div class="pem" id="ca-out"></div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="ca-copy">复制当前</button>
+      <button type="button" class="ghost" id="ca-down">下载当前</button>
+      <button type="button" class="ghost" id="ca-all">打包下载全部</button>
+    </div>
+    <div class="grid" id="ca-grid"></div>
+  </section>
+
+  <!-- RSA 密钥 -->
+  <section class="card" id="panel-rsa" hidden>
+    <h2>生成密钥对</h2>
+    <div class="row">
+      <label for="rk-kind"><b>算法</b></label>
+      <select id="rk-kind">
+        <option value="rsa" selected>RSA</option>
+        <option value="ec">ECDSA（P-256 / P-384）</option>
+      </select>
+    </div>
+    <div class="row" id="rk-rsa-row">
+      <label for="rk-bits"><b>RSA 密钥长度</b></label>
+      <select id="rk-bits">
+        <option value="1024">1024 位（不安全，仅测试旧系统兼容）</option>
+        <option value="2048" selected>2048 位（当前通用下限）</option>
+        <option value="3072">3072 位（更稳妥，生成较慢）</option>
+        <option value="4096">4096 位（生成可能要十几秒）</option>
+      </select>
+    </div>
+    <div class="row" id="rk-ec-row" hidden>
+      <label for="rk-curve"><b>椭圆曲线</b></label>
+      <select id="rk-curve">
+        <option value="P-256" selected>P-256（prime256v1，最通用）</option>
+        <option value="P-384">P-384（secp384r1）</option>
+        <option value="P-521">P-521（secp521r1）</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="rk-clear">清空</button>
+      <button type="button" class="primary" id="rk-run">生成</button>
+    </div>
+    <p class="hint" id="rk-msg"></p>
+    <div class="stat2" id="rk-stat"></div>
+    <div class="tabs" id="rk-tabs">
+      <button data-part="priv" class="on">私钥（PKCS#8）</button>
+      <button data-part="pub">公钥（SPKI）</button>
+      <button data-part="pubssh">OpenSSH 公钥</button>
+      <button data-part="p10">证书签名请求 CSR</button>
+    </div>
+    <div class="pem" id="rk-out"></div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="rk-copy">复制</button>
+      <button type="button" class="ghost" id="rk-down">下载</button>
+      <button type="button" class="ghost" id="rk-pubdown">只存公钥</button>
+    </div>
+    <p class="hint">
+      RSA 走 <code>forge.pki.rsa.generateKeyPair</code>。JS 里算大素数比静态编译的 OpenSSL 慢一个量级，
+      就是页面会卡一会儿的原因。密钥只在内存里，刷新即消失，本页不写 localStorage。
+    </p>
+  </section>
+
+  <!-- JWT -->
+  <section class="card" id="panel-jwt" hidden>
+    <h2>JWT 签名校验</h2>
+    <div class="row">
+      <label for="jt-in"><b>Token</b>（header.payload.signature）</label>
+      <textarea class="area" id="jt-in" style="min-height:90px"></textarea>
+    </div>
+    <div class="row">
+      <label for="jt-alg"><b>签名算法</b>（HS* 用密钥，RS* / ES* 用公钥或证书）</label>
+      <select id="jt-alg">
+        <option value="HS256" selected>HS256（HMAC-SHA256）</option>
+        <option value="HS384">HS384</option>
+        <option value="HS512">HS512</option>
+        <option value="RS256">RS256（RSA-SHA256）</option>
+        <option value="RS384">RS384</option>
+        <option value="RS512">RS512</option>
+        <option value="PS256">PS256（RSA-PSS-SHA256）</option>
+        <option value="ES256">ES256（ECDSA P-256）</option>
+        <option value="ES384">ES384（ECDSA P-384）</option>
+        <option value="none">none（不签名，仅检查格式）</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="jt-key"><b>密钥 / 公钥</b>（HMAC 用任意字符串；RS*/ES* 粘贴 PEM 公钥或证书）</label>
+      <textarea class="area" id="jt-key" style="min-height:110px">your-256-bit-secret</textarea>
+    </div>
+    <div class="btns three">
+      <button type="button" class="ghost" id="jt-sample">载入示例</button>
+      <button type="button" class="ghost" id="jt-clear">清空</button>
+      <button type="button" class="primary" id="jt-run">校验</button>
+    </div>
+    <p class="hint" id="jt-msg"></p>
+    <div class="stat2" id="jt-stat"></div>
+    <div class="grid" id="jt-grid"></div>
+    <table id="jt-table">
+      <thead><tr><th>声明</th><th>值</th><th>说明</th></tr></thead>
+      <tbody id="jt-body"></tbody>
+    </table>
+    <div class="pem" id="jt-out"></div>
+    <p class="hint">
+      校验是认真的：先按声明里的 <code>alg</code> 与手选的算法比对（防止 alg 混淆攻击），
+      再用 HMAC 或 RSA/ECDSA 真正验一遍签名，最后单独检查 <code>exp</code> / <code>nbf</code> / <code>iat</code>。
+      这一点和只做 Base64 解码的那种「JWT 解析」不是一回事。
+    </p>
+  </section>
+
+  <footer>
+    所有密钥与证书都在你的浏览器里生成、解析，不上传、不写磁盘（除非你点下载）<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./lib/forge.js"></script>
+<script src="./crypto2.js"></script>
+</body>
+</html>
