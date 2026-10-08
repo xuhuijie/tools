@@ -5,7 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>随机生成</title>
-<link rel="stylesheet" href="./app.css">
+<style>
+/* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1f2329;--sub:#8a9099;--line:#e8eaed;
+  --primary:#1668dc;--primary-press:#0f52b3;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --warn:#d4380d;--ok:#0f8f74;--radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+header h1{margin:0;font-size:17px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 0}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:14px 14px 2px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card h2{margin:0 0 10px;font-size:14px;font-weight:600}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.row label b{color:var(--text);font-weight:500}
+.input-wrap{position:relative;display:flex;align-items:center}
+input[type="number"],input[type="text"],input[type="datetime-local"],select{
+  width:100%;height:46px;padding:0 12px;
+  font-size:16px;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;font-family:inherit;
+}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus,select:focus{border-color:var(--primary);background:#fff}
+input.invalid{border-color:var(--warn);background:#fff2ef}
+.input-wrap .unit{position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none}
+.input-wrap input[type="number"]{padding-right:64px}
+textarea{
+  width:100%;min-height:130px;padding:10px 12px;
+  font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--primary);background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:10px;margin:2px 0 14px}
+.btns button{flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none}
+.btns button.primary{background:var(--primary);color:#fff}
+.btns button.primary:active{background:var(--primary-press)}
+.btns button.ghost{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+.btns.three button.ghost{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{
+  padding:0 12px;height:32px;font-size:13px;color:var(--primary);
+  background:var(--soft);border:1px solid var(--soft-line);border-radius:9px;
+}
+.chips button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hint{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.5}
+.hint.err{color:var(--warn)}
+.out{
+  font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;
+}
+.out:empty{display:none}
+.out.mono-lg{font-size:15px}
+.out.err{color:var(--warn);background:#fff2ef;border-color:#ffd6cf}
+.out.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.grid div{background:#fff;padding:10px 12px}
+.grid .k{font-size:12px;color:var(--sub)}
+.grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+.formula{
+  font-size:12px;color:var(--sub);line-height:1.6;
+  background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+  word-break:break-all;
+}
+.formula .t{color:var(--text);font-weight:600}
+.formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);word-break:break-all}
+th{color:var(--sub);font-weight:500}
+td.num{font-family:ui-monospace,Menlo,Consolas,monospace}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pick button{
+  padding:0 12px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--text);border:1px solid var(--line);
+}
+.pick button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.list{margin:0 0 12px;padding:0;list-style:none}
+.list li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.list li:last-child{border-bottom:none}
+.list a{color:var(--primary);text-decoration:none;font-weight:500}
+.list .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tabs button{
+  flex:0 0 auto;padding:0 14px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--sub);border:1px solid var(--line);
+}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+footer{max-width:1280px;margin:0 auto;padding:0 16px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+@media(max-width:360px){.grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header>
@@ -42,7 +153,381 @@
   </footer>
 </main>
 
-<script src="./app.js"></script>
-<script src="./random.js"></script>
+<script>
+/* 工具页共用小工具：取元素、格式化、复制、页签切换 */
+(function (global) {
+  'use strict';
+
+  // 复制到剪贴板：HTTPS/本地才用异步 API，其余回退到 execCommand
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(text); });
+    }
+    return Promise.resolve(legacy(text));
+  }
+
+  function legacy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  // 保留 digits 位小数并去掉长浮点尾巴
+  function fmt(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', { maximumFractionDigits: d });
+  }
+
+  // 写回输入框的数值，避免 0.30000000000000004 这类尾巴
+  function fmtInput(n, digits) {
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(digits == null ? 6 : digits)));
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // 在容器内渲染 label/value 网格
+  function cells(container, pairs) {
+    container.innerHTML = '';
+    pairs.forEach(function (p) {
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', p[0]));
+      cell.appendChild(el('div', 'v', p[1]));
+      container.appendChild(cell);
+    });
+  }
+
+  // 复制按钮通用绑定：btn 复制 target 的文本，成功后短暂改文案
+  function bindCopy(btn, getText, doneText) {
+    if (!btn) return;
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      var text = getText();
+      if (!text) return;
+      copy(text).then(function () {
+        btn.textContent = doneText || '已复制';
+        setTimeout(function () { btn.textContent = original; }, 1200);
+      });
+    });
+  }
+
+  // 页签：buttons 为一组按钮，onPick 收到 data-tab
+  function tabs(container, onPick) {
+    var btns = [].slice.call(container.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
+        onPick(b.dataset.tab, b);
+      });
+    });
+    return btns;
+  }
+
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
+})(window);
+</script>
+<script>
+/* 随机生成：密码 / 随机数 / 随机点名 / MAC 地址 */
+(function () {
+  'use strict';
+  var $ = T.$, fields = $('fields'), output = $('output'), hint = $('hint'), current = 'pass';
+
+  // 统一取自 crypto，避免 Math.random 的可预测性
+  function randInt(maxExclusive) {
+    if (maxExclusive <= 0) throw new Error('范围需为正整数');
+    var limit = Math.floor(0xFFFFFFFF / maxExclusive) * maxExclusive;
+    var buf = new Uint32Array(1);
+    do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+    return buf[0] % maxExclusive;
+  }
+  function pick(arr) { return arr[randInt(arr.length)]; }
+
+  var SETS = {
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    digit: '0123456789',
+    symbol: '!@#$%^&*()-_=+[]{};:,.?/'
+  };
+
+  // 排除易混字符：用于「易识别」选项，避免 I/l/1、O/0 等看错
+  var AMBIGUOUS = /[Il1O0o]/g;
+
+  var FORMS = {
+    pass: {
+      hint: '使用 crypto 生成的高强度随机密码。默认保证至少含一个大写、一个小写、一个数字、一个符号。',
+      fields: [
+        { id: 'len', label: '长度', value: '16', type: 'number', step: '1' },
+        { id: 'count', label: '生成个数', value: '5', type: 'number', step: '1' },
+        { id: 'sets', label: '字符集', type: 'checkboxes', options: [['upper', '大写 A-Z', true], ['lower', '小写 a-z', true], ['digit', '数字 0-9', true], ['symbol', '符号 !@#$', true]] },
+        { id: 'no_ambiguous', label: '排除易混字符 I l 1 O 0', type: 'select', options: [['1', '排除'], ['0', '保留']], value: '1' },
+        { id: 'prefix', label: '前缀（可选）', type: 'text', value: '' },
+        { id: 'suffix', label: '后缀（可选）', type: 'text', value: '' }
+      ],
+      run: function () {
+        var len = needInt('len', '长度', 1, 256);
+        var count = needInt('count', '生成个数', 1, 200);
+        var chosen = checked('sets');
+        if (!chosen.length) throw new Error('请至少选择一个字符集');
+        var exclude = $('no_ambiguous').value === '1';
+        var pool = chosen.map(function (k) {
+          var s = SETS[k];
+          return exclude ? s.replace(AMBIGUOUS, '') : s;
+        });
+        var all = pool.join('');
+        if (!all) throw new Error('字符集被排除后为空，请放宽条件');
+        var prefix = $('prefix').value, suffix = $('suffix').value;
+        var body = Math.max(len - prefix.length - suffix.length, 0);
+        if (body === 0 && (prefix || suffix)) {
+          // 前后缀已占满，直接返回拼好的结果
+          return [prefix + suffix];
+        }
+        var out = [];
+        for (var n = 0; n < count; n++) {
+          var chars = [];
+          // 先各字符集至少取一个，再补齐剩余长度，保证强度分布
+          pool.forEach(function (s) { chars.push(pick(s)); });
+          while (chars.length < body) chars.push(pick(all));
+          // 洗牌：Fisher–Yates，用 crypto 取索引
+          for (var i = chars.length - 1; i > 0; i--) {
+            var j = randInt(i + 1);
+            var t = chars[i]; chars[i] = chars[j]; chars[j] = t;
+          }
+          out.push(prefix + chars.slice(0, body).join('') + suffix);
+        }
+        return out;
+      }
+    },
+    num: {
+      hint: '生成指定范围内的整数或小数。范围为闭区间，小数按指定小数位数四舍五入。',
+      fields: [
+        { id: 'min', label: '最小值', value: '1', type: 'number', step: 'any' },
+        { id: 'max', label: '最大值', value: '100', type: 'number', step: 'any' },
+        { id: 'count', label: '生成个数', value: '10', type: 'number', step: '1' },
+        { id: 'decimals', label: '小数位数（0 为整数）', value: '0', type: 'number', step: '1' },
+        { id: 'unique', label: '是否去重', type: 'select', options: [['0', '允许重复'], ['1', '结果不重复']], value: '0' }
+      ],
+      run: function () {
+        var min = needNum('min', '最小值'), max = needNum('max', '最大值');
+        if (min > max) throw new Error('最小值不能大于最大值');
+        var count = needInt('count', '生成个数', 1, 1000);
+        var dec = needInt('decimals', '小数位数', 0, 10);
+        var scale = Math.pow(10, dec);
+        var lo = Math.round(min * scale), hi = Math.round(max * scale);
+        var span = hi - lo + 1;
+        if ($('unique').value === '1' && span < count) {
+          throw new Error('不重复需要 ' + count + ' 个值，但范围内只有 ' + span + ' 个整数可取值');
+        }
+        var seen = {}, out = [];
+        while (out.length < count) {
+          var v = lo + randInt(span);
+          if ($('unique').value === '1') {
+            if (seen[v]) continue;
+            seen[v] = true;
+          }
+          out.push((v / scale).toFixed(dec));
+        }
+        return out;
+      }
+    },
+    roll: {
+      hint: '随机点名：每行一个名字。可一次抽多人，支持抽中后从名单移除。',
+      fields: [
+        { id: 'names', label: '名单（每行一个）', type: 'textarea', value: '张三\n李四\n王五\n赵六\n钱七' },
+        { id: 'count', label: '抽取人数', value: '1', type: 'number', step: '1' },
+        { id: 'dedupe', label: '同一轮不重复', type: 'select', options: [['1', '不重复'], ['0', '可重复']], value: '1' }
+      ],
+      run: function () {
+        var list = $('names').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+        if (!list.length) throw new Error('名单为空，请每行填写一个名字');
+        var count = needInt('count', '抽取人数', 1, list.length);
+        if ($('dedupe').value === '1') {
+          var copy = list.slice(), out = [];
+          for (var i = 0; i < count; i++) out.push(copy.splice(randInt(copy.length), 1)[0]);
+          return out;
+        }
+        var res = [];
+        for (var j = 0; j < count; j++) res.push(pick(list));
+        return res;
+      }
+    },
+    mac: {
+      hint: '生成随机 MAC 地址。可选设置 OUI 前缀（前三段），并保证单播、本地管理位置位。',
+      fields: [
+        { id: 'count', label: '生成个数', value: '5', type: 'number', step: '1' },
+        { id: 'oui', label: 'OUI 前缀（可选，如 00:1A:2B）', type: 'text', value: '' },
+        { id: 'fmt', label: '格式', type: 'select', options: [['colon', 'AA:BB:CC:DD:EE:FF'], ['dash', 'AA-BB-CC-DD-EE-FF'], ['plain', 'AABBCCDDEEFF'], ['cisco', 'AABB.CCDD.EEFF']], value: 'colon' }
+      ],
+      run: function () {
+        var count = needInt('count', '生成个数', 1, 200);
+        var bytes = new Uint8Array(6);
+        var out = [];
+        for (var n = 0; n < count; n++) {
+          crypto.getRandomValues(bytes);
+          var oui = parseOui($('oui').value);
+          if (oui) { bytes[0] = oui[0]; bytes[1] = oui[1]; bytes[2] = oui[2]; }
+          // 首字节 bit0=0 单播、bit1=0 全局唯一（OUI 指定时保持厂商位）
+          bytes[0] = (bytes[0] & 0xFC) | (oui ? (oui[0] & 0x03) : 0x02);
+          out.push(formatMac(bytes, $('fmt').value));
+        }
+        return out;
+      }
+    }
+  };
+
+  function parseOui(s) {
+    var clean = String(s).replace(/[^0-9a-fA-F]/g, '');
+    if (!clean) return null;
+    if (clean.length !== 6) throw new Error('OUI 前缀需为 3 段十六进制，如 00:1A:2B');
+    return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
+  }
+
+  function formatMac(bytes, fmt) {
+    var hex = Array.prototype.map.call(bytes, function (b) { return b.toString(16).toUpperCase().padStart(2, '0'); });
+    if (fmt === 'dash') return hex.join('-');
+    if (fmt === 'plain') return hex.join('');
+    if (fmt === 'cisco') return hex.slice(0, 2).join('') + '.' + hex.slice(2, 4).join('') + '.' + hex.slice(4).join('');
+    return hex.join(':');
+  }
+
+  function needNum(id, label) {
+    var raw = String($(id).value).trim();
+    if (raw === '') throw new Error('请填写' + label);
+    var v = Number(raw);
+    if (!isFinite(v)) throw new Error(label + '需为数字');
+    return v;
+  }
+  function needInt(id, label, lo, hi) {
+    var v = needNum(id, label);
+    if (!Number.isInteger(v) || v < lo || v > hi) throw new Error(label + '需为 ' + lo + '–' + hi + ' 的整数');
+    return v;
+  }
+  function checked(id) {
+    var box = $(id);
+    return [].filter.call(box.querySelectorAll('input[type=checkbox]'), function (c) { return c.checked; })
+      .map(function (c) { return c.value; });
+  }
+
+  function buildFields(form) {
+    fields.innerHTML = '';
+    form.fields.forEach(function (f) {
+      var row = T.el('div', 'row');
+      row.appendChild(T.el('label', null, f.label));
+      if (f.type === 'select') {
+        var sel = document.createElement('select');
+        f.options.forEach(function (o) {
+          var opt = document.createElement('option');
+          opt.value = o[0]; opt.textContent = o[1];
+          if (o[0] === f.value) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.id = f.id;
+        row.appendChild(sel);
+      } else if (f.type === 'textarea') {
+        var ta = document.createElement('textarea');
+        ta.id = f.id; ta.value = f.value || '';
+        row.appendChild(ta);
+      } else if (f.type === 'checkboxes') {
+        var box = T.el('div', 'pick');
+        box.id = f.id;
+        f.options.forEach(function (o) {
+          var lab = document.createElement('label');
+          lab.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text);background:#fff;border:1px solid var(--line);border-radius:9px;padding:0 12px;height:34px';
+          var cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.value = o[0]; cb.checked = !!o[2];
+          cb.style.cssText = 'width:16px;height:16px;margin:0';
+          lab.appendChild(cb);
+          lab.appendChild(document.createTextNode(o[1]));
+          box.appendChild(lab);
+        });
+        row.appendChild(box);
+      } else {
+        var inp = document.createElement('input');
+        inp.type = f.type || 'text';
+        inp.id = f.id;
+        inp.value = f.value == null ? '' : f.value;
+        if (f.type === 'number') inp.inputMode = 'decimal';
+        inp.step = f.step || 'any';
+        row.appendChild(inp);
+      }
+      fields.appendChild(row);
+    });
+  }
+
+  function run() {
+    try {
+      var res = FORMS[current].run();
+      output.className = 'out mono-lg';
+      output.textContent = res.join('\n');
+      hint.className = 'hint';
+      hint.textContent = FORMS[current].hint;
+    } catch (e) {
+      output.className = 'out mono-lg err';
+      output.textContent = '生成失败：' + e.message;
+    }
+  }
+
+  function setTab(name) {
+    current = name;
+    T.markTab(name);
+    buildFields(FORMS[name]);
+    hint.className = 'hint';
+    hint.textContent = FORMS[name].hint;
+    output.className = 'out mono-lg';
+    output.textContent = '';
+  }
+
+  T.tabs($('tabs'), setTab);
+  $('run').addEventListener('click', run);
+  $('reset').addEventListener('click', function () { setTab(current); });
+  T.bindCopy($('copy'), function () { return output.classList.contains('err') ? '' : output.textContent; });
+
+  setTab(T.firstTab('pass'));
+})();
+</script>
 </body>
 </html>

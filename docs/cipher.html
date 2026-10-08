@@ -5,7 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>古典密码</title>
-<link rel="stylesheet" href="./app.css">
+<style>
+/* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1f2329;--sub:#8a9099;--line:#e8eaed;
+  --primary:#1668dc;--primary-press:#0f52b3;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --warn:#d4380d;--ok:#0f8f74;--radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+header h1{margin:0;font-size:17px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 0}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:14px 14px 2px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card h2{margin:0 0 10px;font-size:14px;font-weight:600}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.row label b{color:var(--text);font-weight:500}
+.input-wrap{position:relative;display:flex;align-items:center}
+input[type="number"],input[type="text"],input[type="datetime-local"],select{
+  width:100%;height:46px;padding:0 12px;
+  font-size:16px;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;font-family:inherit;
+}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus,select:focus{border-color:var(--primary);background:#fff}
+input.invalid{border-color:var(--warn);background:#fff2ef}
+.input-wrap .unit{position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none}
+.input-wrap input[type="number"]{padding-right:64px}
+textarea{
+  width:100%;min-height:130px;padding:10px 12px;
+  font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--primary);background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:10px;margin:2px 0 14px}
+.btns button{flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none}
+.btns button.primary{background:var(--primary);color:#fff}
+.btns button.primary:active{background:var(--primary-press)}
+.btns button.ghost{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+.btns.three button.ghost{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{
+  padding:0 12px;height:32px;font-size:13px;color:var(--primary);
+  background:var(--soft);border:1px solid var(--soft-line);border-radius:9px;
+}
+.chips button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hint{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.5}
+.hint.err{color:var(--warn)}
+.out{
+  font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;
+}
+.out:empty{display:none}
+.out.mono-lg{font-size:15px}
+.out.err{color:var(--warn);background:#fff2ef;border-color:#ffd6cf}
+.out.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.grid div{background:#fff;padding:10px 12px}
+.grid .k{font-size:12px;color:var(--sub)}
+.grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+.formula{
+  font-size:12px;color:var(--sub);line-height:1.6;
+  background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+  word-break:break-all;
+}
+.formula .t{color:var(--text);font-weight:600}
+.formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);word-break:break-all}
+th{color:var(--sub);font-weight:500}
+td.num{font-family:ui-monospace,Menlo,Consolas,monospace}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pick button{
+  padding:0 12px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--text);border:1px solid var(--line);
+}
+.pick button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.list{margin:0 0 12px;padding:0;list-style:none}
+.list li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.list li:last-child{border-bottom:none}
+.list a{color:var(--primary);text-decoration:none;font-weight:500}
+.list .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tabs button{
+  flex:0 0 auto;padding:0 14px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--sub);border:1px solid var(--line);
+}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+footer{max-width:1280px;margin:0 auto;padding:0 16px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+@media(max-width:360px){.grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header>
@@ -70,7 +181,329 @@
   </footer>
 </main>
 
-<script src="./app.js"></script>
-<script src="./cipher.js"></script>
+<script>
+/* 工具页共用小工具：取元素、格式化、复制、页签切换 */
+(function (global) {
+  'use strict';
+
+  // 复制到剪贴板：HTTPS/本地才用异步 API，其余回退到 execCommand
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(text); });
+    }
+    return Promise.resolve(legacy(text));
+  }
+
+  function legacy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  // 保留 digits 位小数并去掉长浮点尾巴
+  function fmt(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', { maximumFractionDigits: d });
+  }
+
+  // 写回输入框的数值，避免 0.30000000000000004 这类尾巴
+  function fmtInput(n, digits) {
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(digits == null ? 6 : digits)));
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // 在容器内渲染 label/value 网格
+  function cells(container, pairs) {
+    container.innerHTML = '';
+    pairs.forEach(function (p) {
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', p[0]));
+      cell.appendChild(el('div', 'v', p[1]));
+      container.appendChild(cell);
+    });
+  }
+
+  // 复制按钮通用绑定：btn 复制 target 的文本，成功后短暂改文案
+  function bindCopy(btn, getText, doneText) {
+    if (!btn) return;
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      var text = getText();
+      if (!text) return;
+      copy(text).then(function () {
+        btn.textContent = doneText || '已复制';
+        setTimeout(function () { btn.textContent = original; }, 1200);
+      });
+    });
+  }
+
+  // 页签：buttons 为一组按钮，onPick 收到 data-tab
+  function tabs(container, onPick) {
+    var btns = [].slice.call(container.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
+        onPick(b.dataset.tab, b);
+      });
+    });
+    return btns;
+  }
+
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
+})(window);
+</script>
+<script>
+/* 古典密码：摩尔斯 / 凯撒 / ROT13 / 维吉尼亚 / 栅栏 / 培根 */
+(function () {
+  'use strict';
+  var $ = T.$, $m = T.$, input = $('input'), output = $('output'), hint = $('hint'), current = 'morse';
+
+  // 摩尔斯表（含数字与常用标点）
+  var MORSE = {
+    A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....',
+    I: '..', J: '.---', K: '-.-', L: '.-..', M: '--', N: '-.', O: '---', P: '.--.',
+    Q: '--.-', R: '.-.', S: '...', T: '-', U: '..-', V: '...-', W: '.--', X: '-..-',
+    Y: '-.--', Z: '--..',
+    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+    '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
+    '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+    ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
+    '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+  };
+  var MORSE_REV = {};
+  Object.keys(MORSE).forEach(function (k) { MORSE_REV[MORSE[k]] = k; });
+
+  var HINTS = {
+    morse: '摩尔斯电码：字母/数字转点划，字符之间用空格分隔。解密码时请用空格分隔每个字符、用 / 分隔单词。',
+    caesar: '凯撒密码：把字母在字母表上平移固定位数；解密即反向平移。非字母字符原样保留。',
+    rot13: 'ROT13：凯撒的特例（平移 13 位），加密与解密是同一个操作，做两次即还原。',
+    vigenere: '维吉尼亚密码：用密钥字母决定每个位置平移多少位，属多表替换。密钥只取字母。',
+    fence: '栅栏密码（基础型）：把明文按栏数分组后按列读出，栏数越大打乱越彻底。',
+    bacon: '培根密码：每个字母用 5 个 a/b 表示；解密时 A/B 之外的分隔符会被忽略。'
+  };
+
+  var ASCII_A = 65, ASCII_Z = 90, LETTERS = 26;
+
+  function shiftChar(ch, n) {
+    var code = ch.charCodeAt(0);
+    if (code >= 65 && code <= 90) return String.fromCharCode((code - 65 + n % LETTERS + LETTERS) % LETTERS + 65);
+    if (code >= 97 && code <= 122) return String.fromCharCode((code - 97 + n % LETTERS + LETTERS) % LETTERS + 97);
+    return ch;
+  }
+
+  // ---------- 摩尔斯 ----------
+  function morseEncode(s) {
+    var words = s.toUpperCase().split(/\s+/).filter(Boolean);
+    var bad = [];
+    var res = words.map(function (w) {
+      return Array.from(w).map(function (c) {
+        if (!MORSE[c]) { bad.push(c); return ''; }
+        return MORSE[c];
+      }).filter(Boolean).join(' ');
+    }).join(' / ');
+    if (bad.length) hint.className = 'hint err', hint.textContent = '已跳过无法编码的字符：' + bad.join(' ');
+    return res;
+  }
+  function morseDecode(s) {
+    return s.trim().split(/\s*\/\s*/).map(function (word) {
+      return word.trim().split(/\s+/).map(function (code) {
+        if (!code) return '';
+        return MORSE_REV[code] || '?';
+      }).join('');
+    }).join(' ');
+  }
+
+  // ---------- 维吉尼亚 ----------
+  function vigenere(s, key, dir) {
+    var ks = key.toUpperCase().replace(/[^A-Z]/g, '');
+    if (!ks) throw new Error('密钥需至少包含一个字母');
+    var ki = 0;
+    return Array.from(s).map(function (ch) {
+      var code = ch.charCodeAt(0);
+      var isUpper = code >= 65 && code <= 90, isLower = code >= 97 && code <= 122;
+      if (!isUpper && !isLower) return ch;
+      var shift = ks.charCodeAt(ki++ % ks.length) - ASCII_A;
+      return shiftChar(ch, dir === 'enc' ? shift : -shift);
+    }).join('');
+  }
+
+  // ---------- 栅栏（按栏数分行后逐行拼接） ----------
+  function fenceEncode(s, rails) {
+    if (rails < 2) throw new Error('栏数需为不小于 2 的整数');
+    var out = [];
+    for (var r = 0; r < rails; r++) {
+      for (var i = r; i < s.length; i += rails) out.push(s[i]);
+    }
+    return out.join('');
+  }
+  function fenceDecode(s, rails) {
+    if (rails < 2) throw new Error('栏数需为不小于 2 的整数');
+    var len = s.length;
+    var per = Math.floor(len / rails), extra = len % rails;
+    var rows = [], pos = 0;
+    for (var r = 0; r < rails; r++) {
+      var take = per + (r < extra ? 1 : 0);
+      rows.push(s.substr(pos, take));
+      pos += take;
+    }
+    var out = '', idx = rows.map(function () { return 0; });
+    for (var i = 0; i < len; i++) {
+      var row = i % rails;
+      out += rows[row][idx[row]++];
+    }
+    return out;
+  }
+
+  // ---------- 培根 ----------
+  var BACON = {};
+  'ABCDEFGHIKLMNOPQRSTUVWXYZ'.split('').forEach(function (c, i) {
+    if (c === 'I') { BACON.I = i; BACON.J = i; return; }
+    BACON[c] = i;
+  });
+  function baconEncode(s) {
+    return Array.from(s.toUpperCase()).map(function (c) {
+      var v = BACON[c];
+      if (v == null) return c === ' ' ? '/' : '';
+      return v.toString(2).padStart(5, '0').replace(/0/g, 'a').replace(/1/g, 'b');
+    }).filter(Boolean).join(' ');
+  }
+  function baconDecode(s) {
+    var bits = s.toUpperCase().replace(/[^AB]/g, '');
+    if (bits.length % 5) throw new Error('有效位数 ' + bits.length + ' 不是 5 的倍数');
+    var out = '';
+    for (var i = 0; i < bits.length; i += 5) {
+      var v = parseInt(bits.substr(i, 5).replace(/A/g, '0').replace(/B/g, '1'), 2);
+      out += 'ABCDEFGHIKLMNOPQRSTUVWXYZ'[v] || '?';
+    }
+    return out;
+  }
+
+  function readRails() {
+    var v = parseInt($m('rails').value, 10);
+    if (!(v >= 2)) throw new Error('栏数需为不小于 2 的整数');
+    return v;
+  }
+  function readShift() {
+    var v = parseInt($m('shift').value, 10);
+    if (isNaN(v)) throw new Error('偏移位数需为整数');
+    return v;
+  }
+
+  var OPS = {
+    morse: { enc: morseEncode, dec: morseDecode, params: [] },
+    caesar: { enc: function (s) { return Array.from(s).map(function (c) { return shiftChar(c, readShift()); }).join(''); },
+              dec: function (s) { return Array.from(s).map(function (c) { return shiftChar(c, -readShift()); }).join(''); },
+              params: ['shift-row'] },
+    rot13: { enc: function (s) { return Array.from(s).map(function (c) { return shiftChar(c, 13); }).join(''); },
+             dec: function (s) { return Array.from(s).map(function (c) { return shiftChar(c, 13); }).join(''); },
+             params: [] },
+    vigenere: { enc: function (s) { return vigenere(s, $m('key').value, 'enc'); },
+                dec: function (s) { return vigenere(s, $m('key').value, 'dec'); },
+                params: ['key-row'] },
+    fence: { enc: function (s) { return fenceEncode(s, readRails()); },
+             dec: function (s) { return fenceDecode(s, readRails()); },
+             params: ['rails-row'] },
+    bacon: { enc: baconEncode, dec: baconDecode, params: [] }
+  };
+
+  var LABELS = {
+    morse: ['摩尔斯编码', '摩尔斯解码'],
+    caesar: ['凯撒加密', '凯撒解密'],
+    rot13: ['ROT13 转换', 'ROT13 还原（同加密）'],
+    vigenere: ['维吉尼亚加密', '维吉尼亚解密'],
+    fence: ['栅栏加密', '栅栏解密'],
+    bacon: ['培根加密', '培根解密']
+  };
+
+  var PARAM_ROWS = ['shift-row', 'key-row', 'rails-row'];
+
+  function setTab(name) {
+    current = name;
+    T.markTab(name);
+    var op = OPS[name];
+    PARAM_ROWS.forEach(function (id) { $(id).style.display = op.params.indexOf(id) >= 0 ? '' : 'none'; });
+    hint.className = 'hint';
+    hint.textContent = HINTS[name] || '';
+    $('encode').textContent = LABELS[name][0];
+    $('decode').textContent = LABELS[name][1];
+    output.className = 'out mono-lg';
+    output.textContent = '';
+  }
+
+  function run(mode) {
+    if (input.value === '') { hint.className = 'hint err'; hint.textContent = '请先输入内容'; return; }
+    hint.className = 'hint';
+    hint.textContent = HINTS[current] || '';
+    try {
+      output.className = 'out mono-lg';
+      output.textContent = OPS[current][mode](input.value);
+    } catch (e) {
+      output.className = 'out mono-lg err';
+      output.textContent = '处理失败：' + e.message;
+    }
+  }
+
+  T.tabs($('tabs'), setTab);
+  $('encode').addEventListener('click', function () { run('enc'); });
+  $('decode').addEventListener('click', function () { run('dec'); });
+  $('swap').addEventListener('click', function () {
+    if (output.textContent && !output.classList.contains('err')) {
+      input.value = output.textContent;
+      output.textContent = '';
+    }
+  });
+  T.bindCopy($('copy'), function () { return output.classList.contains('err') ? '' : output.textContent; });
+
+  setTab(T.firstTab('morse'));
+})();
+</script>
 </body>
 </html>

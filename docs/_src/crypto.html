@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>流密码</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:130px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .warnbox{font-size:13px;line-height:1.7;background:#fff8e6;border:1px solid #f3ddb0;border-radius:10px;
+    padding:10px 12px;margin-bottom:12px}
+  .warnbox b{color:#8a5b00}
+  .vec{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px}
+  .vec th,.vec td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;
+    font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+  .vec tr.pass td:first-child{color:var(--ok);font-weight:600}
+  .vec tr.fail td:first-child{color:var(--warn);font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>流密码</h1>
+  <p>RC4 · Rabbit（RFC 4503）加密解密</p>
+</header>
+
+<main>
+
+  <p class="warnbox">
+    <b>RC4 已经不安全</b>，2015 年 RFC 7465 明确禁止在 TLS 中使用；
+    <b>Rabbit 也没有被主流协议采纳</b>。本页是为了看懂算法、复算历史数据、做题与内网小工具，
+    拿标准向量把实现锁死。真实场景请用 AES-GCM 或 ChaCha20-Poly1305。
+  </p>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="rc4" class="on">RC4</button>
+    <button data-tab="rabbit">Rabbit（RFC 4503）</button>
+  </div>
+
+  <!-- RC4 -->
+  <section class="card" id="panel-rc4">
+    <h2>密钥</h2>
+    <div class="row">
+      <label for="r4-key"><b>密钥</b>（任意长度，文本按 UTF-8 计字节；也可粘贴 hex）</label>
+      <input id="r4-key" type="text" value="Key">
+    </div>
+    <div class="chips" id="r4-presets">
+      <button type="button" data-key="Key" class="on">Key</button>
+      <button type="button" data-key="Wiki">Wiki</button>
+      <button type="button" data-key="Secret">Secret</button>
+      <button type="button" data-key="1234567890">1234567890</button>
+    </div>
+    <h2>输入</h2>
+    <textarea class="area" id="r4-in" placeholder="明文或密文">Plaintext</textarea>
+    <div class="btns three">
+      <button type="button" class="ghost" id="r4-swap">用结果当输入</button>
+      <button type="button" class="primary" id="r4-enc">加密</button>
+      <button type="button" class="primary" id="r4-dec">解密</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="r4-hex-in">按 Hex 读输入</button>
+      <button type="button" class="ghost" id="r4-hex-out">输出 Hex</button>
+    </div>
+    <p class="hint" id="r4-hint"></p>
+    <h2>输出</h2>
+    <div class="out" id="r4-out"></div>
+    <div class="out" id="r4-hexout" style="font-size:12px"></div>
+    <button type="button" id="r4-copy" style="width:100%;height:44px;font-size:15px;font-weight:600;border-radius:12px;border:1px solid var(--line);background:#fff;margin-bottom:12px">复制结果</button>
+    <h2>标准向量自检</h2>
+    <table class="vec" id="r4-vec">
+      <thead><tr><th>状态</th><th>密钥 / 明文</th><th>期望密文</th><th>实际</th></tr></thead>
+      <tbody id="r4-vec-body"></tbody>
+    </table>
+    <p class="hint">
+      向量取自 RFC 6229 与公开的 RC4 测试集（维基百科示例）：<code>Key</code> + <code>Plaintext</code> →
+      <code>BBF316E8D940AF0AD3</code>；<code>Wiki</code> + <code>pedia</code> → <code>1021BF0420</code>；
+      <code>Secret</code> + <code>Attack at dawn</code> → <code>45A01F645FC35B383552544B9BF5</code>。
+      任何一条不通过就说明实现有问题。
+    </p>
+  </section>
+
+  <!-- Rabbit -->
+  <section class="card" id="panel-rabbit" hidden>
+    <h2>密钥与 IV</h2>
+    <div class="row">
+      <label for="rb-key"><b>密钥</b>（16 字节，128 位；文本或 hex）</label>
+      <input id="rb-key" type="text" placeholder="128 位密钥">
+    </div>
+    <div class="row">
+      <label for="rb-iv"><b>初始向量 IV</b>（8 字节，64 位，可留空）</label>
+      <input id="rb-iv" type="text" placeholder="留空表示不使用 IV">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="rb-gen">随机生成密钥与 IV</button>
+      <button type="button" class="ghost" id="rb-hex">用 Hex 作为输入</button>
+    </div>
+    <h2>输入</h2>
+    <textarea class="area" id="rb-in" placeholder="明文或密文（UTF-8 文本，或 hex 字节）">hello rabbit</textarea>
+    <div class="btns three">
+      <button type="button" class="ghost" id="rb-swap">用结果当输入</button>
+      <button type="button" class="primary" id="rb-enc">加密</button>
+      <button type="button" class="primary" id="rb-dec">解密</button>
+    </div>
+    <p class="hint" id="rb-hint"></p>
+    <h2>输出</h2>
+    <div class="out" id="rb-out"></div>
+    <button type="button" id="rb-copy" style="width:100%;height:44px;font-size:15px;font-weight:600;border-radius:12px;border:1px solid var(--line);background:#fff;margin-bottom:12px">复制结果</button>
+    <h2>RFC 4503 附录 A 向量自检</h2>
+    <table class="vec" id="rb-vec">
+      <thead><tr><th>状态</th><th>向量</th><th>期望</th><th>实际</th></tr></thead>
+      <tbody id="rb-vec-body"></tbody>
+    </table>
+    <p class="hint">
+      附录 A 共 6 组向量：A.1 全零密钥与 IV、A.2 全零密钥 + 非零 IV、A.3 递增密钥、
+      A.4~A.6 含非零 IV 的组合，各取出前 48 字节密钥流。一组对不上就说明实现偏离标准。
+    </p>
+  </section>
+
+  <footer>
+    纯本地计算；流密码没有完整性校验，密文被改一个 bit 只会让明文错一个 bit，不报错<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./crypto.js"></script>
+</body>
+</html>

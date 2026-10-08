@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>日常计算</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 30px/1.25 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);
+    margin:2px 0 12px;font-variant-numeric:tabular-nums;word-break:break-all}
+  .big small{font-size:14px;color:var(--sub);font-weight:400;display:block;margin-top:4px}
+  .big.warn{color:var(--warn)}
+  .bars{margin-bottom:12px}
+  .bar{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px}
+  .bar .lab{flex:0 0 88px;color:var(--sub)}
+  .bar .track{flex:1;height:12px;background:#eef0f3;border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;background:linear-gradient(90deg,#1668dc,#5b9df3)}
+  .bar .val{flex:0 0 78px;text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .rate-tb{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+  .rate-tb th,.rate-tb td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;
+    font-family:ui-monospace,Menlo,Consolas,monospace}
+  .rate-tb th:first-child,.rate-tb td:first-child{text-align:left;font-family:inherit}
+  .rate-tb tr.on{background:var(--soft)}
+  .rate-tb td.range{font-size:11px}
+  select{width:100%;height:46px;padding:0 10px;font-size:15px;color:var(--text);background:#f7f8fa;
+    border:1px solid var(--line);border-radius:10px;outline:none;font-family:inherit}
+</style>
+</head>
+<body>
+<header>
+  <h1>日常计算</h1>
+  <p>油耗 · 退休倒计时与年龄测算 · 国债利息</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="fuel" class="on">油耗计算</button>
+    <button data-tab="retire">退休测算</button>
+    <button data-tab="pension">养老金测算</button>
+    <button data-tab="bond">国债利息</button>
+  </div>
+
+  <!-- 油耗 -->
+  <section class="card" id="panel-fuel">
+    <h2>输入</h2>
+    <div class="row">
+      <label for="fu-mode"><b>计算方式</b></label>
+      <select id="fu-mode">
+        <option value="twice" selected>两次加油法（加满→加满，最准）</option>
+        <option value="trip">行程法（已知总里程与总耗油）</option>
+        <option value="price">按钱算（加了多少升 / 花了多少钱）</option>
+        <option value="reverse">反推（想跑 X 公里需要多少钱）</option>
+      </select>
+    </div>
+    <div id="fu-fields"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="fu-reset">重置</button>
+      <button type="button" class="primary" id="fu-run">计算</button>
+    </div>
+    <p class="hint" id="fu-hint"></p>
+    <div class="big" id="fu-out"></div>
+    <div class="grid" id="fu-grid"></div>
+    <div class="formula" id="fu-formula"></div>
+    <p class="hint">
+      两次加油法要求两次都加满、且用同一把油枪，误差最小；只记「这次加了多少升 + 跑了多少公里」在没加满时会偏。
+      所有里程按仪表里程表读数之差计算。
+    </p>
+  </section>
+
+  <!-- 退休 -->
+  <section class="card" id="panel-retire" hidden>
+    <h2>出生信息</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="rt-birth"><b>出生日期</b></label>
+        <input id="rt-birth" type="date" value="1985-06-15">
+      </div>
+      <div class="row">
+        <label for="rt-sex"><b>性别</b></label>
+        <select id="rt-sex">
+          <option value="m" selected>男</option>
+          <option value="f">女</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label for="rt-type"><b>女性岗位性质</b>（男性忽略此项；按 2024 年决定，原 50 岁与 55 岁女职工的延迟节奏不同）</label>
+      <select id="rt-type">
+        <option value="worker" selected>原法定 50 岁（女工人）</option>
+        <option value="cadre">原法定 55 岁（女干部/管理技术岗）</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="rt-reset">重置</button>
+      <button type="button" class="primary" id="rt-run">测算</button>
+    </div>
+    <p class="hint" id="rt-msg"></p>
+    <div class="big" id="rt-out"></div>
+    <div class="grid" id="rt-grid"></div>
+    <div class="bars" id="rt-bars"></div>
+    <table class="rate-tb" id="rt-table">
+      <thead><tr><th>出生时间</th><th>法定退休年龄</th><th>说明</th></tr></thead>
+      <tbody id="rt-body"></tbody>
+    </table>
+    <div class="note">
+      <b>口径说明。</b>按 2024 年 9 月全国人大常委会《关于实施渐进式延迟法定退休年龄的决定》及其附表推算：
+      男职工从 60 岁起每 4 个月延迟 1 个月，至 63 岁；
+      原 55 岁女职工同样每 4 个月延迟 1 个月，至 58 岁；
+      原 50 岁女职工每 2 个月延迟 1 个月，至 55 岁。
+      另外达到最低缴费年限后<b>可以自愿弹性提前</b>退休（最多提前 3 年，且不得低于原法定年龄），
+      也可与单位协商<b>弹性延迟</b>（最多延后 3 年）——本页算的是「法定退休年龄」，不含弹性选项。
+      特殊工种、因病完全丧失劳动能力等提前退休情形不在本页范围内。各地执行细则可能不同，以社保经办机构答复为准。
+    </div>
+  </section>
+
+  <!-- 养老金 -->
+  <section class="card" id="panel-pension" hidden>
+    <h2>输入</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="pn-avg"><b>当前当地社平工资</b></label>
+        <div class="input-wrap"><input id="pn-avg" type="number" step="any" min="0" value="8000"><span class="unit">元/月</span></div>
+      </div>
+      <div class="row">
+        <label for="pn-growth"><b>社平工资年增长率</b></label>
+        <div class="input-wrap"><input id="pn-growth" type="number" step="0.1" value="3"><span class="unit">%</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="row">
+        <label for="pn-age"><b>当前年龄</b></label>
+        <div class="input-wrap"><input id="pn-age" type="number" inputmode="numeric" min="18" max="70" value="40"><span class="unit">岁</span></div>
+      </div>
+      <div class="row">
+        <label for="pn-retire"><b>预计退休年龄</b></label>
+        <div class="input-wrap"><input id="pn-retire" type="number" inputmode="numeric" min="45" max="70" value="60"><span class="unit">岁</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="row">
+        <label for="pn-years"><b>累计缴费年限</b>（含视同缴费）</label>
+        <div class="input-wrap"><input id="pn-years" type="number" step="1" min="1" max="50" value="35"><span class="unit">年</span></div>
+      </div>
+      <div class="row">
+        <label for="pn-index"><b>本人平均缴费指数</b></label>
+        <div class="input-wrap"><input id="pn-index" type="number" step="0.05" min="0.4" max="3.5" value="1"><span class="unit">倍社平</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <label for="pn-acct"><b>个人账户余额</b></label>
+      <div class="input-wrap"><input id="pn-acct" type="number" step="any" min="0" value="200000"><span class="unit">元</span></div>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="pn-reset">重置</button>
+      <button type="button" class="primary" id="pn-run">测算</button>
+    </div>
+    <p class="hint" id="pn-msg"></p>
+    <div class="big" id="pn-out"></div>
+    <div class="grid" id="pn-grid"></div>
+    <div class="formula" id="pn-formula"></div>
+    <div class="note">
+      <b>这是粗算，不含过渡性养老金。</b>基础养老金 = 退休时社平 ×(1+缴费指数)÷2×缴费年限×1%；
+      个人账户养老金 = 账户余额 ÷ 计发月数（60 岁 139、55 岁 170、50 岁 195、45 岁 216）。
+      1990 年代统账结合之前参加工作的「视同缴费年限」还会带来过渡性养老金，各地算法不同，本页不含。
+      缴费指数按实际缴费基数与社平之比逐年平均，本页让你直接填，不逐年代算。
+      个人账户余额会继续计息（近年约 6%~7%），本页按当前余额直接除，偏保守。
+    </div>
+  </section>
+
+  <!-- 国债 -->
+  <section class="card" id="panel-bond" hidden>
+    <h2>输入</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="bd-amount"><b>本金</b></label>
+        <div class="input-wrap"><input id="bd-amount" type="number" step="any" min="0" value="100000"><span class="unit">元</span></div>
+      </div>
+      <div class="row">
+        <label for="bd-rate"><b>票面年利率</b></label>
+        <div class="input-wrap"><input id="bd-rate" type="number" step="0.01" min="0" value="2.38"><span class="unit">%</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="row">
+        <label for="bd-years"><b>持有期限</b></label>
+        <div class="input-wrap"><input id="bd-years" type="number" step="1" min="1" max="50" value="3"><span class="unit">年</span></div>
+      </div>
+      <div class="row">
+        <label for="bd-kind"><b>品种</b></label>
+        <select id="bd-kind">
+          <option value="electronic" selected>电子式储蓄国债（按年付息）</option>
+          <option value="certificate">凭证式储蓄国债（到期一次还本付息）</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <label for="bd-tax"><b>利息税</b>（储蓄国债利息免征个人所得税；若持有记账式国债或企业债需另算）</label>
+      <select id="bd-tax">
+        <option value="0" selected>免征（储蓄国债）</option>
+        <option value="20">按 20% 利息所得税扣除</option>
+      </select>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="bd-reset">重置</button>
+      <button type="button" class="primary" id="bd-run">计算</button>
+    </div>
+    <p class="hint" id="bd-msg"></p>
+    <div class="big" id="bd-out"></div>
+    <div class="grid" id="bd-grid"></div>
+    <table class="rate-tb" id="bd-table">
+      <thead><tr><th>期次</th><th>本期利息</th><th>累计利息</th><th>期末本息</th></tr></thead>
+      <tbody id="bd-body"></tbody>
+    </table>
+    <div class="note">
+      <b>这是估算，不是发行公告。</b>电子式储蓄国债按年付息、到期还本；凭证式到期一次还本付息。
+      利率是浮动的，由财政部按发行期公布，本页只做「给定利率下的收益推算」。
+      提前兑取会按持有时间分档计息并收 1% 左右手续费，本页未包含这一情形。
+    </div>
+  </section>
+
+  <footer>
+    全部纯本地计算，输入不联网、不上传；退休与国债政策口径见页内说明<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./life2.js"></script>
+</body>
+</html>

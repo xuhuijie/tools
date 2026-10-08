@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>税额计算</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 28px/1.25 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);
+    margin:2px 0 12px;font-variant-numeric:tabular-nums}
+  .big small{display:block;font-size:13px;color:var(--sub);font-weight:400;margin-top:4px}
+  .big.warn{color:var(--warn)}
+  .rate-tb{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+  .rate-tb th,.rate-tb td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;
+    font-family:ui-monospace,Menlo,Consolas,monospace}
+  .rate-tb th:first-child,.rate-tb td:first-child{text-align:left;font-family:inherit}
+  .rate-tb tr.on{background:var(--soft)}
+  .seg{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+</style>
+</head>
+<body>
+<header>
+  <h1>税额计算</h1>
+  <p>增值税四件套互算 · 劳务报酬预扣税 · 税额综合计算</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="vat" class="on">含税 / 不含税互算</button>
+    <button data-tab="labor">劳务报酬预扣税</button>
+    <button data-tab="all">税额综合计算</button>
+  </div>
+
+  <!-- 增值税四件套 -->
+  <section class="card" id="panel-vat">
+    <h2>输入</h2>
+    <div class="seg" id="vt-mode">
+      <button data-mode="addTax" class="on">已知不含税额，求含税额</button>
+      <button data-mode="stripTax">已知含税额，求不含税额</button>
+      <button data-mode="addRate">已知税额，求含税额</button>
+      <button data-mode="rateFrom">已知含税与不含税，求税率</button>
+    </div>
+    <div id="vt-fields"></div>
+    <div class="seg" id="vt-quick">
+      <button data-r="13">13%</button>
+      <button data-r="9">9%</button>
+      <button data-r="6">6%</button>
+      <button data-r="5">5%（简易计税）</button>
+      <button data-r="3">3%（小规模）</button>
+      <button data-r="1">1%（小规模优惠）</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="vt-reset">重置</button>
+      <button type="button" class="primary" id="vt-run">计算</button>
+    </div>
+    <p class="hint" id="vt-msg"></p>
+    <div class="big" id="vt-out"></div>
+    <div class="grid" id="vt-grid"></div>
+    <div class="formula" id="vt-formula"></div>
+    <div class="note">
+      <b>四件套的关系。</b>含税价 = 不含税价 ×(1+税率)；税额 = 不含税价 × 税率；不含税价 = 含税价 ÷(1+税率)。
+      这里按「价外税」理解：税额本身不参与再计税，所以四个量知道任意两个就能推出另外两个。
+      实际开票还要区分税率与征收率、是否享受小微优惠，以税务口径为准。
+    </div>
+  </section>
+
+  <!-- 劳务报酬 -->
+  <section class="card" id="panel-labor" hidden>
+    <h2>输入</h2>
+    <div class="row">
+      <label for="lb-amount"><b>本次劳务报酬所得（税前）</b></label>
+      <div class="input-wrap"><input id="lb-amount" type="number" step="any" min="0" value="30000"><span class="unit">元</span></div>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="lb-reset">重置</button>
+      <button type="button" class="primary" id="lb-run">计算</button>
+    </div>
+    <p class="hint" id="lb-msg"></p>
+    <div class="big" id="lb-out"></div>
+    <div class="grid" id="lb-grid"></div>
+    <div class="formula" id="lb-formula"></div>
+    <table class="rate-tb" id="lb-table">
+      <thead><tr><th>预扣预缴应纳税所得额</th><th>预扣率</th><th>速算扣除数</th><th>税额</th></tr></thead>
+      <tbody id="lb-body"></tbody>
+    </table>
+    <div class="note">
+      <b>口径。</b>劳务报酬（设计、咨询、讲课、演出等独立劳务）的<b>预扣预缴</b>规则：
+      每次收入不超过 4000 元的，减除费用 800 元；超过 4000 元的，减除 20% 的费用；
+      余额为预扣预缴应纳税所得额，再按三级超额累进预扣率（20% / 30% / 40%）预扣。
+      年度汇算清缴时劳务报酬并入综合所得，按 3%~45% 的年度税率表重算，与预扣数多退少补——
+      所以本页给的是「预扣数」，不等于最终税负。
+    </div>
+  </section>
+
+  <!-- 税额综合 -->
+  <section class="card" id="panel-all" hidden>
+    <h2>输入</h2>
+    <div class="seg" id="al-kind">
+      <button data-kind="vat" class="on">增值税（价税合计）</button>
+      <button data-kind="salary">工资薪金（月）</button>
+      <button data-kind="bonus">年终奖（单独计税）</button>
+      <button data-kind="labor2">劳务报酬（并入年度）</button>
+    </div>
+    <div id="al-fields"></div>
+    <div class="btns">
+      <button type="button" class="ghost" id="al-reset">重置</button>
+      <button type="button" class="primary" id="al-run">计算</button>
+    </div>
+    <p class="hint" id="al-msg"></p>
+    <div class="big" id="al-out"></div>
+    <div class="grid" id="al-grid"></div>
+    <div class="formula" id="al-formula"></div>
+    <div class="note">
+      <b>税率表版本。</b>综合所得用 2019 年起的七级年度税率表，月度工资按「累计预扣预缴」的精神折算成月等效表估算，
+      与逐月累计算出的结果在年初年末会有差异。年终奖单独计税政策目前延续至 2027 年底，
+      36000 / 144000 等临界点会出现「多发一元、到手变少」，本页会标出来。
+    </div>
+  </section>
+
+  <footer>
+    全部纯本地计算；税额结论仅供参考，实际以税务机关口径与你的专项附加扣除为准<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./tax2.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>哈希与校验和</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{
+    margin:0 0 12px;padding:10px 12px;font-size:12px;line-height:1.6;
+    background:#fff;border:1px solid var(--line);border-left:3px solid var(--primary);
+    border-radius:10px;color:var(--sub);
+  }
+  .note a{color:var(--primary);text-decoration:none;font-weight:500}
+</style>
+</head>
+<body>
+<header>
+  <h1>哈希与校验和</h1>
+  <p>MD5 / SHA / CRC32 / 累加和 / Adler-32 / HMAC</p>
+</header>
+
+<main>
+
+  <p class="note">
+    本页偏向文件与文本摘要：MD5、SHA 系列、HMAC、Adler-32，以及常用 CRC 模型。
+    若要按通信协议算校验字节（CRC 预设、累加和 / 异或的宽度与大小端、低字节先发），
+    用<a href="./checksum.html">校验和计算</a>更顺手。
+  </p>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="md5" class="on">MD5</button>
+    <button data-tab="sha">SHA 系列</button>
+    <button data-tab="crc">CRC 校验</button>
+    <button data-tab="sum">累加和 / 异或</button>
+    <button data-tab="adler">Adler-32</button>
+    <button data-tab="hmac">HMAC</button>
+  </div>
+
+  <section class="card">
+    <h2 id="in-title">输入</h2>
+    <textarea id="input" placeholder="在此粘贴文本，或选择文件按字节计算"></textarea>
+    <div class="row" style="margin-top:12px">
+      <label><b>或选择文件</b>（本地读取，不上传）</label>
+      <input id="file" type="file">
+    </div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <section class="card" id="opts">
+    <h2>参数</h2>
+    <div class="row" id="hex-row" style="display:none">
+      <label for="hex">按十六进制解析输入</label>
+      <div class="input-wrap"><input id="hex" type="text" placeholder="留空则按 UTF-8 文本处理"></div>
+    </div>
+    <div class="row" id="key-row" style="display:none">
+      <label for="hkey"><b>HMAC 密钥</b></label>
+      <input id="hkey" type="text" placeholder="例如 secret" value="secret">
+    </div>
+  </section>
+
+  <div class="btns">
+    <button type="button" class="ghost" id="clear">清空</button>
+    <button type="button" class="primary" id="run">计算</button>
+  </div>
+
+  <section class="card">
+    <h2>结果</h2>
+    <div class="out mono-lg" id="output"></div>
+  </section>
+
+  <footer>
+    MD5 与 SHA 系列由浏览器 Web Crypto 与本地实现提供，内容不上传<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./hash.js"></script>
+</body>
+</html>
