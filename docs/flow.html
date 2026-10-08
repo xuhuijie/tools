@@ -175,7 +175,7 @@
     两侧互为输入，改任意一侧即自动换算另一侧<br>
     流速 = 流量 ÷ 3600 ÷ (π × 等效内径² ÷ 4)<br>
     缩进 = 有效内径占口径的百分比：等效内径 = 口径 DN × 缩进 ÷ 100（DN80 缩进 80% → 64 mm）<br>
-    脉冲当量按 ml 计：每秒脉冲数 = 瞬时流量(m³/h) × 1000000 ÷ 脉冲当量(ml) ÷ 3600（留空不显示）<br>
+    脉冲当量按 ml 计：每秒脉冲数 = 瞬时流量(m³/h) × 1000 ÷ 脉冲当量(ml) ÷ 3600（留空不显示）<br>
     <a href="./index.html">← 返回首页</a>·<a href="./calibration.html">流量点校准</a>·<a href="./gold.html">黄金换算</a>·<a href="./checksum.html">校验和计算</a>·<a href="./md5.html">MD5 校验</a>
   </footer>
 </main>
@@ -191,7 +191,7 @@
   // 体积流量按 m³/h、流速按 m/s、内径按 mm 计，故 1 m³/h = 1/3600 m³/s，1 mm = 0.001 m
   var SECONDS_PER_HOUR = 3600;
   var MM_PER_M = 1000;
-  var ML_PER_M3 = 1e6;  // 1 m³ = 1e6 ml，脉冲当量按 ml 计
+  var ML_PER_H = 1e6 / SECONDS_PER_HOUR;  // ml/s = m³/h × 1000 ÷ 3600
 
   function el(tag, cls, text){
     var node = document.createElement(tag);
@@ -227,15 +227,15 @@
     if (id && scroll !== false) $(id).scrollIntoView({behavior:'smooth', block:'center'});
   }
 
-  // 脉冲当量与每秒脉冲数都跨几个数量级：小到 0.00001 ml，大到上千 Hz。
-  // 固定 3 位小数会把小值压成「0」，故按数量级给位数。
-  function scaledDigits(n){
+  // 按数量级给小数位：≥1 保留 3 位，<1 多留两位有效数字
+  // 如 0.139 → 4 位、0.00386 → 5 位、0.0000139 → 7 位。
+  // 上限 9 位，避免极小脉冲当量（如 0.00001 ml）算出上千 Hz 时刷出一长串数字。
+  function digitsFor(n){
     if (!isFinite(n) || n === 0) return 0;
     var abs = Math.abs(n);
     if (abs >= 1000) return 0;
     if (abs >= 1) return 3;
-    if (abs >= 0.001) return 6;
-    return 9;
+    return Math.min(9, Math.max(4, Math.ceil(-Math.log10(abs)) + 1));
   }
 
   // 保留指定位小数并去掉长浮点尾巴（如 3.1249999999999996）
@@ -268,7 +268,7 @@
   }
 
   function render(flow, vel, d, pulse){
-    var hz = pulse ? flow / ML_PER_M3 / pulse : NaN;
+    var hz = pulse ? flow * ML_PER_H / pulse : NaN;
     var main = el('div', 'result-main');
     main.appendChild(el('div', 'k', '流速'));
     var v = el('div', 'v', fmt(vel, 4));
@@ -284,8 +284,8 @@
       ['流速', fmt(vel, 4) + ' m/s'],
       ['口径 DN', fmt($('dn').value === '' ? NaN : readNumber('dn'), 1) + ' mm'],
       ['有效内径', fmt(d, 2) + ' mm'],
-      ['脉冲当量', pulse ? fmt(pulse, scaledDigits(pulse)) + ' ml' : '未填'],
-      ['每秒脉冲数', pulse ? fmt(hz, scaledDigits(hz)) + ' Hz' : '—']
+      ['脉冲当量', pulse ? fmt(pulse, digitsFor(pulse)) + ' ml' : '未填'],
+      ['每秒脉冲数', pulse ? fmt(hz, digitsFor(hz)) + ' Hz' : '—']
     ];
     cells.forEach(function(c){
       var cell = el('div');
@@ -303,7 +303,7 @@
       '<div><code>流速 = ' + fmt(flow, 3) + ' m³/h ÷ 3600 ÷ ' + fmt(area(d), 6) + ' ≈ ' + fmt(vel, 4) + ' m/s</code></div>' +
       '<div style="margin-top:6px">反向核对：<code>' + fmt(velocityToFlow(vel, d), 3) + ' m³/h = ' + fmt(vel, 4) + ' m/s × ' + fmt(area(d), 6) + ' m² × 3600</code></div>' +
       (pulse
-        ? '<div>脉冲频率 = 流量 ÷ 脉冲当量 = <code>' + fmt(flow, 3) + ' m³/h × 1000000 ÷ ' + fmt(pulse, scaledDigits(pulse)) + ' ml ÷ 3600 ≈ ' + fmt(hz, scaledDigits(hz)) + ' 脉冲/s</code></div>'
+        ? '<div>脉冲频率 = 流量 ÷ 脉冲当量 = <code>' + fmt(flow, 3) + ' m³/h × 1000 ÷ 3600 ÷ ' + fmt(pulse, digitsFor(pulse)) + ' ml ≈ ' + fmt(hz, digitsFor(hz)) + ' 脉冲/s</code></div>'
         : '<div>脉冲当量未填，不折算脉冲频率</div>');
 
     resultEl.classList.add('show');
