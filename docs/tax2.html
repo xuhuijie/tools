@@ -5,7 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>税额计算</title>
-<link rel="stylesheet" href="./app.css">
+<style>
+/* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1f2329;--sub:#8a9099;--line:#e8eaed;
+  --primary:#1668dc;--primary-press:#0f52b3;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --warn:#d4380d;--ok:#0f8f74;--radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+header h1{margin:0;font-size:17px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 0}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:14px 14px 2px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card h2{margin:0 0 10px;font-size:14px;font-weight:600}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.row label b{color:var(--text);font-weight:500}
+.input-wrap{position:relative;display:flex;align-items:center}
+input[type="number"],input[type="text"],input[type="datetime-local"],select{
+  width:100%;height:46px;padding:0 12px;
+  font-size:16px;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;font-family:inherit;
+}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus,select:focus{border-color:var(--primary);background:#fff}
+input.invalid{border-color:var(--warn);background:#fff2ef}
+.input-wrap .unit{position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none}
+.input-wrap input[type="number"]{padding-right:64px}
+textarea{
+  width:100%;min-height:130px;padding:10px 12px;
+  font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--primary);background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:10px;margin:2px 0 14px}
+.btns button{flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none}
+.btns button.primary{background:var(--primary);color:#fff}
+.btns button.primary:active{background:var(--primary-press)}
+.btns button.ghost{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+.btns.three button.ghost{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{
+  padding:0 12px;height:32px;font-size:13px;color:var(--primary);
+  background:var(--soft);border:1px solid var(--soft-line);border-radius:9px;
+}
+.chips button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hint{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.5}
+.hint.err{color:var(--warn)}
+.out{
+  font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;
+}
+.out:empty{display:none}
+.out.mono-lg{font-size:15px}
+.out.err{color:var(--warn);background:#fff2ef;border-color:#ffd6cf}
+.out.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.grid div{background:#fff;padding:10px 12px}
+.grid .k{font-size:12px;color:var(--sub)}
+.grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+.formula{
+  font-size:12px;color:var(--sub);line-height:1.6;
+  background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+  word-break:break-all;
+}
+.formula .t{color:var(--text);font-weight:600}
+.formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);word-break:break-all}
+th{color:var(--sub);font-weight:500}
+td.num{font-family:ui-monospace,Menlo,Consolas,monospace}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pick button{
+  padding:0 12px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--text);border:1px solid var(--line);
+}
+.pick button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.list{margin:0 0 12px;padding:0;list-style:none}
+.list li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.list li:last-child{border-bottom:none}
+.list a{color:var(--primary);text-decoration:none;font-weight:500}
+.list .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tabs button{
+  flex:0 0 auto;padding:0 14px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--sub);border:1px solid var(--line);
+}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+footer{max-width:1280px;margin:0 auto;padding:0 16px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+@media(max-width:360px){.grid2{grid-template-columns:1fr}}
+</style>
 <style>
   .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
   .note b{color:var(--text)}
@@ -129,7 +240,689 @@
   </footer>
 </main>
 
-<script src="./app.js"></script>
-<script src="./tax2.js"></script>
+<script>
+/* 工具页共用小工具：取元素、格式化、复制、页签切换 */
+(function (global) {
+  'use strict';
+
+  // 复制到剪贴板：HTTPS/本地才用异步 API，其余回退到 execCommand
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(text); });
+    }
+    return Promise.resolve(legacy(text));
+  }
+
+  function legacy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  // 保留 digits 位小数并去掉长浮点尾巴
+  function fmt(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', { maximumFractionDigits: d });
+  }
+
+  // 写回输入框的数值，避免 0.30000000000000004 这类尾巴
+  function fmtInput(n, digits) {
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(digits == null ? 6 : digits)));
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // 在容器内渲染 label/value 网格
+  function cells(container, pairs) {
+    container.innerHTML = '';
+    pairs.forEach(function (p) {
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', p[0]));
+      cell.appendChild(el('div', 'v', p[1]));
+      container.appendChild(cell);
+    });
+  }
+
+  // 复制按钮通用绑定：btn 复制 target 的文本，成功后短暂改文案
+  function bindCopy(btn, getText, doneText) {
+    if (!btn) return;
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      var text = getText();
+      if (!text) return;
+      copy(text).then(function () {
+        btn.textContent = doneText || '已复制';
+        setTimeout(function () { btn.textContent = original; }, 1200);
+      });
+    });
+  }
+
+  // 页签：buttons 为一组按钮，onPick 收到 data-tab
+  function tabs(container, onPick) {
+    var btns = [].slice.call(container.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
+        onPick(b.dataset.tab, b);
+      });
+    });
+    return btns;
+  }
+
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
+})(window);
+</script>
+<script>
+/* 税额计算：增值税四件套互算 / 劳务报酬预扣税 / 税额综合计算
+   税率表与扣除口径写在页面说明里；纯本地计算，不联网。 */
+(function () {
+  'use strict';
+  var $ = T.$;
+
+  function cell(k, v) {
+    var d = document.createElement('div');
+    var kk = document.createElement('div'); kk.className = 'k'; kk.textContent = k;
+    var vv = document.createElement('div'); vv.className = 'v'; vv.textContent = v;
+    d.appendChild(kk); d.appendChild(vv);
+    return d;
+  }
+
+  function setGrid(el, pairs) {
+    el.innerHTML = '';
+    pairs.forEach(function (p) { el.appendChild(cell(p[0], p[1])); });
+  }
+
+  function money(n, d) {
+    if (!isFinite(n)) return '—';
+    d = d == null ? 2 : d;
+    return n.toLocaleString('zh-CN', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  function num(v) { return Number(v); }
+
+  function rateStr(r) { return (r * 100).toFixed(r * 100 % 1 === 0 ? 0 : 2) + '%'; }
+
+  /* ================= 1. 增值税四件套 ================= */
+
+  /* 关系式：含税 T = 不含税 N ×(1+r)；税额 X = N × r。
+     四个量（T、N、X、r）知道任意两个即可推出其余两个。 */
+  function vatSolve(mode, a, b) {
+    a = Number(a); b = Number(b);
+    var r = {
+      mode: mode, net: null, gross: null, tax: null, rate: null, err: null,
+      formula: ''
+    };
+
+    if (mode === 'addTax') {
+      // 已知不含税额 a 与税率(%) b
+      if (!(a >= 0)) { r.err = '不含税额要 ≥ 0'; return r; }
+      if (!(b >= 0 && b < 100)) { r.err = '税率要在 0 ~ 100% 之间'; return r; }
+      r.net = a; r.rate = b / 100; r.tax = a * r.rate; r.gross = a + r.tax;
+      r.formula = '含税 = ' + money(a) + ' ×(1 + ' + rateStr(r.rate) + ') = ' + money(r.gross) +
+        '；税额 = ' + money(a) + ' × ' + rateStr(r.rate) + ' = ' + money(r.tax);
+    } else if (mode === 'stripTax') {
+      // 已知含税额 a 与税率(%) b
+      if (!(a >= 0)) { r.err = '含税额要 ≥ 0'; return r; }
+      if (!(b >= 0 && b < 100)) { r.err = '税率要在 0 ~ 100% 之间'; return r; }
+      r.gross = a; r.rate = b / 100;
+      r.net = a / (1 + r.rate);
+      r.tax = a - r.net;
+      r.formula = '不含税 = ' + money(a) + ' ÷ (1 + ' + rateStr(r.rate) + ') = ' + money(r.net) +
+        '；税额 = ' + money(a) + ' − ' + money(r.net) + ' = ' + money(r.tax);
+    } else if (mode === 'addRate') {
+      // 已知税额 a 与不含税额 b
+      if (!(a >= 0)) { r.err = '税额要 ≥ 0'; return r; }
+      if (!(b > 0)) { r.err = '不含税额要 > 0（否则算不出税率）'; return r; }
+      r.tax = a; r.net = b; r.rate = a / b; r.gross = a + b;
+      r.formula = '税率 = ' + money(a) + ' ÷ ' + money(b) + ' = ' + rateStr(r.rate) +
+        '；含税 = ' + money(a) + ' + ' + money(b) + ' = ' + money(r.gross);
+    } else {
+      // 已知含税额 a 与不含税额 b，求税率与税额
+      if (!(a > 0)) { r.err = '含税额要 > 0'; return r; }
+      if (!(b >= 0)) { r.err = '不含税额要 ≥ 0'; return r; }
+      if (b > a) { r.err = '不含税额不该大于含税额，检查是否填反了'; return r; }
+      r.gross = a; r.net = b; r.tax = a - b; r.rate = b > 0 ? (a - b) / b : 0;
+      r.formula = '税额 = ' + money(a) + ' − ' + money(b) + ' = ' + money(r.tax) +
+        '；税率 = ' + money(r.tax) + ' ÷ ' + money(b) + ' = ' + rateStr(r.rate);
+    }
+    return r;
+  }
+
+  var VT_FORMS = {
+    addTax: [
+      { id: 'net', label: '不含税金额', value: '10000', unit: '元' },
+      { id: 'rate', label: '税率', value: '13', unit: '%' }
+    ],
+    stripTax: [
+      { id: 'gross', label: '含税金额', value: '11300', unit: '元' },
+      { id: 'rate', label: '税率', value: '13', unit: '%' }
+    ],
+    addRate: [
+      { id: 'tax', label: '税额', value: '1300', unit: '元' },
+      { id: 'net', label: '不含税金额', value: '10000', unit: '元' }
+    ],
+    rateFrom: [
+      { id: 'gross', label: '含税金额', value: '11300', unit: '元' },
+      { id: 'net', label: '不含税金额', value: '10000', unit: '元' }
+    ]
+  };
+
+  // 取当前选中的模式；初始渲染时按钮可能还没带上 on（由 T.tabs 负责），兜底到第一个
+  function vtMode() {
+    var box = $('vt-mode');
+    var on = box.querySelector('button.on') || box.querySelector('button');
+    return on && vtData(on, 'mode') ? on.dataset.mode : 'addTax';
+  }
+
+  // 桩环境里 dataset 可能为空，用属性兜底
+  function vtData(el, key) {
+    if (el && el.dataset && el.dataset[key]) return el.dataset[key];
+    return null;
+  }
+
+  function vtBuild() {
+    var mode = vtMode();
+    if (!VT_FORMS[mode]) mode = 'addTax';
+    var box = $('vt-fields');
+    box.innerHTML = '';
+    VT_FORMS[mode].forEach(function (f) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      var lab = document.createElement('label');
+      lab.setAttribute('for', 'vt-' + f.id);
+      lab.innerHTML = '<b></b>';
+      lab.querySelector('b').textContent = f.label;
+      var wrap = document.createElement('div');
+      wrap.className = 'input-wrap';
+      var inp = document.createElement('input');
+      inp.id = 'vt-' + f.id;
+      inp.type = 'number';
+      inp.step = 'any';
+      inp.value = f.value;
+      var u = document.createElement('span');
+      u.className = 'unit';
+      u.textContent = f.unit;
+      wrap.appendChild(inp); wrap.appendChild(u);
+      row.appendChild(lab); row.appendChild(wrap);
+      box.appendChild(row);
+      inp.addEventListener('input', vtRun);
+    });
+  }
+
+  function vtRun() {
+    var mode = vtMode();
+    var form = VT_FORMS[mode] || VT_FORMS.addTax;
+    var args = [mode, $('vt-' + form[0].id).value, form[1] ? $('vt-' + form[1].id).value : ''];
+    var r = vatSolve(args[0], args[1], args[2]);
+    var msg = $('vt-msg'), out = $('vt-out'), grid = $('vt-grid'), fml = $('vt-formula');
+    if (r.err) {
+      msg.className = 'hint err';
+      msg.textContent = r.err;
+      out.className = 'big warn';
+      out.textContent = '';
+      grid.innerHTML = '';
+      fml.textContent = '';
+      return r;
+    }
+    msg.className = 'hint';
+    msg.textContent = '四个量里的任意两个都能推出其余两个，切换上方模式即可。';
+    out.className = 'big';
+    out.innerHTML = '含税 ' + money(r.gross) + ' 元' +
+      '<small>不含税 ' + money(r.net) + ' 元 · 税额 ' + money(r.tax) + ' 元 · 税率 ' + rateStr(r.rate) + '</small>';
+    setGrid(grid, [
+      ['不含税金额', money(r.net) + ' 元'],
+      ['税率', rateStr(r.rate)],
+      ['税额', money(r.tax) + ' 元'],
+      ['含税金额', money(r.gross) + ' 元'],
+      ['税额 / 含税比', r.gross ? (r.tax / r.gross * 100).toFixed(2) + '%' : '—'],
+      ['反向核对', money(r.net * (1 + r.rate)) + ' 元']
+    ]);
+    fml.innerHTML = '<span class="t">计算过程</span><br>' + r.formula;
+    return r;
+  }
+
+  $('vt-mode').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    [].forEach.call(this.querySelectorAll('button'), function (o) { o.classList.toggle('on', o === b); });
+    vtBuild();
+    vtRun();
+  });
+  $('vt-quick').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    var inp = $('vt-rate');
+    if (inp) { inp.value = b.dataset.r; vtRun(); }
+  });
+  $('vt-run').addEventListener('click', vtRun);
+  $('vt-reset').addEventListener('click', function () {
+    var mode = vtMode();
+    (VT_FORMS[mode] || VT_FORMS.addTax).forEach(function (f) { var el = $('vt-' + f.id); if (el) el.value = f.value; });
+    vtRun();
+  });
+
+  /* ================= 2. 劳务报酬预扣税 ================= */
+
+  /* 劳务报酬预扣预缴：
+      收入 ≤ 4000：应纳税所得额 = 收入 − 800
+      收入 > 4000：应纳税所得额 = 收入 × (1 − 20%)
+     再按三级超额累进预扣率：
+      ≤ 20000 → 20%（速算扣除 0）
+      20000~50000 → 30%（速算扣除 2000）
+      > 50000 → 40%（速算扣除 7000） */
+  var LABOR_BRACKETS = [
+    { upTo: 20000, rate: 0.20, deduct: 0 },
+    { upTo: 50000, rate: 0.30, deduct: 2000 },
+    { upTo: Infinity, rate: 0.40, deduct: 7000 }
+  ];
+
+  function laborTax(income) {
+    income = Number(income);
+    if (!isFinite(income) || income < 0) return { err: '收入要 ≥ 0', income: income };
+    if (income === 0) {
+      return { income: 0, deduction: 0, taxable: 0, rate: 0, quick: 0, tax: 0, net: 0, bracketIdx: -1 };
+    }
+    var deduction = income <= 4000 ? 800 : income * 0.2;
+    var taxable = Math.max(0, income - deduction);
+    var idx = 0;
+    for (var i = 0; i < LABOR_BRACKETS.length; i++) {
+      if (taxable <= LABOR_BRACKETS[i].upTo) { idx = i; break; }
+    }
+    var b = LABOR_BRACKETS[idx];
+    var tax = Math.max(0, taxable * b.rate - b.deduct);
+    return {
+      income: income, deduction: deduction, taxable: taxable,
+      rate: b.rate, quick: b.deduct, tax: tax, net: income - tax, bracketIdx: idx
+    };
+  }
+
+  function lbRun() {
+    var msg = $('lb-msg'), out = $('lb-out'), grid = $('lb-grid'), fml = $('lb-formula'), body = $('lb-body');
+    var r = laborTax($('lb-amount').value);
+    if (r.err) {
+      msg.className = 'hint err';
+      msg.textContent = r.err;
+      out.className = 'big warn';
+      out.textContent = '';
+      grid.innerHTML = ''; fml.textContent = ''; body.innerHTML = '';
+      return r;
+    }
+    msg.className = 'hint';
+    msg.textContent = r.taxable <= 0
+      ? '收入不足 800 元，减除费用后应纳税所得额为 0，本次无需预扣。'
+      : '这是本次的预扣预缴税额；年度汇算时并入综合所得重算，可能退税或补税。';
+    out.className = 'big';
+    out.innerHTML = '预扣税额 ' + money(r.tax) + ' 元' +
+      '<small>税前 ' + money(r.income) + ' 元 · 到手约 ' + money(r.net) + ' 元</small>';
+    setGrid(grid, [
+      ['税前收入', money(r.income) + ' 元'],
+      ['减除费用', money(r.deduction) + ' 元' + (r.income <= 4000 ? '（800 元定额）' : '（20%）')],
+      ['应纳税所得额', money(r.taxable) + ' 元'],
+      ['预扣率', rateStr(r.rate) + '（速算扣除 ' + money(r.quick, 0) + '）'],
+      ['预扣税额', money(r.tax) + ' 元'],
+      ['税后到手', money(r.net) + ' 元']
+    ]);
+    fml.innerHTML = '<span class="t">计算过程</span><br>' +
+      '应纳税所得额 = ' + money(r.income) + (r.income <= 4000 ? ' − 800' : ' ×(1 − 20%)') + ' = ' + money(r.taxable) + '<br>' +
+      '预扣税额 = ' + money(r.taxable) + ' × ' + rateStr(r.rate) + ' − ' + money(r.quick, 0) + ' = ' + money(r.tax);
+
+    body.innerHTML = '';
+    LABOR_BRACKETS.forEach(function (b, i) {
+      var tr = document.createElement('tr');
+      if (i === r.bracketIdx) tr.className = 'on';
+      var label = b.upTo === Infinity ? '超过 50000 元' :
+        (i === 0 ? '不超过 20000 元' : '超过 20000 至 50000 元');
+      var tax = i === r.bracketIdx ? money(r.tax) : '—';
+      [label, rateStr(b.rate), String(b.deduct), tax].forEach(function (t) {
+        var td = document.createElement('td');
+        td.textContent = t;
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    return r;
+  }
+
+  $('lb-run').addEventListener('click', lbRun);
+  $('lb-amount').addEventListener('input', lbRun);
+  $('lb-reset').addEventListener('click', function () { $('lb-amount').value = '30000'; lbRun(); });
+
+  /* ================= 3. 税额综合 ================= */
+
+  var MONTH_BRACKETS = [
+    { upTo: 3000, rate: 0.03, deduct: 0 },
+    { upTo: 12000, rate: 0.10, deduct: 210 },
+    { upTo: 25000, rate: 0.20, deduct: 1410 },
+    { upTo: 35000, rate: 0.25, deduct: 2660 },
+    { upTo: 55000, rate: 0.30, deduct: 4410 },
+    { upTo: 80000, rate: 0.35, deduct: 7160 },
+    { upTo: Infinity, rate: 0.45, deduct: 15160 }
+  ];
+
+  var BONUS_BRACKETS = [
+    { upTo: 3000, rate: 0.03, deduct: 0 },
+    { upTo: 12000, rate: 0.10, deduct: 210 },
+    { upTo: 25000, rate: 0.20, deduct: 1410 },
+    { upTo: 35000, rate: 0.25, deduct: 2660 },
+    { upTo: 55000, rate: 0.30, deduct: 4410 },
+    { upTo: 80000, rate: 0.35, deduct: 7160 },
+    { upTo: Infinity, rate: 0.45, deduct: 15160 }
+  ];
+
+  function bracketOf(table, v) {
+    for (var i = 0; i < table.length; i++) if (v <= table[i].upTo) return table[i];
+    return table[table.length - 1];
+  }
+
+  // 工资薪金：按月等效税率表估算，起征点 5000
+  function salaryTax(opts) {
+    var pay = Number(opts.pay), ins = Number(opts.ins || 0), extra = Number(opts.extra || 0);
+    if (!(pay >= 0)) return { err: '收入要 ≥ 0' };
+    var taxable = pay - 5000 - ins - extra;
+    if (taxable <= 0) return { pay: pay, ins: ins, extra: extra, taxable: 0, rate: 0, deduct: 0, tax: 0, net: pay - ins, bracketIdx: -1 };
+    var b = bracketOf(MONTH_BRACKETS, taxable);
+    var idx = MONTH_BRACKETS.indexOf(b);
+    var tax = Math.max(0, taxable * b.rate - b.deduct);
+    return {
+      pay: pay, ins: ins, extra: extra, taxable: taxable,
+      rate: b.rate, deduct: b.deduct, tax: tax, net: pay - ins - tax, bracketIdx: idx
+    };
+  }
+
+  // 年终奖单独计税：金额 ÷ 12 定税率，再整体乘税率
+  function bonusTax(amount) {
+    amount = Number(amount);
+    if (!(amount >= 0)) return { err: '奖金要 ≥ 0' };
+    if (amount === 0) return { amount: 0, monthly: 0, rate: 0, deduct: 0, tax: 0, net: 0, bracketIdx: -1 };
+    var monthly = amount / 12;
+    var b = bracketOf(BONUS_BRACKETS, monthly);
+    var idx = BONUS_BRACKETS.indexOf(b);
+    var tax = Math.max(0, amount * b.rate - b.deduct);
+    return { amount: amount, monthly: monthly, rate: b.rate, deduct: b.deduct, tax: tax, net: amount - tax, bracketIdx: idx };
+  }
+
+  /* 年终奖的「跳档区间」：多发一点点、到手反而变少。
+     在每个档位边界上解出「到手不减少」的最小追加额。 */
+  function bonusCliffs(amount) {
+    var cur = bonusTax(amount);
+    var curNet = cur.net;
+    var cliffs = [];
+    BONUS_BRACKETS.forEach(function (b, i) {
+      if (i === 0) return;
+      // 该档起始金额 = 上一档上限 × 12
+      var start = BONUS_BRACKETS[i - 1].upTo * 12;
+      var taxAtStart = start * b.rate - b.deduct;
+      var netAtStart = start - taxAtStart;
+      if (curNet > 0 && netAtStart < curNet && amount <= start) {
+        // 需要加多少钱才能补回被多扣的税
+        var need = (curNet - netAtStart) / (1 - b.rate);
+        cliffs.push({
+          at: start, rate: b.rate,
+          netAtStart: netAtStart, gap: curNet - netAtStart,
+          needExtra: need, needTotal: start + need
+        });
+      }
+    });
+    return cliffs;
+  }
+
+  // 劳务报酬并入综合所得（年度）
+  function laborYearly(income, otherYearly) {
+    var l = laborTax(income);
+    if (l.err) return l;
+    var taxable = Math.max(0, l.taxable + Number(otherYearly || 0));
+    var YEAR = [
+      { upTo: 36000, rate: 0.03, deduct: 0 },
+      { upTo: 144000, rate: 0.10, deduct: 2520 },
+      { upTo: 300000, rate: 0.20, deduct: 16920 },
+      { upTo: 420000, rate: 0.25, deduct: 31920 },
+      { upTo: 660000, rate: 0.30, deduct: 52920 },
+      { upTo: 960000, rate: 0.35, deduct: 85920 },
+      { upTo: Infinity, rate: 0.45, deduct: 181920 }
+    ];
+    var b = bracketOf(YEAR, taxable);
+    var tax = Math.max(0, taxable * b.rate - b.deduct);
+    return {
+      income: l.income, deduction: l.deduction, taxable: taxable,
+      rate: b.rate, deduct: b.deduct, tax: tax,
+      prepaid: laborTax(income).tax, diff: tax - laborTax(income).tax
+    };
+  }
+
+  var AL_FORMS = {
+    vat: [
+      { id: 'gross', label: '价税合计（含税）', value: '11300', unit: '元' },
+      { id: 'rate', label: '税率', value: '13', unit: '%' }
+    ],
+    salary: [
+      { id: 'pay', label: '月税前工资', value: '20000', unit: '元' },
+      { id: 'ins', label: '三险一金（个人承担）', value: '2100', unit: '元' },
+      { id: 'extra', label: '专项附加扣除（月）', value: '0', unit: '元' }
+    ],
+    bonus: [
+      { id: 'bamount', label: '年终奖金额', value: '50000', unit: '元' }
+    ],
+    labor2: [
+      { id: 'lamount', label: '劳务报酬（税前）', value: '50000', unit: '元' },
+      { id: 'lother', label: '其他综合所得（年，可留空）', value: '60000', unit: '元' }
+    ]
+  };
+
+  function alKind() {
+    var box = $('al-kind');
+    var on = box.querySelector('button.on') || box.querySelector('button');
+    return on && on.dataset && on.dataset.kind ? on.dataset.kind : 'vat';
+  }
+
+  function alBuild() {
+    var kind = alKind();
+    if (!AL_FORMS[kind]) kind = 'vat';
+    var box = $('al-fields');
+    box.innerHTML = '';
+    AL_FORMS[kind].forEach(function (f) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      var lab = document.createElement('label');
+      lab.setAttribute('for', 'al-' + f.id);
+      lab.innerHTML = '<b></b>';
+      lab.querySelector('b').textContent = f.label;
+      var wrap = document.createElement('div');
+      wrap.className = 'input-wrap';
+      var inp = document.createElement('input');
+      inp.id = 'al-' + f.id;
+      inp.type = 'number';
+      inp.step = 'any';
+      inp.value = f.value;
+      var u = document.createElement('span');
+      u.className = 'unit';
+      u.textContent = f.unit;
+      wrap.appendChild(inp); wrap.appendChild(u);
+      row.appendChild(lab); row.appendChild(wrap);
+      box.appendChild(row);
+      inp.addEventListener('input', alRun);
+    });
+  }
+
+  function alRun() {
+    var kind = alKind();
+    if (!AL_FORMS[kind]) kind = 'vat';
+    var msg = $('al-msg'), out = $('al-out'), grid = $('al-grid'), fml = $('al-formula');
+    grid.innerHTML = '';
+    fml.innerHTML = '';
+
+    if (kind === 'vat') {
+      var r = vatSolve('stripTax', $('al-gross').value, $('al-rate').value);
+      if (r.err) { msg.className = 'hint err'; msg.textContent = r.err; out.textContent = ''; return null; }
+      msg.className = 'hint';
+      msg.textContent = '按价外税拆分，不含税价与税额之和应等于含税价。';
+      out.className = 'big';
+      out.innerHTML = '税额 ' + money(r.tax) + ' 元<small>不含税 ' + money(r.net) + ' 元 · 含税 ' + money(r.gross) + ' 元</small>';
+      setGrid(grid, [
+        ['含税（价税合计）', money(r.gross) + ' 元'],
+        ['不含税', money(r.net) + ' 元'],
+        ['税额', money(r.tax) + ' 元'],
+        ['税率', rateStr(r.rate)],
+        ['税额占含税比', (r.tax / r.gross * 100).toFixed(2) + '%'],
+        ['核对', money(r.net + r.tax) + ' 元']
+      ]);
+      fml.innerHTML = '<span class="t">计算过程</span><br>' + r.formula;
+      return r;
+    }
+
+    if (kind === 'salary') {
+      var s = salaryTax({ pay: $('al-pay').value, ins: $('al-ins').value, extra: $('al-extra').value });
+      if (s.err) { msg.className = 'hint err'; msg.textContent = s.err; out.textContent = ''; return null; }
+      msg.className = 'hint';
+      msg.textContent = '按月等效税率表估算；实际走累计预扣预缴，年初少、年末多，全年合计接近。';
+      out.className = 'big';
+      out.innerHTML = '月个税 ' + money(s.tax) + ' 元<small>税后到手约 ' + money(s.net) + ' 元</small>';
+      setGrid(grid, [
+        ['税前工资', money(s.pay) + ' 元'],
+        ['三险一金', money(s.ins) + ' 元'],
+        ['专项附加扣除', money(s.extra) + ' 元'],
+        ['应纳税所得额', money(s.taxable) + ' 元'],
+        ['适用税率', rateStr(s.rate) + '（速算扣除 ' + money(s.deduct, 0) + '）'],
+        ['本月个税', money(s.tax) + ' 元']
+      ]);
+      fml.innerHTML = '<span class="t">计算过程</span><br>' +
+        '应纳税所得额 = ' + money(s.pay) + ' − 5000 − ' + money(s.ins) + ' − ' + money(s.extra) + ' = ' + money(s.taxable) + '<br>' +
+        '个税 = ' + money(s.taxable) + ' × ' + rateStr(s.rate) + ' − ' + money(s.deduct, 0) + ' = ' + money(s.tax);
+      return s;
+    }
+
+    if (kind === 'bonus') {
+      var b = bonusTax($('al-bamount').value);
+      if (b.err) { msg.className = 'hint err'; msg.textContent = b.err; out.textContent = ''; return null; }
+      var cliffs = bonusCliffs(Number(b.amount));
+      msg.className = 'hint';
+      msg.textContent = cliffs.length
+        ? '注意跳档：再发到 ' + money(cliffs[0].at, 0) + ' 元时，到手反而比现在少 ' +
+          money(cliffs[0].gap) + ' 元，要比 ' + money(cliffs[0].needTotal, 0) + ' 元才追得回来。'
+        : '未落在跳档区间内。';
+      out.className = 'big' + (cliffs.length ? ' warn' : '');
+      out.innerHTML = '个税 ' + money(b.tax) + ' 元<small>折月 ' + money(b.monthly) +
+        ' 元落 ' + rateStr(b.rate) + ' 档 · 税后到手 ' + money(b.net) + ' 元</small>';
+      setGrid(grid, [
+        ['奖金金额', money(b.amount) + ' 元'],
+        ['折合每月', money(b.monthly) + ' 元'],
+        ['适用税率', rateStr(b.rate)],
+        ['速算扣除数', money(b.deduct, 0) + ' 元'],
+        ['应纳税额', money(b.tax) + ' 元'],
+        ['税后到手', money(b.net) + ' 元']
+      ]);
+      fml.innerHTML = '<span class="t">计算过程</span><br>' +
+        '按月折算定档：' + money(b.amount) + ' ÷ 12 = ' + money(b.monthly) + ' → ' + rateStr(b.rate) + ' 档<br>' +
+        '个税 = ' + money(b.amount) + ' × ' + rateStr(b.rate) + ' − ' + money(b.deduct, 0) + ' = ' + money(b.tax);
+      return b;
+    }
+
+    var l = laborYearly($('al-lamount').value, $('al-lother').value);
+    if (l.err) { msg.className = 'hint err'; msg.textContent = l.err; out.textContent = ''; return null; }
+    msg.className = 'hint';
+    msg.textContent = '并入综合所得按年度税率表重算：预扣 ' + money(l.prepaid) + ' 元，年度应纳税 ' +
+      money(l.tax) + ' 元，汇算时' + (l.diff >= 0 ? '需补 ' + money(l.diff) : '可退 ' + money(-l.diff)) + ' 元。';
+    out.className = 'big';
+    out.innerHTML = '年度个税 ' + money(l.tax) + ' 元' +
+      '<small>预扣 ' + money(l.prepaid) + ' 元 · ' + (l.diff >= 0 ? '补税 ' : '退税 ') + money(Math.abs(l.diff)) + ' 元</small>';
+    setGrid(grid, [
+      ['劳务收入', money(l.income) + ' 元'],
+      ['减除费用', money(l.deduction) + ' 元'],
+      ['并入后应纳税所得额', money(l.taxable) + ' 元'],
+      ['年度税率', rateStr(l.rate) + '（速算扣除 ' + money(l.deduct, 0) + '）'],
+      ['年度应纳税额', money(l.tax) + ' 元'],
+      ['汇算差额', (l.diff >= 0 ? '补 ' : '退 ') + money(Math.abs(l.diff)) + ' 元']
+    ]);
+    fml.innerHTML = '<span class="t">计算过程</span><br>' +
+      '并入综合所得后应纳税所得额 = ' + money(l.taxable) + '<br>' +
+      '年度个税 = ' + money(l.taxable) + ' × ' + rateStr(l.rate) + ' − ' + money(l.deduct, 0) + ' = ' + money(l.tax) + '<br>' +
+      '与预扣 ' + money(l.prepaid) + ' 元相比，' + (l.diff >= 0 ? '应补缴' : '应退还') + ' ' + money(Math.abs(l.diff)) + ' 元';
+    return l;
+  }
+
+  $('al-kind').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    [].forEach.call(this.querySelectorAll('button'), function (o) { o.classList.toggle('on', o === b); });
+    alBuild();
+    alRun();
+  });
+  $('al-run').addEventListener('click', alRun);
+  $('al-reset').addEventListener('click', function () {
+    var kind = alKind();
+    (AL_FORMS[kind] || AL_FORMS.vat).forEach(function (f) { var el = $('al-' + f.id); if (el) el.value = f.value; });
+    alRun();
+  });
+
+  /* ================= 页签与初始化 ================= */
+
+  var PANELS = ['vat', 'labor', 'all'];
+  function setTab(name) {
+    T.markTab(name);
+    PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
+  }
+  T.tabs($('tabs'), setTab);
+
+  vtBuild();
+  vtRun();
+  lbRun();
+  alBuild();
+  alRun();
+  setTab(T.firstTab('vat'));
+
+  window.__tax2 = {
+    vatSolve: vatSolve, VT_FORMS: VT_FORMS,
+    laborTax: laborTax, laborYearly: laborYearly, LABOR_BRACKETS: LABOR_BRACKETS,
+    salaryTax: salaryTax, bonusTax: bonusTax, bonusCliffs: bonusCliffs,
+    bracketOf: bracketOf, MONTH_BRACKETS: MONTH_BRACKETS, BONUS_BRACKETS: BONUS_BRACKETS,
+    money: money, rateStr: rateStr
+  };
+})();
+</script>
 </body>
 </html>

@@ -5,7 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
 <title>颜色转换</title>
-<link rel="stylesheet" href="./app.css">
+<style>
+/* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
+:root{
+  --bg:#f5f6f8;--card:#fff;--text:#1f2329;--sub:#8a9099;--line:#e8eaed;
+  --primary:#1668dc;--primary-press:#0f52b3;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --warn:#d4380d;--ok:#0f8f74;--radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+header{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(135deg,#1668dc,#3b8bf0);color:#fff;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+header h1{margin:0;font-size:17px;font-weight:600}
+header p{margin:4px 0 0;font-size:12px;opacity:.9}
+main{max-width:1280px;margin:0 auto;padding:12px 16px 0}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:14px 14px 2px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.card h2{margin:0 0 10px;font-size:14px;font-weight:600}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.row label b{color:var(--text);font-weight:500}
+.input-wrap{position:relative;display:flex;align-items:center}
+input[type="number"],input[type="text"],input[type="datetime-local"],select{
+  width:100%;height:46px;padding:0 12px;
+  font-size:16px;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;font-family:inherit;
+}
+input[type="number"]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input:focus,select:focus{border-color:var(--primary);background:#fff}
+input.invalid{border-color:var(--warn);background:#fff2ef}
+.input-wrap .unit{position:absolute;right:12px;font-size:12px;color:var(--sub);pointer-events:none}
+.input-wrap input[type="number"]{padding-right:64px}
+textarea{
+  width:100%;min-height:130px;padding:10px 12px;
+  font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text);
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  outline:none;resize:vertical;
+}
+textarea:focus{border-color:var(--primary);background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:10px;margin:2px 0 14px}
+.btns button{flex:1;height:48px;font-size:16px;font-weight:600;border-radius:12px;border:none}
+.btns button.primary{background:var(--primary);color:#fff}
+.btns button.primary:active{background:var(--primary-press)}
+.btns button.ghost{flex:0 0 96px;background:#fff;color:var(--text);border:1px solid var(--line)}
+.btns.three button.ghost{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{
+  padding:0 12px;height:32px;font-size:13px;color:var(--primary);
+  background:var(--soft);border:1px solid var(--soft-line);border-radius:9px;
+}
+.chips button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hint{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.5}
+.hint.err{color:var(--warn)}
+.out{
+  font:13px/1.7 ui-monospace,Menlo,Consolas,monospace;
+  background:#f7f8fa;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;
+}
+.out:empty{display:none}
+.out.mono-lg{font-size:15px}
+.out.err{color:var(--warn);background:#fff2ef;border-color:#ffd6cf}
+.out.ok{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.grid div{background:#fff;padding:10px 12px}
+.grid .k{font-size:12px;color:var(--sub)}
+.grid .v{font-size:16px;font-weight:600;margin-top:2px;word-break:break-all}
+.formula{
+  font-size:12px;color:var(--sub);line-height:1.6;
+  background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px;
+  word-break:break-all;
+}
+.formula .t{color:var(--text);font-weight:600}
+.formula code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#4b5563}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);word-break:break-all}
+th{color:var(--sub);font-weight:500}
+td.num{font-family:ui-monospace,Menlo,Consolas,monospace}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pick button{
+  padding:0 12px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--text);border:1px solid var(--line);
+}
+.pick button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.list{margin:0 0 12px;padding:0;list-style:none}
+.list li{padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.list li:last-child{border-bottom:none}
+.list a{color:var(--primary);text-decoration:none;font-weight:500}
+.list .d{display:block;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tabs button{
+  flex:0 0 auto;padding:0 14px;height:34px;font-size:13px;border-radius:9px;
+  background:#fff;color:var(--sub);border:1px solid var(--line);
+}
+.tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+footer{max-width:1280px;margin:0 auto;padding:0 16px;font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer a{color:var(--primary);text-decoration:none;margin:0 6px}
+@media(max-width:360px){.grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header>
@@ -50,7 +161,264 @@
   </footer>
 </main>
 
-<script src="./app.js"></script>
-<script src="./color.js"></script>
+<script>
+/* 工具页共用小工具：取元素、格式化、复制、页签切换 */
+(function (global) {
+  'use strict';
+
+  // 复制到剪贴板：HTTPS/本地才用异步 API，其余回退到 execCommand
+  function copy(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(text); });
+    }
+    return Promise.resolve(legacy(text));
+  }
+
+  function legacy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  // 保留 digits 位小数并去掉长浮点尾巴
+  function fmt(n, digits) {
+    if (!isFinite(n)) return '—';
+    var d = digits == null ? 4 : digits;
+    return Number(n.toFixed(d)).toLocaleString('zh-CN', { maximumFractionDigits: d });
+  }
+
+  // 写回输入框的数值，避免 0.30000000000000004 这类尾巴
+  function fmtInput(n, digits) {
+    if (!isFinite(n)) return '';
+    return String(Number(n.toFixed(digits == null ? 6 : digits)));
+  }
+
+  function $(id) { return document.getElementById(id); }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // 在容器内渲染 label/value 网格
+  function cells(container, pairs) {
+    container.innerHTML = '';
+    pairs.forEach(function (p) {
+      var cell = el('div');
+      cell.appendChild(el('div', 'k', p[0]));
+      cell.appendChild(el('div', 'v', p[1]));
+      container.appendChild(cell);
+    });
+  }
+
+  // 复制按钮通用绑定：btn 复制 target 的文本，成功后短暂改文案
+  function bindCopy(btn, getText, doneText) {
+    if (!btn) return;
+    var original = btn.textContent;
+    btn.addEventListener('click', function () {
+      var text = getText();
+      if (!text) return;
+      copy(text).then(function () {
+        btn.textContent = doneText || '已复制';
+        setTimeout(function () { btn.textContent = original; }, 1200);
+      });
+    });
+  }
+
+  // 页签：buttons 为一组按钮，onPick 收到 data-tab
+  function tabs(container, onPick) {
+    var btns = [].slice.call(container.querySelectorAll('button'));
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (o) { o.classList.toggle('on', o === b); });
+        syncHash(b.dataset.tab);
+        onPick(b.dataset.tab, b);
+      });
+    });
+    return btns;
+  }
+
+  // 把按钮高亮对齐到 name。点击时 tabs() 已经切过，但初始化是从 hash 进来的，
+  // 未必等于 HTML 里写死 class="on" 的那个，所以各页的 setTab 里要再调一次。
+  function markTab(name) {
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.classList.toggle('on', b.dataset.tab === name);
+    });
+  }
+
+  // 切页签时把页签名写回地址，刷新与分享都能停在同一个工具上
+  function syncHash(name) {
+    if (!global.history || !global.history.replaceState) return;
+    global.history.replaceState(null, '', '#' + name);
+  }
+
+  // 地址 hash 指定页签：#<页签名>，如 number.html#divisor。
+  // 首页每条工具都带着 href="./page.html#tab" 过来，没有它就永远落回默认页签。
+  function hashTab() {
+    var h = String(global.location && global.location.hash || '').replace(/^#/, '');
+    return /^[a-z0-9]+$/i.test(h) ? h : null;
+  }
+
+  // 打开页面时该选哪个页签：优先地址 hash（且必须是本页真实存在的页签），否则 defaultTab。
+  function firstTab(defaultTab) {
+    var want = hashTab();
+    if (!want) return defaultTab;
+    var btns = [].slice.call(document.querySelectorAll('#tabs button'));
+    var ok = btns.some(function (b) { return b.dataset.tab === want; });
+    return ok ? want : defaultTab;
+  }
+
+  global.T = { $: $, el: el, fmt: fmt, fmtInput: fmtInput, cells: cells, copy: copy, bindCopy: bindCopy, tabs: tabs, hashTab: hashTab, firstTab: firstTab, syncHash: syncHash, markTab: markTab };
+})(window);
+</script>
+<script>
+/* 颜色转换：HEX / RGB / HSL / HSV / CMYK，附 WCAG 对比度 */
+(function () {
+  'use strict';
+  var $ = T.$;
+  var grid = $('grid'), swatch = $('swatch');
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(function (v) {
+      return clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0');
+    }).join('').toUpperCase();
+  }
+
+  function hexToRgb(hex) {
+    var h = String(hex).trim().replace(/^#/, '');
+    if (/^[0-9a-fA-F]{3}$/.test(h)) h = h.split('').map(function (c) { return c + c; }).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var l = (max + min) / 2, h = 0, s = 0;
+    if (max !== min) {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+  }
+
+  function rgbToHsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    var h = 0;
+    if (d !== 0) {
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h /= 6;
+    }
+    return [Math.round(h * 360), Math.round((max === 0 ? 0 : d / max) * 100), Math.round(max * 100)];
+  }
+
+  function rgbToCmyk(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var k = 1 - Math.max(r, g, b);
+    if (k === 1) return [0, 0, 0, 100];
+    return [
+      Math.round((1 - r - k) / (1 - k) * 100),
+      Math.round((1 - g - k) / (1 - k) * 100),
+      Math.round((1 - b - k) / (1 - k) * 100),
+      Math.round(k * 100)
+    ];
+  }
+
+  // WCAG 2.1 相对亮度：先按 sRGB 反伽马到线性空间，再按 0.2126/0.7152/0.0722 加权
+  function luminance(r, g, b) {
+    var chan = [r, g, b].map(function (v) {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * chan[0] + 0.7152 * chan[1] + 0.0722 * chan[2];
+  }
+
+  function contrast(rgb1, rgb2) {
+    var l1 = luminance.apply(null, rgb1), l2 = luminance.apply(null, rgb2);
+    var hi = Math.max(l1, l2), lo = Math.min(l1, l2);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  function render(r, g, b) {
+    var hex = rgbToHex(r, g, b);
+    var hsl = rgbToHsl(r, g, b), hsv = rgbToHsv(r, g, b), cmyk = rgbToCmyk(r, g, b);
+    var white = contrast([r, g, b], [255, 255, 255]).toFixed(2);
+    var black = contrast([r, g, b], [0, 0, 0]).toFixed(2);
+
+    $('hex').value = hex;
+    $('r').value = Math.round(r); $('g').value = Math.round(g); $('b').value = Math.round(b);
+    $('picker').value = hex.toLowerCase();
+    swatch.style.background = hex;
+    swatch.style.color = Number(white) >= Number(black) ? '#fff' : '#000';
+    swatch.textContent = hex + '  文字自动选' + (Number(white) >= Number(black) ? '白' : '黑');
+
+    T.cells(grid, [
+      ['HEX', hex],
+      ['RGB', 'rgb(' + Math.round(r) + ', ' + Math.round(g) + ', ' + Math.round(b) + ')'],
+      ['HSL', 'hsl(' + hsl[0] + ', ' + hsl[1] + '%, ' + hsl[2] + '%)'],
+      ['HSV', 'hsv(' + hsv[0] + ', ' + hsv[1] + '%, ' + hsv[2] + '%)'],
+      ['CMYK', cmyk[0] + '%, ' + cmyk[1] + '%, ' + cmyk[2] + '%, ' + cmyk[3] + '%'],
+      ['对白对比度', white + ':1' + (Number(white) >= 4.5 ? '（正文可用）' : Number(white) >= 3 ? '（大字可用）' : '（偏低）')],
+      ['对黑对比度', black + ':1' + (Number(black) >= 4.5 ? '（正文可用）' : Number(black) >= 3 ? '（大字可用）' : '（偏低）')]
+    ]);
+  }
+
+  function fromHex() {
+    var rgb = hexToRgb($('hex').value);
+    if (!rgb) { $('hint').className = 'hint err'; $('hint').textContent = 'HEX 格式不正确，应形如 #1668dc 或 #16c'; return; }
+    $('hint').className = 'hint';
+    $('hint').textContent = HINT_TEXT;
+    render(rgb[0], rgb[1], rgb[2]);
+  }
+
+  function fromRgb() {
+    var r = Number($('r').value), g = Number($('g').value), b = Number($('b').value);
+    if ([r, g, b].some(function (v) { return isNaN(v) || v < 0 || v > 255; })) {
+      $('hint').className = 'hint err'; $('hint').textContent = 'R/G/B 需为 0–255 的数字';
+      return;
+    }
+    $('hint').className = 'hint';
+    $('hint').textContent = HINT_TEXT;
+    render(r, g, b);
+  }
+
+  var HINT_TEXT = '支持 #RGB 缩写与 #RRGGBB；RGB 三通道改动即时换算；对比度按 WCAG 2.1，4.5:1 为正文达标线。';
+
+  $('hex').addEventListener('input', fromHex);
+  ['r', 'g', 'b'].forEach(function (id) { $(id).addEventListener('input', fromRgb); });
+  $('picker').addEventListener('input', function () {
+    $('hex').value = $('picker').value;
+    fromHex();
+  });
+  $('random').addEventListener('click', function () {
+    var bytes = new Uint8Array(3);
+    crypto.getRandomValues(bytes);
+    render(bytes[0], bytes[1], bytes[2]);
+    $('hint').className = 'hint';
+    $('hint').textContent = HINT_TEXT;
+  });
+  T.bindCopy($('copy'), function () { return $('hex').value; });
+
+  $('hint').textContent = HINT_TEXT;
+  render(22, 104, 220);
+})();
+</script>
 </body>
 </html>

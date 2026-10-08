@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>在线时钟 · 秒表 · 计时器</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .clock-time{
+    font:700 46px/1.1 ui-monospace,Menlo,Consolas,monospace;
+    letter-spacing:2px;text-align:center;margin:6px 0 2px;
+    font-variant-numeric:tabular-nums;
+  }
+  .clock-time .ms{font-size:24px;color:var(--primary)}
+  .clock-time .sep{opacity:.35;padding:0 1px}
+  .clock-sub{text-align:center;font-size:13px;color:var(--sub);margin-bottom:12px}
+  .clock-big{font:600 15px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--text)}
+  .big-num{
+    font:700 40px/1.2 ui-monospace,Menlo,Consolas,monospace;
+    text-align:center;font-variant-numeric:tabular-nums;margin:4px 0 10px;
+    word-break:break-all;
+  }
+  .big-num .ms{font-size:22px;color:var(--primary)}
+  .lap{overflow:hidden}
+  .lap table{margin-bottom:4px}
+  .lap td:last-child,.lap th:last-child{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .lap-wrap{max-height:260px;overflow-y:auto}
+  .sw-btns{display:flex;gap:10px;margin:2px 0 14px}
+  .sw-btns button{
+    flex:1;height:52px;font-size:17px;font-weight:600;border-radius:12px;
+    border:1px solid var(--line);background:#fff;color:var(--text);
+  }
+  .sw-btns button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .sw-btns button.primary:active{background:var(--primary-press)}
+  .sw-btns button:disabled{opacity:.45}
+  .ring{display:block;margin:0 auto 6px;width:190px;height:190px}
+  .ring .track{fill:none;stroke:#e8eaed;stroke-width:10}
+  .ring .bar{fill:none;stroke:var(--primary);stroke-width:10;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .18s linear}
+  .ring .bar.warn{stroke:#d4380d}
+  .ring .bar.ok{stroke:var(--ok)}
+  .pulse{animation:pulse 1s steps(2,start) infinite}
+  @keyframes pulse{50%{opacity:.25}}
+  .seg{display:flex;gap:1px;background:var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .seg button{flex:1;height:38px;font-size:13px;border:none;background:#fff;color:var(--sub)}
+  .seg button.on{background:var(--primary);color:#fff}
+  .zones{margin:0;padding:0;list-style:none}
+  .zones li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .zones li:last-child{border-bottom:none}
+  .zones .zt{font-family:ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+  .zones .zd{font-size:12px;color:var(--sub);align-self:center;margin-left:auto}
+  .swatch{width:100%;height:44px;padding:0;border-radius:10px;border:1px solid var(--line);background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>在线时钟</h1>
+  <p>时钟 · 秒表 · 计时器 · 倒计时</p>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button data-tab="clock" class="on">在线时钟</button>
+    <button data-tab="stopwatch">秒表</button>
+    <button data-tab="timer">计时器</button>
+    <button data-tab="countdown">倒计时</button>
+    <button data-tab="zones">世界时间</button>
+  </div>
+
+  <!-- 时钟 -->
+  <section class="card" id="panel-clock">
+    <h2>当前时间</h2>
+    <div class="clock-time" id="clk-time">--<span class="sep">:</span>--<span class="sep">:</span>--</div>
+    <div class="clock-sub" id="clk-date">加载中…</div>
+    <div class="seg" id="clk-mode">
+      <button data-mode="24" class="on">24 小时制</button>
+      <button data-mode="12">12 小时制</button>
+      <button data-mode="ms">毫秒</button>
+    </div>
+    <div class="grid" id="clk-grid"></div>
+    <div class="row">
+      <label>配色（时钟主色，可记忆）</label>
+      <input type="color" class="swatch" id="clk-color" value="#1668dc">
+    </div>
+    <p class="hint" id="clk-msg"></p>
+  </section>
+
+  <!-- 秒表 -->
+  <section class="card" id="panel-stopwatch" hidden>
+    <h2>秒表</h2>
+    <div class="big-num" id="sw-time">00:00<span class="ms">.00</span></div>
+    <div class="sw-btns">
+      <button type="button" class="primary" id="sw-main">开始</button>
+      <button type="button" id="sw-lap" disabled>计次</button>
+      <button type="button" id="sw-reset" disabled>复位</button>
+    </div>
+    <div class="lap lap-wrap" id="sw-laps-wrap" hidden>
+      <table>
+        <thead><tr><th>次</th><th>单次</th><th>累计</th></tr></thead>
+        <tbody id="sw-laps"></tbody>
+      </table>
+    </div>
+    <p class="hint">基于 <code>performance.now()</code> 取值，不受系统时间调整影响；页面切到后台后仍按真实耗时累计。切页签会暂停刷新，回到本页继续显示准确值。</p>
+  </section>
+
+  <!-- 计时器 -->
+  <section class="card" id="panel-timer" hidden>
+    <h2>倒计时计时器</h2>
+    <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+      <circle class="track" cx="100" cy="100" r="88"></circle>
+      <circle class="bar" id="tm-bar" cx="100" cy="100" r="88" stroke-dasharray="552.9" stroke-dashoffset="0"></circle>
+    </svg>
+    <div class="big-num" id="tm-time">00:00<span class="ms">.0</span></div>
+
+    <div class="row">
+      <label>时长（时 / 分 / 秒）</label>
+      <div class="grid2">
+        <div class="input-wrap"><input type="number" id="tm-h" min="0" max="99" step="1" value="0" placeholder="时"><span class="unit">时</span></div>
+        <div class="input-wrap"><input type="number" id="tm-m" min="0" max="99" step="1" value="5" placeholder="分"><span class="unit">分</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="grid2">
+        <div class="input-wrap"><input type="number" id="tm-s" min="0" max="59" step="1" value="0" placeholder="秒"><span class="unit">秒</span></div>
+        <div class="input-wrap"><input type="number" id="tm-ms" min="0" max="99" step="1" value="0" placeholder="毫秒"><span class="unit">毫秒</span></div>
+      </div>
+    </div>
+    <div class="chips" id="tm-preset">
+      <button type="button" data-sec="60">1 分钟</button>
+      <button type="button" data-sec="180">3 分钟</button>
+      <button type="button" data-sec="300">5 分钟</button>
+      <button type="button" data-sec="600">10 分钟</button>
+      <button type="button" data-sec="1500">25 分钟</button>
+    </div>
+    <div class="sw-btns">
+      <button type="button" class="primary" id="tm-main">开始</button>
+      <button type="button" id="tm-reset">重置</button>
+    </div>
+    <p class="hint" id="tm-msg">到点后在页面内提示（无声音依赖，可点击「提醒」按钮请求系统通知权限）。</p>
+  </section>
+
+  <!-- 倒计时 -->
+  <section class="card" id="panel-countdown" hidden>
+    <h2>倒计时</h2>
+    <div class="row">
+      <label>目标时刻（留空按「距今 N 天」算）</label>
+      <input type="datetime-local" id="cd-at" step="1">
+    </div>
+    <div class="row">
+      <label>或：距今天数</label>
+      <div class="input-wrap"><input type="number" id="cd-days" step="0.5" min="0" placeholder="如 7"><span class="unit">天</span></div>
+    </div>
+    <div class="grid" id="cd-grid"></div>
+    <div class="big-num" id="cd-d"></div>
+    <p class="hint" id="cd-msg">按本地时区计算，剩余时间实时刷新。</p>
+  </section>
+
+  <!-- 世界时间 -->
+  <section class="card" id="panel-zones" hidden>
+    <h2>世界时间</h2>
+    <ul class="zones" id="zones"></ul>
+    <p class="hint">按 <code>Intl</code> 时区数据库换算，随系统时区数据库更新。</p>
+  </section>
+
+  <footer>
+    全部基于系统时钟与 <code>performance.now()</code>，零依赖、离线可用<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./clock.js"></script>
+</body>
+</html>

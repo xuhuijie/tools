@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>健康与证件</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .note{font-size:12px;color:var(--sub);line-height:1.65;background:#f7f8fa;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .note b{color:var(--text)}
+  .big{font:700 28px/1.25 ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--primary);
+    margin:2px 0 12px;font-variant-numeric:tabular-nums}
+  .big small{display:block;font-size:13px;color:var(--sub);font-weight:400;margin-top:4px}
+  .big.warn{color:var(--warn)}
+  .seg{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .rate-tb{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+  .rate-tb th,.rate-tb td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;
+    font-family:ui-monospace,Menlo,Consolas,monospace}
+  .rate-tb th:first-child,.rate-tb td:first-child{text-align:left;font-family:inherit}
+  .rate-tb tr.on{background:var(--soft)}
+  .symptom{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .symptom label{display:flex;align-items:center;gap:5px;font-size:13px;padding:6px 10px;
+    border:1px solid var(--line);border-radius:9px;background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>健康与证件</h1>
+  <p>eGFR · 胎儿体重 · 预产期 · 身份证解析 · 尺码对照</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="egfr" class="on">eGFR 肾小球滤过率</button>
+    <button data-tab="preg">孕产计算</button>
+    <button data-tab="card">身份证解析</button>
+    <button data-tab="bmi">BMI 与内衣尺码</button>
+    <button data-tab="size">尺码对照</button>
+    <button data-tab="name">百家姓</button>
+  </div>
+
+  <!-- eGFR -->
+  <section class="card" id="panel-egfr">
+    <h2>输入</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="eg-age"><b>年龄</b></label>
+        <div class="input-wrap"><input id="eg-age" type="number" inputmode="numeric" min="18" max="120" value="55"><span class="unit">岁</span></div>
+      </div>
+      <div class="row">
+        <label for="eg-sex"><b>性别</b></label>
+        <select id="eg-sex"><option value="m">男</option><option value="f" selected>女</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <label for="eg-cr"><b>血清肌酐 Scr</b>（单位可切换）</label>
+      <div class="input-wrap"><input id="eg-cr" type="number" step="0.01" min="1" value="88.4"><span class="unit">μmol/L</span></div>
+    </div>
+    <div class="seg" id="eg-unit">
+      <button data-unit="umol" class="on">μmol/L（国内常用）</button>
+      <button data-unit="mgdl">mg/dL（欧美常用）</button>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="eg-reset">重置</button>
+      <button type="button" class="primary" id="eg-run">计算</button>
+    </div>
+    <p class="hint" id="eg-msg"></p>
+    <div class="big" id="eg-out"></div>
+    <div class="grid" id="eg-grid"></div>
+    <table class="rate-tb" id="eg-table">
+      <thead><tr><th>公式</th><th>eGFR</th><th>分期</th></tr></thead>
+      <tbody id="eg-body"></tbody>
+    </table>
+    <div class="note">
+      <b>这不等于肾功能诊断。</b>eGFR 只是估算值，需结合尿蛋白、影像学与病史由医生判断。
+      以下人群不适用 CKD-EPI 公式：<b>孕妇、18 岁以下儿童青少年、极端肌肉量（健美/恶病质）、
+      急性肾损伤期、正在用大剂量糖皮质激素或甲氧苄啶等影响肌酐代谢的药物</b>。
+      公式本身在 eGFR &gt; 60 时误差较大，报告常写作「&gt;90」而非具体数字。
+    </div>
+  </section>
+
+  <!-- 孕产 -->
+  <section class="card" id="panel-preg" hidden>
+    <h2>输入</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="pg-lmp"><b>末次月经第一天（LMP）</b></label>
+        <input id="pg-lmp" type="date" value="2026-01-05">
+      </div>
+      <div class="row">
+        <label for="pg-cycle"><b>月经周期长度</b>（用于校正排卵日）</label>
+        <div class="input-wrap"><input id="pg-cycle" type="number" inputmode="numeric" min="20" max="45" value="28"><span class="unit">天</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <label for="pg-today"><b>计算基准日</b>（默认今天）</label>
+      <input id="pg-today" type="date">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="pg-reset">重置</button>
+      <button type="button" class="primary" id="pg-run">计算</button>
+    </div>
+    <p class="hint" id="pg-msg"></p>
+    <div class="big" id="pg-out"></div>
+    <div class="tabs" id="pg-tabs">
+      <button data-part="due" class="on">预产期与孕周</button>
+      <button data-part="fetal">胎儿体重</button>
+    </div>
+    <div id="pg-due">
+      <div class="grid" id="pg-grid"></div>
+      <table class="rate-tb" id="pg-table">
+        <thead><tr><th>产检节点</th><th>孕周</th><th>日期</th></tr></thead>
+        <tbody id="pg-body"></tbody>
+      </table>
+    </div>
+    <div id="pg-fetal" hidden>
+      <div class="row2">
+        <div class="row">
+          <label for="ft-bpd"><b>双顶径 BPD</b></label>
+          <div class="input-wrap"><input id="ft-bpd" type="number" step="0.1" value="8.5"><span class="unit">cm</span></div>
+        </div>
+        <div class="row">
+          <label for="ft-ac"><b>腹围 AC</b></label>
+          <div class="input-wrap"><input id="ft-ac" type="number" step="0.1" value="29.0"><span class="unit">cm</span></div>
+        </div>
+        <div class="row">
+          <label for="ft-fl"><b>股骨长 FL</b></label>
+          <div class="input-wrap"><input id="ft-fl" type="number" step="0.1" value="6.5"><span class="unit">cm</span></div>
+        </div>
+      </div>
+      <div class="btns">
+        <button type="button" class="ghost" id="ft-reset">重置</button>
+        <button type="button" class="primary" id="ft-run">估算</button>
+      </div>
+      <p class="hint" id="ft-msg"></p>
+      <div class="big" id="ft-out"></div>
+      <div class="grid" id="ft-grid"></div>
+    </div>
+    <div class="note">
+      <b>预产期只是估算。</b>按内格勒法则（LMP + 280 天）推算，实际分娩在预产期前后两周内都算正常。
+      月经不规律或周期明显长于/短于 28 天时，按 LMP 算的误差较大，应以早期 B 超（尤其是 8~13 周的 CRL）为准。
+      <b>胎儿体重公式误差 ±10%~15%</b>，同一组数据不同公式能差 200 g 以上，仅用于判断生长趋势，不能替代医生评估。
+    </div>
+  </section>
+
+  <!-- 身份证 -->
+  <section class="card" id="panel-card" hidden>
+    <h2>输入</h2>
+    <div class="row">
+      <label for="cd-in"><b>身份证号</b>（18 位，本地解析，不上传）</label>
+      <input id="cd-in" type="text" maxlength="18" placeholder="110105199001011234" value="110105199001011234">
+    </div>
+    <div class="row">
+      <label for="cd-at"><b>计算基准日</b>（默认今天）</label>
+      <input id="cd-at" type="date">
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="cd-reset">重置</button>
+      <button type="button" class="primary" id="cd-run">解析</button>
+    </div>
+    <p class="hint" id="cd-msg"></p>
+    <div class="big" id="cd-out"></div>
+    <div class="grid" id="cd-grid"></div>
+    <table class="rate-tb" id="cd-table">
+      <thead><tr><th>项</th><th>值</th></tr></thead>
+      <tbody id="cd-body"></tbody>
+    </table>
+    <div class="note">
+      <b>校验位按 GB 11643 算</b>（前 17 位加权求和后查模 11 的校验码），能验出大部分录入错误，
+      但校验通过<b>不等于号码真实存在</b>——伪造者只要按规则算对校验位就能造出合法格式的号。
+      地区码按 GB/T 2260 前 6 位的行政区划表映射，随区划调整会变化。
+    </div>
+  </section>
+
+  <!-- BMI 与内衣尺码 -->
+  <section class="card" id="panel-bmi" hidden>
+    <h2>BMI 体重指数</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="bm-h"><b>身高</b></label>
+        <div class="input-wrap"><input id="bm-h" type="number" inputmode="numeric" min="100" max="230" value="175"><span class="unit">cm</span></div>
+      </div>
+      <div class="row">
+        <label for="bm-w"><b>体重</b></label>
+        <div class="input-wrap"><input id="bm-w" type="number" step="0.1" min="20" max="200" value="70"><span class="unit">kg</span></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="bm-reset">重置</button>
+      <button type="button" class="primary" id="bm-run">计算</button>
+    </div>
+    <p class="hint" id="bm-msg"></p>
+    <div class="big" id="bm-out"></div>
+    <div class="grid" id="bm-grid"></div>
+    <div class="note">
+      <b>分类用的是中国标准</b>（WS/T 428-2013）：偏瘦 &lt;18.5、正常 18.5~23.9、超重 24~27.9、肥胖 ≥28。
+      这与 WHO 国际标准（超重 ≥25、肥胖 ≥30）不同——同样的 BMI 24，按中国标准已属超重。
+      BMI 只看身高体重，不区分肌肉与脂肪，健身人群、孕妇、儿童青少年都不适用。
+    </div>
+
+    <h2 style="margin-top:14px">内衣尺码</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="br-under"><b>下胸围</b>（水平绕胸部下缘一周）</label>
+        <div class="input-wrap"><input id="br-under" type="number" step="0.5" min="50" max="130" value="75"><span class="unit">cm</span></div>
+      </div>
+      <div class="row">
+        <label for="br-over"><b>上胸围</b>（水平绕胸部最丰满处一周）</label>
+        <div class="input-wrap"><input id="br-over" type="number" step="0.5" min="50" max="150" value="85"><span class="unit">cm</span></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="br-reset">重置</button>
+      <button type="button" class="primary" id="br-run">换算</button>
+    </div>
+    <p class="hint" id="br-msg"></p>
+    <div class="big" id="br-out"></div>
+    <div class="grid" id="br-grid"></div>
+    <div class="note">
+      <b>量法与口径。</b>上胸围量最丰满处（常见于前倾 45° 时），下胸围量平静呼气末。
+      底围取 5 的倍数的就近档，罩杯按上下差定：≤7.5 为 AA、约 10 为 A、约 12.5 为 B，依此类推，每档差 2.5cm。
+      欧美码（下围英寸 + 4）与亚洲码不是一个体系，同一个人在不同品牌可能差一个码，试穿为准。
+    </div>
+  </section>
+
+  <!-- 尺码 -->
+  <section class="card" id="panel-size" hidden>
+    <h2>衣服尺码</h2>
+    <div class="row2">
+      <div class="row">
+        <label for="sz-h"><b>身高</b></label>
+        <div class="input-wrap"><input id="sz-h" type="number" inputmode="numeric" min="130" max="210" value="175"><span class="unit">cm</span></div>
+      </div>
+      <div class="row">
+        <label for="sz-w"><b>体重</b></label>
+        <div class="input-wrap"><input id="sz-w" type="number" inputmode="numeric" min="35" max="150" value="70"><span class="unit">kg</span></div>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="row">
+        <label for="sz-sex"><b>性别</b></label>
+        <select id="sz-sex"><option value="m" selected>男</option><option value="f">女</option></select>
+      </div>
+      <div class="row">
+        <label for="sz-fit"><b>版型偏好</b></label>
+        <select id="sz-fit">
+          <option value="slim">修身</option>
+          <option value="normal" selected>标准</option>
+          <option value="loose">宽松</option>
+        </select>
+      </div>
+    </div>
+    <div class="btns">
+      <button type="button" class="ghost" id="sz-reset">重置</button>
+      <button type="button" class="primary" id="sz-run">推荐</button>
+    </div>
+    <p class="hint" id="sz-msg"></p>
+    <div class="big" id="sz-out"></div>
+    <div class="grid" id="sz-grid"></div>
+    <h2>鞋码换算</h2>
+    <div class="row">
+      <label for="sh-len"><b>脚长</b>（脚跟到最长趾尖，下午测量更准）</label>
+      <div class="input-wrap"><input id="sh-len" type="number" step="0.1" min="15" max="35" value="25.5"><span class="unit">cm</span></div>
+    </div>
+    <div class="btns">
+      <button type="button" class="primary" id="sh-run">换算</button>
+    </div>
+    <p class="hint" id="sh-msg"></p>
+    <div class="grid" id="sh-grid"></div>
+    <table class="rate-tb" id="sh-table">
+      <thead><tr><th>脚长</th><th>中国码</th><th>欧码 EU</th><th>美码 US</th><th>英码 UK</th></tr></thead>
+      <tbody id="sh-body"></tbody>
+    </table>
+    <div class="note">
+      <b>尺码没有国标强制统一</b>，各品牌自己的版型比尺码表影响更大。这里的推荐按「体重 + 身高 + 版型」
+      给出最粗的落点，买之前还是看具体商品的实测尺寸（胸围/腰围/衣长）比看 S/M/L 靠谱。
+      鞋码按脚长查表，同一脚长在不同品牌的鞋楦宽度下可能差半码。
+    </div>
+  </section>
+
+  <!-- 百家姓 -->
+  <section class="card" id="panel-name" hidden>
+    <h2>查询</h2>
+    <div class="row">
+      <label for="bj-q"><b>姓氏</b>（支持单姓、复姓，或按排名搜索）</label>
+      <input id="bj-q" type="search" placeholder="如 王 / 欧阳 / 1">
+    </div>
+    <p class="hint" id="bj-msg"></p>
+    <div class="grid" id="bj-grid"></div>
+    <table class="rate-tb" id="bj-table">
+      <thead><tr><th>排名</th><th>姓氏</th><th>常见程度</th></tr></thead>
+      <tbody id="bj-body"></tbody>
+    </table>
+    <div class="note">
+      <b>排名口径。</b>按公安部户政管理研究中心公布的全国姓名报告统计顺序（前 100 名）。
+      不同统计口径（户籍人口 / 常住人口 / 某省）排出来的次序会不一样，
+      这里只给一个公认常用的大致序，不声称是唯一正确排序。
+    </div>
+  </section>
+
+  <footer>
+    全部纯本地计算，身份证号与身体数据不会上传；健康相关结论仅供参考，请遵医嘱<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./health2.js"></script>
+</body>
+</html>

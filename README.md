@@ -2,9 +2,11 @@
 
 工具合集 H5 页面集合，直接用浏览器打开即可使用。
 
-**不依赖构建、不依赖网络。** 少数页面携带了第三方库（放在 `docs/lib/`，随仓库提交），
-但仍是「打开 HTML 就能跑」，不需要装环境、也不需要起服务。首页把全部工具按分类铺开，
-顶部可搜索，输入关键词直接命中单项工具。
+**不依赖构建、不依赖网络，每个页面都是自带全部样式与脚本的单文件。** 页面用到的第三方库
+（放在 `docs/lib/`，随仓库提交）在打包时被内联进 HTML，运行时没有任何相对子资源请求——
+这样手机浏览器（如 Edge / 微信）从「下载 / 文件管理器」打开本地 HTML 时也能完整渲染，
+不会出现「静态样式丢失、脚本不跑」的裸页。首页把全部工具按分类铺开，顶部可搜索，
+输入关键词直接命中单项工具。
 
 ## 页面清单
 
@@ -383,11 +385,15 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 直接用浏览器打开 `docs/index.html`：全部工具按分类铺在首页，顶部搜索直达单项，点击即进对应计算页。
 也可以直接打开任意页面，或通过静态托管发布（如仓库 Pages / 云原生构建）。
 
-不需要构建、不需要装依赖、不需要起服务。少数页面会用 `<script src="./lib/xxx.js">`
-引入随仓库提交的第三方库（见 `docs/lib/README.md`），这些库是离线文件，不联网加载。
+不需要构建、不需要装依赖、不需要起服务。**派发出去的 `docs/*.html` 都是自包含的单文件**：
+页面共用的样式与工具函数（`docs/app.css`、`docs/app.js`）、各页自己的脚本、以及第三方库
+（`docs/lib/`，见该目录 README）在打包时已全部内联，打开时不再请求任何相对资源，断网可用。
 
-通用工具页共用 `docs/app.css` 与 `docs/app.js`（取元素、格式化、复制、页签）。
-校准 / 黄金 / 流量 / 校验 / MD5 这几页仍是各自独立的单文件。
+可编辑的源在 `docs/_src/*.html`：里面仍写 `<link href="./app.css">`、`<script src="./app.js">`
+这类引用，改完跑一次 `python3 tools/inline_pages.py`，把资源内联后输出到 `docs/*.html`。
+之所以这一层内联不能省：手机版 Edge 从 `content://`（下载 / 文件管理器）打开页面时，
+浏览器会渲染主文档却拦掉相对子资源，页面的样式与脚本全丢，只剩一坨裸文字。
+把资源内联进 HTML 后就没有可拦的子资源，问题不再出现。
 
 本地预览：
 
@@ -438,10 +444,11 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 
 ## 结构
 
-- `docs/index.html` — 首页，全部工具按分类铺开（HTML + 少量 JS，样式在 `docs/index.css`）
-- `docs/index.css` — 首页样式，含手机单列到桌面五列的响应式断点
-- `docs/app.css`、`docs/app.js` — 通用工具页共用样式与工具函数（30 页共用，避免各写一份）
+- `docs/*.html` — 派发用的页面，全部自包含（样式与脚本已内联，无相对子资源请求）
+- `docs/_src/*.html` — 页面的可编辑源，仍以 `<link>` / `<script src>` 引用同目录资源
+- `docs/index.css`、`docs/app.css`、`docs/app.js`、`docs/*.js` — 各页样式与脚本的源文件
 - `docs/lib/` — 随仓库携带的第三方库（二维码、条码、证书、Markdown 净化），见该目录的 README
+- `tools/inline_pages.py` — 把 `docs/_src/*.html` 里的相对资源内联，产出 `docs/*.html`（幂等）
 - `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
 - `tools/index_icons.py` — 首页条目的图标（内联 SVG）与配色映射
 - `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/index.html`，并做重复入口收敛
@@ -455,11 +462,13 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `docs/checksum.html` — 校验和计算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/md5.html` — 文件 / 文本 MD5 校验页（HTML + CSS + JS 单文件，SHA 系列调用浏览器原生 crypto，无外部依赖）
 - `docs/base.html` / `cipher.html` / `hash.html` / `number.html` / `color.html` / `random.html` / `net.html` / `date.html`
-  — 通用工具页（HTML + CSS + JS，依赖同目录的 `app.css` / `app.js`，无其它外部依赖）
-- `docs/clock.html` — 在线时钟页（时钟、秒表、计时器、倒计时、世界时间，依赖 `app.css` / `app.js`）
-- `docs/dev.html` — 开发工具页（JSON / SQL 格式化、文本对比、JWT 解析，依赖 `app.css` / `app.js`）
-- `docs/geometry.html` — 几何与电子计算页（依赖 `app.css` / `app.js`）
-- `docs/finance.html` — 个税与健康计算页（依赖 `app.css` / `app.js`）
+  — 通用工具页（源共用 `_src` 里的 `app.css` / `app.js`，打包后为单文件）
+- `docs/clock.html` — 在线时钟页（时钟、秒表、计时器、倒计时、世界时间）
+- `docs/dev.html` — 开发工具页（JSON / SQL 格式化、文本对比、JWT 解析）
+- `docs/geometry.html` — 几何与电子计算页
+- `docs/finance.html` — 个税与健康计算页
 - `docs/web.html` / `station2.html` / `text2.html` / `game.html` / `codec.html` / `crypto.html`
   / `crypto2.html` / `media.html` / `life2.html` / `health2.html` / `tax2.html` / `holiday.html`
-  — 第二轮补齐的 12 个页面，依赖 `app.css` / `app.js`，其中 `web` / `codec` / `crypto2` 还依赖 `docs/lib/` 下的库
+  — 第二轮补齐的 12 个页面，其中 `web` / `codec` / `crypto2` 的第三方库在打包时已一并内联
+
+以上所有 `docs/*.html` 都已内联全部资源，是自包含单文件；对应的可编辑源在 `docs/_src/`。

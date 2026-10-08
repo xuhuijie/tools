@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#1668dc">
+<title>站点诊断</title>
+<link rel="stylesheet" href="./app.css">
+<style>
+  .area{width:100%;min-height:100px;padding:10px 12px;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;
+    color:var(--text);background:#f7f8fa;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+  .area:focus{border-color:var(--primary);background:#fff}
+  .code{font:12px/1.7 ui-monospace,Menlo,Consolas,monospace;background:#f7f8fa;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;margin-bottom:12px;word-break:break-all;white-space:pre-wrap;max-height:300px;overflow:auto}
+  .seg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .seg button{padding:0 12px;height:34px;font-size:13px;border-radius:9px;background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .seg button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .chip{display:inline-block;font-size:12px;border-radius:7px;padding:3px 8px;margin:0 6px 6px 0;background:var(--soft);color:var(--primary);border:1px solid var(--soft-line)}
+  .chip.warn{background:#fff5e0;color:#8a5b00;border-color:#f3ddb0}
+  .chip.bad{background:#fdeeea;color:#a8291a;border-color:#f6c9c0}
+  .status{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .status:last-child{border-bottom:none}
+  .status b{flex:0 0 46px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px}
+  .status .d{flex:1;min-width:0}
+  .status .u{font-size:11px;color:var(--sub);font-family:ui-monospace,Menlo,Consolas,monospace}
+  .s2{color:#0f8f74}.s3{color:#b45309}.s4{color:#b02a1a}.s5{color:#6d28d9}
+  .port-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+  .port{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px}
+  .port b{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--primary)}
+  .port span{display:block;font-size:11px;color:var(--sub);margin-top:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>站点诊断</h1>
+  <p>HTTP 状态码 · User-Agent 分析 · 端口自查清单</p>
+</header>
+
+<main>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="http" class="on">HTTP 状态码</button>
+    <button data-tab="ua">User-Agent 分析</button>
+    <button data-tab="port">端口自查</button>
+  </div>
+
+  <!-- HTTP 状态码 -->
+  <section class="card" id="panel-http">
+    <h2>速查</h2>
+    <div class="row">
+      <label for="ht-q"><b>搜索</b>（码值或说明关键字）</label>
+      <input id="ht-q" type="search" placeholder="如 404 / 缓存 / 重定向">
+    </div>
+    <div class="seg" id="ht-class">
+      <button data-cls="all" class="on">全部</button>
+      <button data-cls="1">1xx 信息</button>
+      <button data-cls="2">2xx 成功</button>
+      <button data-cls="3">3xx 重定向</button>
+      <button data-cls="4">4xx 客户端错误</button>
+      <button data-cls="5">5xx 服务端错误</button>
+    </div>
+    <p class="hint" id="ht-count"></p>
+    <div id="ht-list"></div>
+    <p class="hint">
+      状态码按 RFC 9110 与各扩展规范整理，共 60 余条。第 1 位定类别，后两位才是具体原因；
+      遇到没见过的码先看首位，比查全表快。
+    </p>
+  </section>
+
+  <!-- UA -->
+  <section class="card" id="panel-ua" hidden>
+    <h2>User-Agent</h2>
+    <textarea class="area" id="ua-in" placeholder="粘贴一条 User-Agent，留空则分析本机浏览器"></textarea>
+    <div class="btns">
+      <button type="button" class="ghost" id="ua-mine">用本机 UA</button>
+      <button type="button" class="primary" id="ua-run">分析</button>
+    </div>
+    <div class="chips" id="ua-presets">
+      <button data-ua="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36">Chrome / Win</button>
+      <button data-ua="Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1">Safari / iPhone</button>
+      <button data-ua="Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36">Chrome / 安卓</button>
+      <button data-ua="Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)">百度爬虫</button>
+      <button data-ua="curl/8.6.0">curl</button>
+    </div>
+    <p class="hint" id="ua-msg"></p>
+    <div class="code" id="ua-out"></div>
+    <div class="grid" id="ua-grid"></div>
+    <table id="ua-table">
+      <thead><tr><th>项</th><th>值</th></tr></thead>
+      <tbody id="ua-body"></tbody>
+    </table>
+    <p class="hint">
+      识别逻辑是「按特征串匹配」，不是查库。UA 可以随便伪造，所以结果只能当线索，
+      不能当身份凭证——按 UA 做权限判断是常见安全漏洞。
+    </p>
+  </section>
+
+  <!-- 端口 -->
+  <section class="card" id="panel-port" hidden>
+    <h2>常用端口清单与自查</h2>
+    <div class="row">
+      <label for="pt-q"><b>搜索</b></label>
+      <input id="pt-q" type="search" placeholder="如 3306 / 数据库 / docker">
+    </div>
+    <p class="hint" id="pt-count"></p>
+    <div class="port-row" id="pt-list"></div>
+    <div class="note" style="font-size:12px;color:var(--sub);line-height:1.7;background:#f7f8fa;border-radius:10px;padding:10px 12px">
+      <b>关于在线扫描。</b>浏览器里发不出 TCP 连接，纯前端**做不到**端口扫描；
+      用 <code>fetch</code> 试端口也只是发 HTTP 请求，且被 CORS 与混合内容限制，试出来的东西不可信。
+      所以本页不做扫描，而是给你一份「常用端口 + 危险暴露 + 对应加固命令」的清单，
+      配合本机 <code>ss -lntp</code> / <code>netstat -ano</code> 或服务端 <code>nmap</code> 使用。
+    </div>
+  </section>
+
+  <footer>
+    状态码与端口清单为内置数据（不联网）；UA 分析纯本地字符串匹配<br>
+    <a href="./index.html">返回首页</a>
+  </footer>
+</main>
+
+<script src="./app.js"></script>
+<script src="./station2.js"></script>
+</body>
+</html>
