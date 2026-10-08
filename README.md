@@ -395,6 +395,24 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 浏览器会渲染主文档却拦掉相对子资源，页面的样式与脚本全丢，只剩一坨裸文字。
 把资源内联进 HTML 后就没有可拦的子资源，问题不再出现。
 
+### 整站单文件 `docs/all.html`
+
+内联只解决了 css/js 这类子资源；从 `content://` 打开时，页面里 `./page.html` 这种
+「跳到另一个文件」的链接同样会被拦，报「文件找不到」——单独打开某个 html 正常，
+从首页点链接进去就进不去，就是这么来的。
+
+`python3 tools/bundle_site.py` 把全部 30 个页面合成一份自包含的 `docs/all.html`：
+每页一个 `<section class="page" data-name="xxx.html">`，页内脚本收在 section 里、
+首次切到时才执行；`app.js` 见到这种结构就接管导航，点链接改成文档内切 section，
+不走任何文件跳转，离线也整站可用。分发时给这一个文件就够。
+
+各页原本共用同一套 id（`tabs` / `input` / `output`…），合到一份文档里会互相抢，
+所以 `T.$` 只在当前活动页里找；页内自带的 `$` 定义在打包时改写成走 `T.$`，
+`markTab` / `firstTab` 也只看当前页。页面状态放内存不写地址栏——`#<页签名>`
+这个通道被各页自己的页签逻辑占着（如 `checksum.html` 会把它改写成 `#crc`）。
+
+散装单页不受影响：`app.js` 里没有 `section.page` 时一切照旧，`docs/*.html` 仍可单独打开。
+
 本地预览：
 
 ```bash
@@ -449,6 +467,8 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `docs/index.css`、`docs/app.css`、`docs/app.js`、`docs/*.js` — 各页样式与脚本的源文件
 - `docs/lib/` — 随仓库携带的第三方库（二维码、条码、证书、Markdown 净化），见该目录的 README
 - `tools/inline_pages.py` — 把 `docs/_src/*.html` 里的相对资源内联，产出 `docs/*.html`（幂等）
+- `tools/bundle_site.py` — 把 `docs/*.html` 合成整站单文件 `docs/all.html`（幂等）
+- `tools/smoke_all.py` — 无头 Chrome 过一遍 `docs/all.html` 的每页与每个首页入口
 - `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
 - `tools/index_icons.py` — 首页条目的图标（内联 SVG）与配色映射
 - `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/index.html`，并做重复入口收敛
