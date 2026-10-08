@@ -542,6 +542,7 @@
 
   var PANELS = ['vat', 'labor', 'all'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -551,7 +552,7 @@
   lbRun();
   alBuild();
   alRun();
-  setTab('vat');
+  setTab(T.firstTab('vat'));
 
   window.__tax2 = {
     vatSolve: vatSolve, VT_FORMS: VT_FORMS,

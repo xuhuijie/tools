@@ -828,6 +828,7 @@
 
   var PANELS = ['egfr', 'preg', 'card', 'bmi', 'size', 'name'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -841,7 +842,7 @@
   szRun();
   shRun();
   bjRun();
-  setTab('egfr');
+  setTab(T.firstTab('egfr'));
 
   window.__health2 = {
     egfrCkdEpi: egfrCkdEpi, egfrMdrd: egfrMdrd, gfrStage: gfrStage, toMgDl: toMgDl,

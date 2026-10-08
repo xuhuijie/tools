@@ -548,6 +548,7 @@
 
   var PANELS = ['fuel', 'retire', 'pension', 'bond'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -557,7 +558,7 @@
   rtRun();
   pnRun();
   bdRun();
-  setTab('fuel');
+  setTab(T.firstTab('fuel'));
 
   window.__life2 = {
     fuelConsumption: fuelConsumption, FU_FORMS: FU_FORMS,

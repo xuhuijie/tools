@@ -906,12 +906,13 @@
 
   var PANELS = ['ssl', 'ca', 'rsa', 'jwt'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
 
   $('jt-in').value = forgeOk() ? sampleJwt() : '';
-  setTab('ssl');
+  setTab(T.firstTab('ssl'));
   if (forgeOk()) { jtRun(); }
 
   window.__crypto2 = {

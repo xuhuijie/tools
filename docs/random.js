@@ -239,6 +239,7 @@
 
   function setTab(name) {
     current = name;
+    T.markTab(name);
     buildFields(FORMS[name]);
     hint.className = 'hint';
     hint.textContent = FORMS[name].hint;
@@ -251,5 +252,5 @@
   $('reset').addEventListener('click', function () { setTab(current); });
   T.bindCopy($('copy'), function () { return output.classList.contains('err') ? '' : output.textContent; });
 
-  setTab('pass');
+  setTab(T.firstTab('pass'));
 })();

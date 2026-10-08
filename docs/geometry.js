@@ -444,14 +444,16 @@
   }
 
   /* 页签 */
-  T.tabs($('tabs'), function (name) {
+  function setTab(name) {
     TAB = name;
+    T.markTab(name);
     buildPickers();
     buildFields();
     renderShape();
     titleOf();
     run();
-  });
+  }
+  T.tabs($('tabs'), setTab);
 
   $('run').addEventListener('click', run);
   $('reset').addEventListener('click', function () {
@@ -460,11 +462,7 @@
   });
   $('fields').addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
 
-  buildPickers();
-  buildFields();
-  renderShape();
-  titleOf();
-  run();
+  setTab(T.firstTab('plane'));
 
   // 供测试脚本取纯函数
   window.__geometry = {

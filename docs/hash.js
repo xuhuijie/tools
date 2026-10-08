@@ -411,6 +411,7 @@
   }
 
   function setTab(name) {
+    T.markTab(name);
     current = name;
     hint.className = 'hint';
     hint.textContent = HINTS[name] || '';
@@ -477,5 +478,5 @@
   });
   input.addEventListener('input', function () { fileBytes = null; });
 
-  setTab('md5');
+  setTab(T.firstTab('md5'));
 })();

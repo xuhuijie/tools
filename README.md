@@ -20,7 +20,7 @@
 | `docs/base.html` | 编码解码（Base64/32/58/62、URL、Hex、Unicode、Punycode） |
 | `docs/cipher.html` | 古典密码（摩尔斯、凯撒、ROT13、维吉尼亚、栅栏、培根） |
 | `docs/hash.html` | 哈希与校验和（MD5、SHA、CRC、Adler-32、HMAC） |
-| `docs/number.html` | 数字与单位（金额大写、存储单位、幂与开方、因数、数列、钢管重量） |
+| `docs/number.html` | 数字与单位（金额大写、存储单位、幂与开方、整除判断、整除数、数列、钢管重量） |
 | `docs/color.html` | 颜色转换（RGB / HEX / HSL / HSV / CMYK，附对比度） |
 | `docs/random.html` | 随机生成（密码、随机数、点名、MAC 地址） |
 | `docs/net.html` | 网络计算（IPv4 子网划分、MAC 解析） |
@@ -283,7 +283,7 @@ URL 编解码三条、Base 编解码成对条目、正切与正弦、平行四�
 | `base.html` | Base64 / Base32 / Base58 / Base62 / URL 编解码、Hex、Unicode 转义、Punycode |
 | `cipher.html` | 摩尔斯电码、凯撒密码、ROT13、维吉尼亚密码、栅栏密码、培根密码 |
 | `hash.html` | MD5、SHA-1/256/512、8 种 CRC 模型、累加和与异或校验、Adler-32、HMAC（偏向文件与文本摘要） |
-| `number.html` | 金额大写、存储单位换算、幂与开方、对数、因数分解与整除、等差等比数列、字节统计、钢管重量 |
+| `number.html` | 金额大写、存储单位换算、幂与开方、对数、整除判断、整除数（因数）清单、等差等比数列、字节统计、钢管重量 |
 | `color.html` | RGB / HEX / HSL / HSV / CMYK 互转，附 WCAG 对比度 |
 | `random.html` | 密码生成、随机数、随机点名、MAC 地址（随机源为 `crypto.getRandomValues`） |
 | `net.html` | IPv4 子网划分、MAC 地址解析 |
@@ -296,6 +296,11 @@ URL 编解码三条、Base 编解码成对条目、正切与正弦、平行四�
 要点：
 
 - **首页可搜索可跳转**：支持按名称搜索，分类导航锚点直达对应分组
+- **每条入口直达自己的工具**：一张页面装了多个工具（`number.html` 有 9 个），
+  首页条目写成 `./page.html#tab`，页面由 `app.js` 的 `T.firstTab` 认领 hash 并切到对应页签。
+  条目到页签的映射在 `tools/gen_index_page.py` 的 `ENTRY_TABS`，
+  跑脚本时会逐条核对「该页面确实有这个页签」，写错直接报错；没有页签按钮的页面
+  （`checksum.html` 靠勾选框切工具）用同文件里的 `HASH_TABS` 声明可用 hash
 - **与已有页面的分工**：CRC / 累加和 / 异或这三类清单项指向本仓库已有的 `checksum.html`，
   它按通信协议给预设、宽度与大小端、校验字节，比 `hash.html` 更贴实际组帧；
   `hash.html` 则偏向文件与文本摘要（MD5、SHA、HMAC、Adler-32）
@@ -309,7 +314,11 @@ URL 编解码三条、Base 编解码成对条目、正切与正弦、平行四�
 - **个税口径写明按估算**：工资走累计预扣预缴，本页用按月等效税率表估算并标注；
   年终奖单独计税的「多发 1 元到手反降」跳档区间会主动提醒
 - 首页由 `tools/gen_index_page.py` 生成，条目数据在 `tools/catalog.json`，
-  条目到实现页的映射在 `tools/local_pages.json`；调整分类或映射后重跑脚本即可
+  条目到实现页的映射在 `tools/local_pages.json`，条目到页签的映射在同脚本的 `ENTRY_TABS`；
+  调整分类、映射或页签名后重跑脚本即可
+- **一个功能一条入口**：清单里同功能的多个条目（`整除计算器` 与 `整除数计算器`、
+  `大写转换器` 与 `URL编码`、三套敏感词词库等）在首页各留一条，指向各自页签，
+  不再出现「点进去长得一样」
 
 ### 校验
 
@@ -318,7 +327,7 @@ URL 编解码三条、Base 编解码成对条目、正切与正弦、平行四�
 
 ```bash
 node tools/check_algos.mjs
-# 245 通过, 0 失败
+# 815 通过, 0 失败
 ```
 
 覆盖的向量：
@@ -327,6 +336,8 @@ node tools/check_algos.mjs
 - CRC 对 CRC RevEng 目录（`123456789` 在 8 种模型下的标准值）
 - Base32/Base58/Base62 对 RFC 4648 与比特币地址样例；Punycode 对 RFC 3492（`中国` → `fiqs8s`、`münchen`）
 - 金额大写覆盖零、整、角、分、负数与跨节补零等边界
+- 整除判断的商/余数/「能整除吗」与整除数清单（质数只有 1 与自身、1 的清单只有 1）
+- 首页页签路由：无 hash 用默认、hash 命中切过去、hash 不是本页页签时回落默认
 - HMAC-SHA1/256/512 与 Node `crypto` 对照
 - 日期对 ISO 8601 周号边界（如 2021-01-01 属 2020 年第 53 周）
 - 子网掩码连续性、MAC 单播/组播位、WCAG 黑白对比度 21:1
@@ -424,8 +435,9 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 - `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
 - `tools/index_icons.py` — 首页条目的图标（内联 SVG）与配色映射
 - `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/index.html`，并做重复入口收敛
-- `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验（797 条断言）
+- `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验（815 条断言）
 - `tools/smoke.py` — 无头 Chrome 逐页点遍按钮，收集 JS 报错
+- `tools/check_index_links.py` — 无头 Chrome 逐条打开首页入口，核对落点是不是该条工具自己的页签
 - `tools/vendor.sh` — 重新拉取 `docs/lib/` 下的第三方库（版本号写死，日常不需要跑）
 - `docs/calibration.html` — 电磁水表流量点校准计算页（HTML + CSS + JS 单文件，无外部依赖）
 - `docs/gold.html` — 黄金价格换算与斐波那契回调计算页（HTML + CSS + JS 单文件，除汇率自动获取外无外部依赖）
