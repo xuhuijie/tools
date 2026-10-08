@@ -128,7 +128,10 @@ function loadModule(file, exports, libs) {
   globalThis.T = {
     $: (i) => document.getElementById(i),
     el: () => domStub().document.createElement(),
-    tabs: () => [], bindCopy() {}, cells() {},
+    tabs: () => [], bindCopy() {}, cells() {}, markTab() {}, syncHash() {},
+    // 单测里没有地址栏，hash 一律当空，firstTab 直接回落到页面默认页签
+    hashTab: () => null,
+    firstTab: (defaultTab) => defaultTab,
     fmt: (n, d) => Number(n.toFixed(d == null ? 4 : d)).toLocaleString('zh-CN', { maximumFractionDigits: d }),
   };
   globalThis.__store = store;
@@ -258,10 +261,31 @@ const enc = (s) => new TextEncoder().encode(s);
   }
 }
 
+// ---------- app.js 的页签路由 ----------
+// 首页每条入口写的是 ./page.html#tab，认不认这个 hash 决定点开是不是落对工具。
+{
+  const loadApp = (hash, tabs) => {
+    const src = fs.readFileSync(path.join(docs, 'app.js'), 'utf8');
+    const btns = tabs.map((t) => ({ dataset: { tab: t } }));
+    const win = { location: { hash }, history: { replaceState() {} } };
+    const doc = { querySelectorAll: () => btns, querySelector: () => null };
+    // app.js 里用的是裸 document，不是 window.document，两个都补上
+    new Function('window', 'document', src)(win, doc);
+    win.document = doc;
+    return win.T;
+  };
+  eq(loadApp('', ['a', 'b']).firstTab('a'), 'a', '无 hash 用默认页签');
+  eq(loadApp('#b', ['a', 'b']).firstTab('a'), 'b', 'hash 命中则切到该页签');
+  eq(loadApp('#zzz', ['a', 'b']).firstTab('a'), 'a', 'hash 不是本页页签时回落默认');
+  eq(loadApp('#b', ['a', 'b']).hashTab(), 'b', 'hashTab 去井号');
+  eq(loadApp('#', ['a']).hashTab(), null, '空 hash 视为无');
+  eq(loadApp('#a%20b', ['a']).hashTab(), null, '带特殊字符的 hash 不认');
+}
+
 // ---------- number.js ----------
 {
   const M = loadModule('number.js',
-    'amountToChinese,storage,powerResult,logResult,divisorResult,seriesResult,byteStats,steelResult,factorize,divisors,parseSteelInput'.split(',').filter(x => x !== 'parseSteelInput'));
+    'amountToChinese,storage,powerResult,logResult,divideResult,divisorResult,seriesResult,byteStats,steelResult,factorize,divisors,parseSteelInput'.split(',').filter(x => x !== 'parseSteelInput'));
   const amounts = [
     [1234.56, '壹仟贰佰叁拾肆元伍角陆分'],
     [100, '壹佰元整'],
@@ -286,6 +310,21 @@ const enc = (s) => new TextEncoder().encode(s);
   eq(M.seriesResult(1, 1, 100, 'ap')[2][1], '5,050', '等差数列 1..100 和');
   eq(M.seriesResult(1, 2, 10, 'gp')[1][1], '512', '等比数列第 10 项');
   eq(M.seriesResult(1, 2, 10, 'gp')[2][1], '1,023', '等比数列前 10 项和');
+  // 整除判断与「列出所有整除数」是两件事：前者给商与余数，后者给因数清单
+  const div = (a, b) => Object.fromEntries(M.divideResult(a, b));
+  eq(div(500, 5)['整除判断'], '500 ÷ 5 = 100，能整除', '整除判断 500÷5');
+  eq(div(500, 5)['余数'], '0', '整除 500÷5 余数');
+  eq(div(500, 7)['整除判断'], '500 ÷ 7 = 71 余 3，不能整除', '整除判断 500÷7');
+  eq(div(500, 7)['商'], '71', '500÷7 商');
+  eq(div(500, 7)['余数'], '3', '500÷7 余数');
+  eq(div(500, 7)['最近的整除结果'], '71 × 7 = 497', '500÷7 最近的整除结果');
+  eq(div(-7, 2)['余数'], '-1', '负数整除余数与被除数同号');
+  eq(div(1.5, 0.5)['商'], '3', '小数整除给商');
+  const divs = (n) => Object.fromEntries(M.divisorResult(n));
+  eq(divs(12)['所有整除数'], '1, 2, 3, 4, 6, 12', '整除数清单 12');
+  eq(divs(12)['个数'], '6', '整除数个数 12');
+  eq(divs(1)['所有整除数'], '1', '整除数清单 1');
+  eq(divs(97)['个数'], '2', '质数只有 1 与自身两个整除数');
   eq(M.steelResult(108, 4, 7.85)[0][1], '10.2592 kg/m', '钢管 108×4 理论重量');
   eq(M.byteStats('你好abc').find((r) => r[0].includes('总字节数'))[1], '9', '字节统计 UTF-8');
 }

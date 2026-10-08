@@ -719,6 +719,22 @@
   });
   syncOptionRow();
   switchMode('hex');
+
+  // 地址 hash 只留一项：#crc / #sum / #xor。
+  // 首页的 CRC32、累加和、BCC 异或三条入口都落在这张页面，不认 hash 就都看到同一屏。
+  var only = String(location.hash || '').replace(/^#/, '');
+  if (only === 'crc' || only === 'sum' || only === 'xor'){
+    $('chk-crc').checked = only === 'crc';
+    $('chk-sum').checked = only === 'sum';
+    $('chk-xor').checked = only === 'xor';
+    syncOptionRow();
+  }
+  $('form').addEventListener('change', function(e){
+    if (e.target && /^chk-/.test(e.target.id) && history.replaceState){
+      var on = ['crc', 'sum', 'xor'].filter(function(k){ return $('chk-' + k).checked; });
+      history.replaceState(null, '', '#' + (on.length === 1 ? on[0] : 'all'));
+    }
+  });
 })();
 </script>
 </body>

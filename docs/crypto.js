@@ -464,6 +464,7 @@
 
   var PANELS = ['rc4', 'rabbit'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -472,7 +473,7 @@
   rbPaintVectors();
   r4Run();
   rbRun();
-  setTab('rc4');
+  setTab(T.firstTab('rc4'));
 
   window.__crypto = {
     rc4: rc4, rc4Keystream: rc4Keystream, rc4SelfTest: rc4SelfTest, RC4_VECTORS: RC4_VECTORS,

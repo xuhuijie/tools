@@ -30,11 +30,17 @@
         { id: 'b', label: '底数（留空为 ln）', value: '10', type: 'number', step: 'any' }
       ]
     },
-    divisor: {
-      hint: '因数分解与整除判断：给出质因数分解、所有正因数、因数个数与因数和；同时判断两数能否整除。',
+    divide: {
+      hint: '整除判断：给被除数与除数，算商与余数，说清能不能整除；除不尽时顺带给出最大整除数与最接近的整除结果。',
       fields: [
-        { id: 'n', label: '待分解整数 N', value: '360', type: 'number', step: '1' },
-        { id: 'm', label: '除数（可选，判断整除）', value: '', type: 'number', step: '1' }
+        { id: 'a', label: '被除数', value: '500', type: 'number', step: 'any' },
+        { id: 'b', label: '除数', value: '5', type: 'number', step: 'any' }
+      ]
+    },
+    divisor: {
+      hint: '列出所有能整除该数的数：包含 1 与它本身，附质因数分解、因数个数与因数和。',
+      fields: [
+        { id: 'n', label: '待分解整数 N', value: '360', type: 'number', step: '1' }
       ]
     },
     series: {
@@ -203,7 +209,34 @@
     return list.sort(function (a, b) { return a - b; });
   }
 
-  function divisorResult(n, m) {
+  // 整除判断：能不能被整除、商与余数各是多少
+  function divideResult(a, b) {
+    if (b === 0) throw new Error('除数不能为 0');
+    var rows = [];
+    var q = a / b;
+    if (Number.isInteger(a) && Number.isInteger(b)) {
+      // 整数之间才谈得上余数；用截断取商，负数的余数与被除数同号
+      var quo = Math.trunc(q);
+      var rem = a - b * quo;
+      rows.push(['商', String(quo)]);
+      rows.push(['余数', String(rem)]);
+      rows.push(['整除判断', rem === 0
+        ? a + ' ÷ ' + b + ' = ' + quo + '，能整除'
+        : a + ' ÷ ' + b + ' = ' + quo + ' 余 ' + rem + '，不能整除']);
+      if (rem !== 0) {
+        rows.push(['向下取整的商', String(Math.floor(q))]);
+        rows.push(['最近的整除结果', String(Math.round(q)) + ' × ' + b + ' = ' + T.fmt(Math.round(q) * b, 10)]);
+      }
+    } else {
+      rows.push(['商', T.fmt(q, 10)]);
+      rows.push(['整除判断', '两数含小数，直接给出商；能整除时商为整数']);
+    }
+    rows.push(['原始式子', a + ' ÷ ' + b]);
+    return rows;
+  }
+
+  // 所有能整除 N 的数（正因数）
+  function divisorResult(n) {
     if (!Number.isInteger(n) || n < 1) throw new Error('待分解的 N 需为不小于 1 的整数');
     if (n > 1e12) throw new Error('N 过大，试除法难以在瞬间完成，请换更小的数');
     var fs = factorize(n);
@@ -211,16 +244,12 @@
     var expr = fs.map(function (f) { return f[1] === 1 ? String(f[0]) : f[0] + '^' + f[1]; }).join(' × ');
     var count = ds.length;
     var sum = ds.reduce(function (a, b) { return a + b; }, 0);
-    var rows = [
+    return [
+      ['所有整除数', ds.length > 60 ? ds.slice(0, 60).join(', ') + ' …（共 ' + count + ' 个）' : ds.join(', ')],
+      ['个数', String(count)],
       ['质因数分解', n === 1 ? '1（无质因数）' : (n + ' = ' + expr)],
-      ['因数个数', String(count)],
-      ['所有正因数', ds.length > 60 ? ds.slice(0, 60).join(', ') + ' …（共 ' + count + ' 个）' : ds.join(', ')],
       ['因数和', String(sum)]
     ];
-    if (Number.isInteger(m) && m !== 0) {
-      rows.push(['整除判断', n + ' ÷ ' + m + ' ' + (n % m === 0 ? '= ' + (n / m) + '，可整除' : '余 ' + (n % m) + '，不能整除')]);
-    }
-    return rows;
   }
 
   // ---------- 数列 ----------
@@ -353,8 +382,10 @@
         rows = powerResult(num('base', '底数'), num('exp', '指数'));
       } else if (current === 'log') {
         rows = logResult(num('x', '真数 N'), num('b', '底数', { optional: true }));
+      } else if (current === 'divide') {
+        rows = divideResult(num('a', '被除数'), num('b', '除数'));
       } else if (current === 'divisor') {
-        rows = divisorResult(num('n', '待分解整数 N'), num('m', '除数', { optional: true }));
+        rows = divisorResult(num('n', '待分解整数 N'));
       } else if (current === 'series') {
         rows = seriesResult(num('first', '首项'), num('ratio', '公差/公比'), num('count', '项数'), val('kind'));
       } else if (current === 'bytes') {
@@ -382,6 +413,7 @@
 
   function setTab(name) {
     current = name;
+    T.markTab(name);
     var form = FORMS[name];
     buildFields(form);
     $('hint').className = 'hint';
@@ -396,5 +428,5 @@
   // 输入框回车即算，省一次点击
   fields.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') run(); });
 
-  setTab('daxie');
+  setTab(T.firstTab('daxie'));
 })();

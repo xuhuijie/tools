@@ -617,6 +617,7 @@
   var PANELS = ['source', 'markdown', 'html', 'refresh', 'short', 'robots', 'icp', 'dns'];
 
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
     if (name !== 'refresh') rfStop('未开始');
   }
@@ -630,7 +631,7 @@
   robotsRun();
   icpRun();
   dnsRender();
-  setTab('source');
+  setTab(T.firstTab('source'));
 
   // 供测试脚本直接调用，不污染页面行为
   window.__web = {

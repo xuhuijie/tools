@@ -365,6 +365,7 @@
 
   var PANELS = ['http', 'ua', 'port'];
   function setTab(name) {
+    T.markTab(name);
     PANELS.forEach(function (p) { $('panel-' + p).hidden = p !== name; });
   }
   T.tabs($('tabs'), setTab);
@@ -380,7 +381,7 @@
   htRender();
   uaRun();
   ptRender();
-  setTab('http');
+  setTab(T.firstTab('http'));
 
   window.__station2 = {
     HTTP_CODES: HTTP_CODES, PORTS: PORTS, CLASS_DESC: CLASS_DESC,
