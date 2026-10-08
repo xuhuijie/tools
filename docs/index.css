@@ -61,6 +61,7 @@ main{max-width:1440px;margin:0 auto;padding:12px 16px 0}
   text-decoration:none;color:inherit;
   border-left:3px solid var(--ic,var(--line));
 }
+.item[hidden]{display:none}
 .item:active{background:#f7f8fa;border-color:var(--soft-line)}
 /* 图标：圆角色块承托，颜色取自该条目的功能域 */
 .thumb{
