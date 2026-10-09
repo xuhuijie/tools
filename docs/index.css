@@ -161,11 +161,6 @@ main{max-width:1440px;margin:0 auto;padding:0 16px 0}
 .go .ico{width:16px;height:16px}
 @media(min-width:768px){.go{display:block}}
 
-/* 专项工具：只有三条，用自适应列宽铺开，不做固定列数的空网格 */
-#cat-special{margin-bottom:16px}
-#cat-special .items{grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
-#cat-special .item{background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--card) 88%,var(--primary)))}
-
 .empty{font-size:13px;color:var(--sub);text-align:center;padding:28px 0}
 .empty[hidden]{display:none}
 footer{max-width:1440px;margin:26px auto 0;padding:16px 0 0;border-top:1px solid var(--line);

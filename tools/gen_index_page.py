@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""渲染 docs/index.html：搜索栏下方为专项工具，随后全部工具按分类铺在首页。
+"""渲染 docs/index.html：全部工具按分类铺在首页。
 
 数据来源 tools/catalog.json（条目与说明）、tools/local_pages.json（条目 → 本地页）
 与 tools/index_icons.py（图标与配色）。条目本身不带外链，点击即进本地实现页。
@@ -69,7 +69,6 @@ PAGE_NAMES = {
     'holiday.html': '放假安排',
 }
 
-# 本仓库自有的专项工具，不属清单内条目；单独一组，排在搜索栏下方
 # 清单里有几条是同一个功能的多个入口，重复铺在首页只会让人多点一次。
 # 这里按「同一页面 + 同一功能」把冗余入口去掉，键为保留的条目，值为被去掉的条目。
 # 只删重复入口，页面能力一项没少。
@@ -153,7 +152,7 @@ def check_search_alias(catalog):
         for url, meta in items:
             names.add(meta['name'])
     for name in SEARCH_ALIAS:
-        if name not in names and name not in {t[1] for t in SPECIAL}:
+        if name not in names:
             raise SystemExit('搜索别名指向的条目已不在清单：' + name)
 
 
@@ -185,12 +184,11 @@ def check_entry_subs(catalog):
     清单里改名、去重后新留下的条目，都会在这里当场露出来，不会悄悄退回兜底文案。
     """
     missing = [m['name'] for items in catalog.values() for _, m in items
-               if m['name'] not in ENTRY_SUBS and m['name'] not in {t[1] for t in SPECIAL}]
+               if m['name'] not in ENTRY_SUBS]
     if missing:
         raise SystemExit('这些条目还没有副标题（补进 entry_subs.json）：' + '、'.join(missing))
     stale = [n for n in ENTRY_SUBS
-             if n not in {m['name'] for items in catalog.values() for _, m in items}
-             and n not in {t[1] for t in SPECIAL}]
+             if n not in {m['name'] for items in catalog.values() for _, m in items}]
     if stale:
         raise SystemExit('副标题表里的条目已不在首页：' + '、'.join(stale))
 
@@ -247,12 +245,6 @@ def collapse(catalog):
     out = {k: [(u, m) for u, m in v if u not in kill] for k, v in catalog.items()}
     return out, dropped
 
-
-SPECIAL = [
-    ('calibration.html', '电磁水表流量点校准', '按零点与误差百分比换算各流量点校正值', 'target'),
-    ('gold.html', '黄金价格换算', '美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位', 'coin'),
-    ('flow.html', '瞬时流量与流速换算', 'm³/h ↔ m/s 双向换算，按口径与有效内径占比折算', 'flow'),
-]
 
 # 清单条目 → 目标页面里的页签（data-tab）。
 # 同一张页面装了多个工具，条目不带页签就永远落回页面默认页签——比如「整除计算器」
@@ -502,9 +494,6 @@ SEARCH_ALIAS = {
     '二维码生成器': '二维码 生成 二维码生成',
     '条形码生成器': '条形码 条码 code128 ean upc',
     '在线MAC地址生成器': 'mac 物理地址 网卡地址',
-    '电磁水表流量点校准': '校准 电磁水表 流量点',
-    '黄金价格换算': '黄金 金价 盎司',
-    '瞬时流量与流速换算': '流量 流速 瞬时流量',
 }
 
 
@@ -579,11 +568,6 @@ def main():
                             esc(subtitle), '\n    '.join(rows))
         )
 
-    specials = '\n      '.join(
-        item_html(page, name, desc, icon_key, keywords=SEARCH_ALIAS.get(name, ''))
-        for page, name, desc, icon_key in SPECIAL
-    )
-
     page = '''<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -637,16 +621,6 @@ def main():
     </nav>
 
     <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
-
-    <section class="cat" id="cat-special">
-      <div class="cat-hd">
-        <h2>专项工具 <small>%d 项</small></h2>
-        <p>本仓库自研，清单里没有对应款</p>
-      </div>
-      <div class="items">
-      %s
-      </div>
-    </section>
 
     <div id="list">
 %s
@@ -724,14 +698,14 @@ def main():
         }
       });
     }, { rootMargin: '-72px 0px -70%% 0px' });
-    cats.forEach(function (c) { if (c.id !== 'cat-special') pick.observe(c); });
+    cats.forEach(function (c) { pick.observe(c); });
   }
 })();
 </script>
 </body>
 </html>
 ''' % (index_icons.sprite(), total, len(PAGE_NAMES), len(CATEGORIES),
-            '\n      '.join(navs), len(SPECIAL), specials, '\n'.join(sections))
+            '\n      '.join(navs), '\n'.join(sections))
 
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
     print('wrote docs/index.html', len(page), 'bytes;', total,
