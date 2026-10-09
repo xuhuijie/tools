@@ -4,246 +4,497 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
-<title>工具合集</title>
-<link rel="stylesheet" href="./index.css">
+<title>工具合集 · 离线可用的中文小工具</title>
+<style>
+/* 首页样式：手机单列，宽屏按容器自适应多列铺满 */
+:root{
+  --bg:#f3f5f9;--card:#fff;--text:#141a24;--sub:#6b7482;--dim:#98a1af;--line:#e6e9ef;
+  --primary:#1668dc;--primary-2:#3b8bf0;--soft:#e8f1fd;--soft-line:#c3dbfb;
+  --shadow:0 1px 2px rgba(16,24,40,.05);
+  --shadow-hd:0 2px 10px rgba(16,24,40,.10);
+  --radius:14px;--radius-sm:11px;
+  --hd:linear-gradient(135deg,#1668dc,#3b8bf0);
+}
+:root[data-theme=dark]{
+  --bg:#0f1319;--card:#171d26;--text:#e8ecf2;--sub:#98a3b3;--dim:#79838f;--line:#252d39;
+  --soft:#1b2739;--soft-line:#2d4060;--primary:#5b9cf8;--primary-2:#7db2ff;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+  --shadow-hd:0 2px 12px rgba(0,0,0,.5);
+  --hd:linear-gradient(135deg,#17509e,#2b6bb8);
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --bg:#0f1319;--card:#171d26;--text:#e8ecf2;--sub:#98a3b3;--dim:#79838f;--line:#252d39;
+    --soft:#1b2739;--soft-line:#2d4060;--primary:#5b9cf8;--primary-2:#7db2ff;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+    --shadow-hd:0 2px 12px rgba(0,0,0,.5);
+    --hd:linear-gradient(135deg,#17509e,#2b6bb8);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:1440px;margin:0 auto;padding:0 16px}
+main{max-width:1440px;margin:0 auto;padding:0 16px 0}
+
+/* 内联图标集：只作 symbol 定义，本身不渲染 */
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---- 头部：品牌 + 主题切换，滚动时一直挂着 ---- */
+.hd{position:sticky;top:0;z-index:20;background:var(--hd);color:#fff;
+  box-shadow:var(--shadow-hd)}
+.hd-in{display:flex;align-items:center;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;max-width:1440px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{width:34px;height:34px;flex:none;border-radius:10px;display:flex;
+  align-items:center;justify-content:center;background:rgba(255,255,255,.16);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.logo .ico{width:19px;height:19px}
+.bt{display:flex;flex-direction:column;min-width:0}
+.hd h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.01em;line-height:1.25}
+.hd p{margin:1px 0 0;font-size:11.5px;opacity:.82;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-side{display:flex;align-items:center;gap:8px;flex:none}
+.tagline{font-size:11.5px;opacity:.78;border:1px solid rgba(255,255,255,.28);
+  border-radius:999px;padding:3px 9px;white-space:nowrap}
+#theme{-webkit-appearance:none;appearance:none;cursor:pointer;color:#fff;
+  width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.24);display:flex;align-items:center;
+  justify-content:center;padding:0}
+#theme:active{background:rgba(255,255,255,.26)}
+#theme .ico{width:17px;height:17px}
+#theme .moon{display:none}
+:root[data-theme=dark] #theme .moon{display:block}
+:root[data-theme=dark] #theme .sun{display:none}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme=light]) #theme .moon{display:block}
+  :root:not([data-theme=light]) #theme .sun{display:none}
+}
+@media(max-width:520px){.tagline{display:none}}
+
+/* ---- 首屏：统计 + 搜索 ---- */
+.hero{padding:14px 0 2px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.stat{font-size:12px;color:var(--sub);background:var(--card);border:1px solid var(--line);
+  border-radius:999px;padding:4px 11px;box-shadow:var(--shadow)}
+.stat b{color:var(--primary);font-size:13px;font-weight:700;margin-right:3px}
+.search-row{position:relative;margin-bottom:12px}
+.search-row .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  color:var(--dim);width:18px;height:18px;pointer-events:none}
+#q{
+  width:100%;height:48px;padding:0 52px 0 40px;font-size:15px;font-family:inherit;
+  color:var(--text);background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);outline:none;box-shadow:var(--shadow);
+  -webkit-appearance:none;appearance:none;
+}
+#q::placeholder{color:var(--dim)}
+#q:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--soft)}
+#q::-webkit-search-cancel-button{-webkit-appearance:none}
+.kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;
+  color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:2px 6px;
+  background:var(--bg);pointer-events:none}
+@media(max-width:520px){.kbd{display:none}}
+
+/* ---- 分类导航：一条可横滑的胶囊，跟着滚动高亮 ---- */
+.cats{position:sticky;top:calc(54px + env(safe-area-inset-top));z-index:15;
+  display:flex;gap:8px;overflow-x:auto;margin:0 -16px 14px;padding:8px 16px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  background:var(--bg);border-bottom:1px solid transparent}
+.cats[hidden]{display:none}
+.cats::-webkit-scrollbar{display:none}
+.nav{
+  display:flex;align-items:center;gap:7px;flex:none;white-space:nowrap;
+  background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:7px 13px;text-decoration:none;color:var(--text);
+  font-size:13.5px;box-shadow:var(--shadow);transition:border-color .15s,color .15s;
+}
+.nav .ico{width:16px;height:16px;color:var(--ic,var(--sub))}
+.nav b{font-weight:600}
+.nav span{font-size:11.5px;color:var(--dim)}
+.nav:active,.nav.on{border-color:var(--soft-line);background:var(--soft)}
+.nav.on b{color:var(--primary)}
+
+/* ---- 分类分组 ---- */
+.cat{margin-bottom:20px;scroll-margin-top:104px}
+.cat[hidden]{display:none}
+.cat-hd{margin:0 2px 10px;display:flex;flex-direction:column;gap:3px}
+.cat-hd h2{margin:0;font-size:16.5px;font-weight:650;display:flex;align-items:baseline;gap:8px}
+.cat-hd h2 small{font-size:11px;font-weight:400;color:var(--primary);
+  background:var(--soft);border-radius:6px;padding:2px 6px}
+.cat-hd p{margin:0;font-size:12px;color:var(--sub)}
+
+/* ---- 条目卡片：窄屏单列，宽屏自动多列铺满 ---- */
+.items{display:grid;grid-template-columns:1fr;gap:10px}
+.item{
+  position:relative;display:flex;align-items:center;gap:11px;
+  min-height:74px;padding:11px 13px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  text-decoration:none;color:inherit;
+  box-shadow:var(--shadow);
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+}
+/* 左侧那 3px 主题色：条目的功能域配色，扫一眼能分出类 */
+.item::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;
+  border-radius:0 3px 3px 0;background:var(--ic,var(--line))}
+.item[hidden]{display:none}
+.item:active{background:var(--soft);border-color:var(--soft-line)}
+@media(hover:hover){
+  .item:hover{transform:translateY(-2px);border-color:var(--soft-line);
+    box-shadow:0 6px 18px rgba(16,24,40,.10)}
+  :root[data-theme=dark] .item:hover{box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  .item:hover .go{opacity:1;transform:none}
+}
+.thumb{
+  flex:0 0 40px;width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ic-bg,#f1f2f4);color:var(--ic,var(--sub));
+}
+.thumb .ico{width:21px;height:21px;stroke-width:1.75}
+.item .t{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.item .n{font-size:14.5px;font-weight:600;line-height:1.35;color:var(--text);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .c{font-size:11.5px;color:var(--sub);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 桌面端右缘的箭头：只作可点的暗示，手机不给它留位置 */
+.go{flex:none;color:var(--dim);opacity:.45;transform:translateX(-3px);
+  transition:opacity .12s,transform .12s;display:none}
+.go .ico{width:16px;height:16px}
+@media(min-width:768px){.go{display:block}}
+.badge{position:absolute;top:-1px;right:-1px;font-size:10px;line-height:1;
+  padding:4px 7px;border-radius:0 var(--radius) 0 8px;
+  color:var(--primary);background:var(--soft);border-left:1px solid var(--soft-line);
+  border-bottom:1px solid var(--soft-line)}
+
+/* 专项工具：只有三条，用自适应列宽铺开，不做固定列数的空网格 */
+#cat-special{margin-bottom:16px}
+#cat-special .items{grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+#cat-special .item{background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--card) 88%,var(--primary)))}
+
+.empty{font-size:13px;color:var(--sub);text-align:center;padding:28px 0}
+.empty[hidden]{display:none}
+footer{max-width:1440px;margin:26px auto 0;padding:16px 0 0;border-top:1px solid var(--line);
+  font-size:12px;color:var(--sub);text-align:center;line-height:1.7}
+footer p{margin:0}
+footer .dim{color:var(--dim);font-size:11.5px}
+
+/* 逐级加宽：手机 1 列 → 平板 2~3 列 → 桌面铺满多列 */
+@media(min-width:520px){
+  .items{grid-template-columns:repeat(2,1fr)}
+}
+@media(min-width:768px){
+  .items{grid-template-columns:repeat(3,1fr)}
+}
+@media(min-width:1080px){
+  .items{grid-template-columns:repeat(4,1fr)}
+}
+@media(min-width:1340px){
+  .items{grid-template-columns:repeat(5,1fr)}
+}
+</style>
 </head>
 <body>
-<svg class="sprite" aria-hidden="true" focusable="false"><symbol id="ic-code" viewBox="0 0 24 24"><path d="M8 6 2.5 12 8 18M16 6l5.5 6L16 18"/></symbol><symbol id="ic-link" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5M8 12l-2 2a3.5 3.5 0 0 0 5 5l2-2M16 12l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></symbol><symbol id="ic-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M15 12v2"/></symbol><symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol><symbol id="ic-unlock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></symbol><symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol><symbol id="ic-hash" viewBox="0 0 24 24"><path d="M10 3 8 21M16 3l-2 18M4 9h16M3 15h16"/></symbol><symbol id="ic-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6"/></symbol><symbol id="ic-sum" viewBox="0 0 24 24"><path d="M17 4H6l6 8-6 8h11"/></symbol><symbol id="ic-calc" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></symbol><symbol id="ic-graph" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-5 3 3 4-6"/></symbol><symbol id="ic-shape" viewBox="0 0 24 24"><rect x="3" y="3" width="10" height="10" rx="1"/><circle cx="16" cy="16" r="5"/></symbol><symbol id="ic-angle" viewBox="0 0 24 24"><path d="M4 20h16M4 20 16 6"/><path d="M11 20a7 7 0 0 1 7-7"/></symbol><symbol id="ic-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13h6l-1 8 8-10h-6z"/></symbol><symbol id="ic-text" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M9 19h6"/></symbol><symbol id="ic-paragraph" viewBox="0 0 24 24"><path d="M13 4v16M17 4v16M13 8H9a4 4 0 0 0 0 8h4"/></symbol><symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5 21 21"/></symbol><symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3.5 2"/></symbol><symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="ic-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 2 2 0 0 0 2-2 2 2 0 0 0-.6-1.4 2 2 0 0 1 1.4-3.4H17a4 4 0 0 0 4-4c0-3.9-4-7.2-9-7.2z"/><circle cx="8" cy="10" r="1"/><circle cx="10" cy="6.5" r="1"/><circle cx="15" cy="7" r="1"/></symbol><symbol id="ic-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></symbol><symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M18 18h3v3h-3z"/></symbol><symbol id="ic-barcode" viewBox="0 0 24 24"><path d="M4 5v14M7 5v14M10 5v10M13 5v14M16 5v10M19 5v14"/></symbol><symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-7 9"/></symbol><symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-10a6 6 0 1 0-12 0c0 4.7 6 10 6 10z"/><circle cx="12" cy="11" r="2.3"/></symbol><symbol id="ic-ruler" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M7 8v3M12 8v4M17 8v3"/></symbol><symbol id="ic-network" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-2h12v2"/></symbol><symbol id="ic-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol><symbol id="ic-browser" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M6.5 6.5h.01M9.5 6.5h.01"/></symbol><symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></symbol><symbol id="ic-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 9.5h6M9 13h6M12 7v10"/></symbol><symbol id="ic-percent" viewBox="0 0 24 24"><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/><path d="M19 5 5 19"/></symbol><symbol id="ic-id" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M5.5 16c.8-1.5 2-2.2 3.5-2.2s2.7.7 3.5 2.2M15 10h3M15 13h3"/></symbol><symbol id="ic-game" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="9" rx="4"/><path d="M7 12h3M8.5 10.5v3M15 11.5h.01M17.5 14h.01"/></symbol><symbol id="ic-flow" viewBox="0 0 24 24"><path d="M4 8h9a4 4 0 0 1 0 8H9"/><path d="M7 5 4 8l3 3M12 13l3 3-3 3"/></symbol><symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="ic-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol><symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.5 6a4 4 0 1 0 4.3 6.4L21 15.6 18.6 18l-3.2-3.2A4 4 0 0 1 9 10.5z"/><path d="M9.5 14.5 4 20"/></symbol><symbol id="ic-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l9 9-8 8z"/><circle cx="7" cy="8" r="1.4"/></symbol><symbol id="ic-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/></symbol><symbol id="ic-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5z"/><path d="M3 13l9 5 9-5"/></symbol><symbol id="ic-book" viewBox="0 0 24 24"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M17 7h2v13H8"/></symbol><symbol id="ic-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M4 9h16M8 9l-3 6h6zM16 9l-3 6h6z"/></symbol></svg>
+<svg class="sprite" aria-hidden="true" focusable="false"><symbol id="ic-code" viewBox="0 0 24 24"><path d="M8 6 2.5 12 8 18M16 6l5.5 6L16 18"/></symbol><symbol id="ic-link" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5M8 12l-2 2a3.5 3.5 0 0 0 5 5l2-2M16 12l2-2a3.5 3.5 0 0 0-5-5l-2 2"/></symbol><symbol id="ic-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M15 12v2"/></symbol><symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol><symbol id="ic-unlock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></symbol><symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol><symbol id="ic-hash" viewBox="0 0 24 24"><path d="M10 3 8 21M16 3l-2 18M4 9h16M3 15h16"/></symbol><symbol id="ic-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6"/></symbol><symbol id="ic-sum" viewBox="0 0 24 24"><path d="M17 4H6l6 8-6 8h11"/></symbol><symbol id="ic-calc" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></symbol><symbol id="ic-graph" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-5 3 3 4-6"/></symbol><symbol id="ic-shape" viewBox="0 0 24 24"><rect x="3" y="3" width="10" height="10" rx="1"/><circle cx="16" cy="16" r="5"/></symbol><symbol id="ic-angle" viewBox="0 0 24 24"><path d="M4 20h16M4 20 16 6"/><path d="M11 20a7 7 0 0 1 7-7"/></symbol><symbol id="ic-bolt" viewBox="0 0 24 24"><path d="M13 3 5 13h6l-1 8 8-10h-6z"/></symbol><symbol id="ic-text" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M9 19h6"/></symbol><symbol id="ic-paragraph" viewBox="0 0 24 24"><path d="M13 4v16M17 4v16M13 8H9a4 4 0 0 0 0 8h4"/></symbol><symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5 21 21"/></symbol><symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3.5 2"/></symbol><symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="ic-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 2 2 0 0 0 2-2 2 2 0 0 0-.6-1.4 2 2 0 0 1 1.4-3.4H17a4 4 0 0 0 4-4c0-3.9-4-7.2-9-7.2z"/><circle cx="8" cy="10" r="1"/><circle cx="10" cy="6.5" r="1"/><circle cx="15" cy="7" r="1"/></symbol><symbol id="ic-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></symbol><symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1M14 20h1M18 18h3v3h-3z"/></symbol><symbol id="ic-barcode" viewBox="0 0 24 24"><path d="M4 5v14M7 5v14M10 5v10M13 5v14M16 5v10M19 5v14"/></symbol><symbol id="ic-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-7 9"/></symbol><symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-10a6 6 0 1 0-12 0c0 4.7 6 10 6 10z"/><circle cx="12" cy="11" r="2.3"/></symbol><symbol id="ic-ruler" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M7 8v3M12 8v4M17 8v3"/></symbol><symbol id="ic-network" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-2h12v2"/></symbol><symbol id="ic-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol><symbol id="ic-browser" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M6.5 6.5h.01M9.5 6.5h.01"/></symbol><symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></symbol><symbol id="ic-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 9.5h6M9 13h6M12 7v10"/></symbol><symbol id="ic-percent" viewBox="0 0 24 24"><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/><path d="M19 5 5 19"/></symbol><symbol id="ic-id" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M5.5 16c.8-1.5 2-2.2 3.5-2.2s2.7.7 3.5 2.2M15 10h3M15 13h3"/></symbol><symbol id="ic-game" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="9" rx="4"/><path d="M7 12h3M8.5 10.5v3M15 11.5h.01M17.5 14h.01"/></symbol><symbol id="ic-flow" viewBox="0 0 24 24"><path d="M4 8h9a4 4 0 0 1 0 8H9"/><path d="M7 5 4 8l3 3M12 13l3 3-3 3"/></symbol><symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="ic-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol><symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.5 6a4 4 0 1 0 4.3 6.4L21 15.6 18.6 18l-3.2-3.2A4 4 0 0 1 9 10.5z"/><path d="M9.5 14.5 4 20"/></symbol><symbol id="ic-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l9 9-8 8z"/><circle cx="7" cy="8" r="1.4"/></symbol><symbol id="ic-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/></symbol><symbol id="ic-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5z"/><path d="M3 13l9 5 9-5"/></symbol><symbol id="ic-book" viewBox="0 0 24 24"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M17 7h2v13H8"/></symbol><symbol id="ic-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M4 9h16M8 9l-3 6h6zM16 9l-3 6h6z"/></symbol><symbol id="ic-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol><symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></symbol><symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></symbol><symbol id="ic-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol></svg>
 
-<header>
-  <div class="wrap">
-    <h1><span class="logo"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span>工具合集</h1>
-    <p>全离线可用的浏览器端工具集，打开即算，数据不出本机</p>
-    <div class="stats">
-      <span><b>117</b>个工具</span>
-      <span><b>5</b>个分类</span>
-      <span><b>0</b>依赖联网</span>
+<header class="hd">
+  <div class="wrap hd-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg class="ico"><use href="#ic-grid"/></svg></span>
+      <span class="bt">
+        <h1>工具合集</h1>
+        <p>中文小工具，打开即用</p>
+      </span>
+    </div>
+    <div class="hd-side">
+      <span class="tagline">纯浏览器计算 · 数据不出本机</span>
+      <button id="theme" type="button" aria-label="切换深浅色">
+        <svg class="ico moon" aria-hidden="true"><use href="#ic-moon"/></svg>
+        <svg class="ico sun" aria-hidden="true"><use href="#ic-sun"/></svg>
+      </button>
     </div>
   </div>
 </header>
 
 <main>
-  <div class="search-row">
-    <input id="q" type="search" placeholder="搜索工具，如 编码 / 二维码 / 面积">
-  </div>
-
-  <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
-
-  <section class="cat" id="cat-special">
-    <div class="cat-hd">
-      <h2>专项工具 <small>3 项</small></h2>
-    </div>
-    <div class="items">
-      <a class="item" href="./calibration.html" data-page="calibration.html" data-kw="校准 电磁水表 流量点" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-target"/></svg></span><span class="t"><span class="n">电磁水表流量点校准</span><span class="c">按零点与误差百分比换算各流量点校正值</span></span></a>
-      <a class="item" href="./gold.html" data-page="gold.html" data-kw="黄金 金价 盎司" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-coin"/></svg></span><span class="t"><span class="n">黄金价格换算</span><span class="c">美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位</span></span></a>
-      <a class="item" href="./flow.html" data-page="flow.html" data-kw="流量 流速 瞬时流量" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-flow"/></svg></span><span class="t"><span class="n">瞬时流量与流速换算</span><span class="c">m³/h ↔ m/s 双向换算，按口径与有效内径占比折算</span></span></a>
+  <section class="hero">
+    <div class="wrap">
+      <div class="stats">
+        <span class="stat"><b>117</b> 个工具</span>
+        <span class="stat"><b>25</b> 个页面</span>
+        <span class="stat"><b>5</b> 个分类</span>
+      </div>
+      <div class="search-row">
+        <svg class="ico" aria-hidden="true"><use href="#ic-search"/></svg>
+        <input id="q" type="search" placeholder="搜索工具，如 编码 / 二维码 / 面积 / 个税">
+        <span class="kbd">/</span>
+      </div>
     </div>
   </section>
 
-  <nav class="cats">
-    <a class="nav" href="#cat-master">站长工具<span>16</span></a>
-    <a class="nav" href="#cat-code">开发工具<span>28</span></a>
-    <a class="nav" href="#cat-learn">学习工具<span>28</span></a>
-    <a class="nav" href="#cat-live">生活工具<span>26</span></a>
-    <a class="nav" href="#cat-other">小工具<span>19</span></a>
-  </nav>
+  <div class="wrap">
+    <nav class="cats" aria-label="分类导航">
+      <a class="nav" href="#cat-master" style="--ic:#1668dc"><svg class="ico"><use href="#ic-browser"/></svg><b>站长工具</b><span>16 项</span></a>
+      <a class="nav" href="#cat-code" style="--ic:#1668dc"><svg class="ico"><use href="#ic-code"/></svg><b>开发工具</b><span>28 项</span></a>
+      <a class="nav" href="#cat-learn" style="--ic:#0891b2"><svg class="ico"><use href="#ic-graph"/></svg><b>学习工具</b><span>28 项</span></a>
+      <a class="nav" href="#cat-live" style="--ic:#e11d48"><svg class="ico"><use href="#ic-heart"/></svg><b>生活工具</b><span>26 项</span></a>
+      <a class="nav" href="#cat-other" style="--ic:#db2777"><svg class="ico"><use href="#ic-dice"/></svg><b>小工具</b><span>19 项</span></a>
+    </nav>
 
-  <div id="list">
+    <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
+
+    <section class="cat" id="cat-special">
+      <div class="cat-hd">
+        <h2>专项工具 <small>3 项</small></h2>
+        <p>本仓库自研，清单里没有对应款</p>
+      </div>
+      <div class="items">
+      <a class="item" href="./calibration.html" data-page="calibration.html" data-kw="校准 电磁水表 流量点" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-target"/></svg></span><span class="t"><span class="n">电磁水表流量点校准</span><span class="c">按零点与误差百分比换算各流量点校正值</span></span><span class="badge">自研</span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+      <a class="item" href="./gold.html" data-page="gold.html" data-kw="黄金 金价 盎司" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-coin"/></svg></span><span class="t"><span class="n">黄金价格换算</span><span class="c">美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位</span></span><span class="badge">自研</span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+      <a class="item" href="./flow.html" data-page="flow.html" data-kw="流量 流速 瞬时流量" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-flow"/></svg></span><span class="t"><span class="n">瞬时流量与流速换算</span><span class="c">m³/h ↔ m/s 双向换算，按口径与有效内径占比折算</span></span><span class="badge">自研</span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+      </div>
+    </section>
+
+    <div id="list">
 <section class="cat" id="cat-master">
   <div class="cat-hd">
-    <h2 id="h-cat-master">站长工具 <small>16 项</small></h2>
+    <h2>站长工具 <small>16 项</small></h2>
     <p>域名解析、HTTP 与网页、站点诊断</p>
   </div>
   <div class="items">
-    <a class="item" href="./web.html#source" data-page="web.html" data-kw="源码 源代码 网页源码 查看源码 view source" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">在线查看网页源代码</span><span class="c">抓取并预览任意网址的源码</span></span></a>
-    <a class="item" href="./station2.html#http" data-page="station2.html" data-kw="http 状态码 状态码查询 404 500" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">HTTP状态码</span><span class="c">状态码含义与分类速查</span></span></a>
-    <a class="item" href="./base.html#url" data-page="base.html" data-kw="url url编码 url解码 urlencode urldecode 转义" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">URL编码</span><span class="c">中文与特殊字符转 %XX</span></span></a>
-    <a class="item" href="./web.html#markdown" data-page="web.html" data-kw="markdown md 编辑器 预览" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-paragraph"/></svg></span><span class="t"><span class="n">在线Markdown编辑器</span><span class="c">边写边看实时预览</span></span></a>
-    <a class="item" href="./web.html#html" data-page="web.html" data-kw="html 网页编辑 富文本 可视化编辑" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">在线网页HTML编辑器</span><span class="c">可视化编辑网页，所见即所得</span></span></a>
-    <a class="item" href="./color.html" data-page="color.html" data-kw="颜色 取色器 色板 色值 调色" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-palette"/></svg></span><span class="t"><span class="n">在线网页颜色取色器</span><span class="c">屏幕取色与色值转换</span></span></a>
-    <a class="item" href="./web.html#refresh" data-page="web.html" data-kw="刷新 定时刷新 自动刷新 网页刷新" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">网页自动刷新_在线网址定时刷新工具</span><span class="c">按间隔定时刷新指定网页</span></span></a>
-    <a class="item" href="./web.html#short" data-page="web.html" data-kw="短链 短网址 短url 压缩链接" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-link"/></svg></span><span class="t"><span class="n">在线短网址生成_短网址在线生成</span><span class="c">长链接压短，便于分享</span></span></a>
-    <a class="item" href="./base.html#unicode" data-page="base.html" data-kw="uuencode uudecode 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">在线uuencode编码解码</span><span class="c">二进制转可见 ASCII</span></span></a>
-    <a class="item" href="./base.html#punycode" data-page="base.html" data-kw="punycode 中文域名 域名转码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Punycode编码_Punycode转换_中文域名转码</span><span class="c">中文域名转 ACE 形式</span></span></a>
-    <a class="item" href="./station2.html#ua" data-page="station2.html" data-kw="ua useragent 浏览器标识 设备识别" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">UserAgent分析，UA查询、检测</span><span class="c">解析浏览器与操作系统</span></span></a>
-    <a class="item" href="./base.html#hex" data-page="base.html" data-kw="escape unescape 转义 unicode转义" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Escape加密/UnEscape解密工具</span><span class="c">字符串转义与还原</span></span></a>
-    <a class="item" href="./station2.html#port" data-page="station2.html" data-kw="端口 端口扫描 开放端口 端口检测" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-server"/></svg></span><span class="t"><span class="n">在线端口扫描工具</span><span class="c">探测常用端口开放情况</span></span></a>
-    <a class="item" href="./web.html#robots" data-page="web.html" data-kw="robots robots.txt 爬虫协议" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">robots文件生成</span><span class="c">生成 robots.txt 规则</span></span></a>
-    <a class="item" href="./web.html#icp" data-page="web.html" data-kw="备案 icp 备案号 备案查询" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">网站备案查询</span><span class="c">域名 ICP 备案状态查询</span></span></a>
-    <a class="item" href="./web.html#dns" data-page="web.html" data-kw="dns 域名解析 解析 ip查询 域名查询" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-server"/></svg></span><span class="t"><span class="n">DNS查询/DNS解析</span><span class="c">A / MX / CNAME / TXT 记录</span></span></a>
+    <a class="item" href="./web.html#source" data-page="web.html" data-kw="源码 源代码 网页源码 查看源码 view source" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">在线查看网页源代码</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./station2.html#http" data-page="station2.html" data-kw="http 状态码 状态码查询 404 500" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">HTTP状态码</span><span class="c">站点诊断</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#url" data-page="base.html" data-kw="url url编码 url解码 urlencode urldecode 转义" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">URL编码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#markdown" data-page="web.html" data-kw="markdown md 编辑器 预览" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-paragraph"/></svg></span><span class="t"><span class="n">在线Markdown编辑器</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#html" data-page="web.html" data-kw="html 网页编辑 富文本 可视化编辑" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">在线网页HTML编辑器</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./color.html" data-page="color.html" data-kw="颜色 取色器 色板 色值 调色" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-palette"/></svg></span><span class="t"><span class="n">在线网页颜色取色器</span><span class="c">颜色转换</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#refresh" data-page="web.html" data-kw="刷新 定时刷新 自动刷新 网页刷新" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">网页自动刷新_在线网址定时刷新工具</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#short" data-page="web.html" data-kw="短链 短网址 短url 压缩链接" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-link"/></svg></span><span class="t"><span class="n">在线短网址生成_短网址在线生成</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#unicode" data-page="base.html" data-kw="uuencode uudecode 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">在线uuencode编码解码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#punycode" data-page="base.html" data-kw="punycode 中文域名 域名转码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Punycode编码_Punycode转换_中文域名转码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./station2.html#ua" data-page="station2.html" data-kw="ua useragent 浏览器标识 设备识别" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">UserAgent分析，UA查询、检测</span><span class="c">站点诊断</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#hex" data-page="base.html" data-kw="escape unescape 转义 unicode转义" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Escape加密/UnEscape解密工具</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./station2.html#port" data-page="station2.html" data-kw="端口 端口扫描 开放端口 端口检测" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-server"/></svg></span><span class="t"><span class="n">在线端口扫描工具</span><span class="c">站点诊断</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#robots" data-page="web.html" data-kw="robots robots.txt 爬虫协议" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-browser"/></svg></span><span class="t"><span class="n">robots文件生成</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#icp" data-page="web.html" data-kw="备案 icp 备案号 备案查询" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">网站备案查询</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./web.html#dns" data-page="web.html" data-kw="dns 域名解析 解析 ip查询 域名查询" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-server"/></svg></span><span class="t"><span class="n">DNS查询/DNS解析</span><span class="c">网页与站长</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
   </div>
 </section>
 <section class="cat" id="cat-code">
   <div class="cat-hd">
-    <h2 id="h-cat-code">开发工具 <small>28 项</small></h2>
+    <h2>开发工具 <small>28 项</small></h2>
     <p>编码解码、加解密、校验和、格式化</p>
   </div>
   <div class="items">
-    <a class="item" href="./base.html#base64" data-page="base.html" data-kw="base64 base 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base64编码</span><span class="c">文本转 Base64</span></span></a>
-    <a class="item" href="./base.html#base58" data-page="base.html" data-kw="base62 base 编码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base62编码</span><span class="c">0-9A-Za-z 进制转换</span></span></a>
-    <a class="item" href="./base.html#base58" data-page="base.html" data-kw="base58 base 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base58编码解码</span><span class="c">去掉易混字符的编码</span></span></a>
-    <a class="item" href="./base.html#base32" data-page="base.html" data-kw="base32 base 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base32解码</span><span class="c">A-Z2-7 编码与解码</span></span></a>
-    <a class="item" href="./cipher.html#rot13" data-page="cipher.html" data-kw="rot13 rot 凯撒 位移" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">ROT13加密解密</span><span class="c">字母位移 13 位加解密</span></span></a>
-    <a class="item" href="./hash.html#adler" data-page="hash.html" data-kw="adler32 adler 校验和 checksum" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">adler32校验和计算器</span><span class="c">ZIP / ZooKeeper 常用校验</span></span></a>
-    <a class="item" href="./checksum.html#xor" data-page="checksum.html" data-kw="bcc 异或 xor 校验和" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-check"/></svg></span><span class="t"><span class="n">BCC异或校验和工具</span><span class="c">xor 异或校验字节计算</span></span></a>
-    <a class="item" href="./hash.html#hmac" data-page="hash.html" data-kw="hmac 签名 消息认证" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-hash"/></svg></span><span class="t"><span class="n">HMAC在线计算工具</span><span class="c">HMAC-MD5 / SHA 系列签名</span></span></a>
-    <a class="item" href="./dev.html#json" data-page="dev.html" data-kw="json 格式化 校验 压缩" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">在线格式化JSON_生成格式化JSON工具</span><span class="c">JSON 格式化、校验与压缩</span></span></a>
-    <a class="item" href="./crypto2.html#ssl" data-page="crypto2.html" data-kw="ssl 证书 证书解析 证书校验 https" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">SSL证书校验_证书文件校验在线</span><span class="c">解析 pem / crt / cer 证书</span></span></a>
-    <a class="item" href="./crypto2.html#ca" data-page="crypto2.html" data-kw="ca 证书 自签 签发 私有证书 https" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">在线https私有证书生成颁发工具</span><span class="c">自签 SSL 证书，本地测试用</span></span></a>
-    <a class="item" href="./dev.html#jwt" data-page="dev.html" data-kw="jwt token 解析 解码" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-unlock"/></svg></span><span class="t"><span class="n">JWT解密解码</span><span class="c">解析头部、载荷与签名</span></span></a>
-    <a class="item" href="./crypto2.html#jwt" data-page="crypto2.html" data-kw="jwt 签名 验签 校验" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-unlock"/></svg></span><span class="t"><span class="n">jwt签名验证</span><span class="c">校验 JWT 签名是否正确</span></span></a>
-    <a class="item" href="./crypto2.html#jwt" data-page="crypto2.html" data-kw="jwt 生成 token 签发" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-unlock"/></svg></span><span class="t"><span class="n">jwt在线生成</span><span class="c">按密钥签发 JWT Token</span></span></a>
-    <a class="item" href="./color.html" data-page="color.html" data-kw="rgb hex 颜色 色值 转换" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-palette"/></svg></span><span class="t"><span class="n">RGB颜色转换_RGB颜色转换器</span><span class="c">RGB / HEX / HSL 互转</span></span></a>
-    <a class="item" href="./date.html#ts" data-page="date.html" data-kw="时间戳 unix timestamp 转换 毫秒" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线时间戳转换工具_时间戳转换</span><span class="c">Unix 时间戳与日期互转</span></span></a>
-    <a class="item" href="./dev.html#diff" data-page="dev.html" data-kw="对比 diff 文本对比 差异 代码对比" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span><span class="t"><span class="n">在线文本对比_代码对比工具</span><span class="c">逐行找出两段文本差异</span></span></a>
-    <a class="item" href="./dev.html#sql" data-page="dev.html" data-kw="sql 格式化 美化 压缩" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-table"/></svg></span><span class="t"><span class="n">SQL在线格式化工具</span><span class="c">SQL 美化与压缩</span></span></a>
-    <a class="item" href="./cipher.html#bacon" data-page="cipher.html" data-kw="培根 bacon 密码 加密" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">培根密码解密加密</span><span class="c">A/B 五位一组替换字母</span></span></a>
-    <a class="item" href="./cipher.html#fence" data-page="cipher.html" data-kw="栅栏 fence 密码 加密" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">栅栏密码解密【基础型】</span><span class="c">按栏数重排还原明文</span></span></a>
-    <a class="item" href="./crypto.html#rabbit" data-page="crypto.html" data-kw="rabbit 流密码 加密 解密" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-lock"/></svg></span><span class="t"><span class="n">在线Rabbit加密解密</span><span class="c">Rabbit 流密码加解密</span></span></a>
-    <a class="item" href="./checksum.html#sum" data-page="checksum.html" data-kw="累加和 求和 checksum 校验" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">累加和在线计算</span><span class="c">逐字节累加的校验和</span></span></a>
-    <a class="item" href="./crypto2.html#rsa" data-page="crypto2.html" data-kw="rsa 公钥 私钥 密钥" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-key"/></svg></span><span class="t"><span class="n">在线RSA公私钥生成</span><span class="c">生成 RSA 密钥对</span></span></a>
-    <a class="item" href="./checksum.html#crc" data-page="checksum.html" data-kw="crc crc32 校验 crc16" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-check"/></svg></span><span class="t"><span class="n">CRC32在线校验工具</span><span class="c">CRC16 / CRC32 校验计算</span></span></a>
-    <a class="item" href="./cipher.html#vigenere" data-page="cipher.html" data-kw="维吉尼亚 vigenere 密码 加密" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">维吉尼亚密码翻译器</span><span class="c">多表替换的古典密码</span></span></a>
-    <a class="item" href="./cipher.html#caesar" data-page="cipher.html" data-kw="凯撒 caesar 密码 位移" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">凯撒密码转换器</span><span class="c">固定位移的替换密码</span></span></a>
-    <a class="item" href="./cipher.html#morse" data-page="cipher.html" data-kw="摩尔斯 摩斯 morse 电码" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">摩尔斯电码转换器</span><span class="c">点划电码与文本互转</span></span></a>
-    <a class="item" href="./crypto.html#rc4" data-page="crypto.html" data-kw="rc4 流密码 加密 解密" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-lock"/></svg></span><span class="t"><span class="n">在线RC4加密解密</span><span class="c">RC4 流密码加解密</span></span></a>
+    <a class="item" href="./base.html#base64" data-page="base.html" data-kw="base64 base 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base64编码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#base58" data-page="base.html" data-kw="base62 base 编码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base62编码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#base58" data-page="base.html" data-kw="base58 base 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base58编码解码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./base.html#base32" data-page="base.html" data-kw="base32 base 编码 解码" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">Base32解码</span><span class="c">编码解码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./cipher.html#rot13" data-page="cipher.html" data-kw="rot13 rot 凯撒 位移" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">ROT13加密解密</span><span class="c">古典密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./hash.html#adler" data-page="hash.html" data-kw="adler32 adler 校验和 checksum" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">adler32校验和计算器</span><span class="c">哈希与摘要</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./checksum.html#xor" data-page="checksum.html" data-kw="bcc 异或 xor 校验和" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-check"/></svg></span><span class="t"><span class="n">BCC异或校验和工具</span><span class="c">校验和计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./hash.html#hmac" data-page="hash.html" data-kw="hmac 签名 消息认证" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-hash"/></svg></span><span class="t"><span class="n">HMAC在线计算工具</span><span class="c">哈希与摘要</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./dev.html#json" data-page="dev.html" data-kw="json 格式化 校验 压缩" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-code"/></svg></span><span class="t"><span class="n">在线格式化JSON_生成格式化JSON工具</span><span class="c">开发工具</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto2.html#ssl" data-page="crypto2.html" data-kw="ssl 证书 证书解析 证书校验 https" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">SSL证书校验_证书文件校验在线</span><span class="c">证书与密钥</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto2.html#ca" data-page="crypto2.html" data-kw="ca 证书 自签 签发 私有证书 https" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">在线https私有证书生成颁发工具</span><span class="c">证书与密钥</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./dev.html#jwt" data-page="dev.html" data-kw="jwt token 解析 解码" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-unlock"/></svg></span><span class="t"><span class="n">JWT解密解码</span><span class="c">开发工具</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto2.html#jwt" data-page="crypto2.html" data-kw="jwt 签名 验签 校验" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-unlock"/></svg></span><span class="t"><span class="n">jwt签名验证</span><span class="c">证书与密钥</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto2.html#jwt" data-page="crypto2.html" data-kw="jwt 生成 token 签发" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-unlock"/></svg></span><span class="t"><span class="n">jwt在线生成</span><span class="c">证书与密钥</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./color.html" data-page="color.html" data-kw="rgb hex 颜色 色值 转换" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-palette"/></svg></span><span class="t"><span class="n">RGB颜色转换_RGB颜色转换器</span><span class="c">颜色转换</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./date.html#ts" data-page="date.html" data-kw="时间戳 unix timestamp 转换 毫秒" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线时间戳转换工具_时间戳转换</span><span class="c">日期与时间</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./dev.html#diff" data-page="dev.html" data-kw="对比 diff 文本对比 差异 代码对比" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span><span class="t"><span class="n">在线文本对比_代码对比工具</span><span class="c">开发工具</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./dev.html#sql" data-page="dev.html" data-kw="sql 格式化 美化 压缩" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-table"/></svg></span><span class="t"><span class="n">SQL在线格式化工具</span><span class="c">开发工具</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./cipher.html#bacon" data-page="cipher.html" data-kw="培根 bacon 密码 加密" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">培根密码解密加密</span><span class="c">古典密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./cipher.html#fence" data-page="cipher.html" data-kw="栅栏 fence 密码 加密" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">栅栏密码解密【基础型】</span><span class="c">古典密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto.html#rabbit" data-page="crypto.html" data-kw="rabbit 流密码 加密 解密" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-lock"/></svg></span><span class="t"><span class="n">在线Rabbit加密解密</span><span class="c">流密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./checksum.html#sum" data-page="checksum.html" data-kw="累加和 求和 checksum 校验" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">累加和在线计算</span><span class="c">校验和计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto2.html#rsa" data-page="crypto2.html" data-kw="rsa 公钥 私钥 密钥" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-key"/></svg></span><span class="t"><span class="n">在线RSA公私钥生成</span><span class="c">证书与密钥</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./checksum.html#crc" data-page="checksum.html" data-kw="crc crc32 校验 crc16" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-check"/></svg></span><span class="t"><span class="n">CRC32在线校验工具</span><span class="c">校验和计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./cipher.html#vigenere" data-page="cipher.html" data-kw="维吉尼亚 vigenere 密码 加密" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">维吉尼亚密码翻译器</span><span class="c">古典密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./cipher.html#caesar" data-page="cipher.html" data-kw="凯撒 caesar 密码 位移" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">凯撒密码转换器</span><span class="c">古典密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./cipher.html#morse" data-page="cipher.html" data-kw="摩尔斯 摩斯 morse 电码" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">摩尔斯电码转换器</span><span class="c">古典密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./crypto.html#rc4" data-page="crypto.html" data-kw="rc4 流密码 加密 解密" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-lock"/></svg></span><span class="t"><span class="n">在线RC4加密解密</span><span class="c">流密码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
   </div>
 </section>
 <section class="cat" id="cat-learn">
   <div class="cat-hd">
-    <h2 id="h-cat-learn">学习工具 <small>28 项</small></h2>
+    <h2>学习工具 <small>28 项</small></h2>
     <p>数学几何、单位换算、物理电子、文本处理</p>
   </div>
   <div class="items">
-    <a class="item" href="./number.html#divide" data-page="number.html" data-kw="整除 除法 商 余数" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-target"/></svg></span><span class="t"><span class="n">整除计算器</span><span class="c">求商与余数</span></span></a>
-    <a class="item" href="./number.html#series" data-page="number.html" data-kw="等差 数列 求和 数列求和" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">等差数列求和公式计算器</span><span class="c">首项、公差、项数求和</span></span></a>
-    <a class="item" href="./number.html#series" data-page="number.html" data-kw="等比 数列 求和 数列求和" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">等比数列求和公式计算器</span><span class="c">首项、公比、项数求和</span></span></a>
-    <a class="item" href="./number.html#bytes" data-page="number.html" data-kw="字节 字数 byte 大小统计" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span><span class="t"><span class="n">字节数统计在线计算工具</span><span class="c">字符与字节占用统计</span></span></a>
-    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="正方体 表面积 立方体" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">正方体表面积公式计算器</span><span class="c">棱长求表面积与体积</span></span></a>
-    <a class="item" href="./geometry.html#plane" data-page="geometry.html" data-kw="面积 正方形 矩形 长方形 平行四边形" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">正方形面积公式计算器_矩形面积公式计算器</span><span class="c">边长、周长与面积互算</span></span></a>
-    <a class="item" href="./geometry.html#plane" data-page="geometry.html" data-kw="梯形 周长 面积" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">梯形周长公式计算器</span><span class="c">上底、下底、腰长求周长</span></span></a>
-    <a class="item" href="./text2.html#tidy" data-page="text2.html" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-paragraph"/></svg></span><span class="t"><span class="n">在线文字排版_文本排版工具</span><span class="c">段落缩进与排版规整</span></span></a>
-    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="圆柱 表面积 圆柱体" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">圆柱体表面积公式计算器</span><span class="c">底面半径与高求表面积</span></span></a>
-    <a class="item" href="./number.html#storage" data-page="number.html" data-kw="存储 单位换算 kb mb gb tb" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span><span class="t"><span class="n">存储单位换算</span><span class="c">B / KB / MB / GB / TB 互转</span></span></a>
-    <a class="item" href="./number.html#log" data-page="number.html" data-kw="log 对数 log2 lg" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-graph"/></svg></span><span class="t"><span class="n">log计算器_log在线计算器</span><span class="c">任意底数对数计算</span></span></a>
-    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="圆锥 表面积 圆锥体" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">圆锥表面积公式计算</span><span class="c">半径与母线求表面积</span></span></a>
-    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="长方体 表面积" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">长方体表面积公式计算器</span><span class="c">长宽高求表面积与体积</span></span></a>
-    <a class="item" href="./geometry.html#trig" data-page="geometry.html" data-kw="正弦 正切 三角 sin cos tan" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-angle"/></svg></span><span class="t"><span class="n">正弦计算器</span><span class="c">sin / cos / tan 三角函数</span></span></a>
-    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 并联 分流" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">并联电阻分流计算</span><span class="c">并联支路的分流比</span></span></a>
-    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 分压 电压" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">电阻分压计算器_电阻分压计算公式</span><span class="c">两电阻分压比与输出电压</span></span></a>
-    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 串联" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">串联电阻计算器</span><span class="c">串联总阻值计算</span></span></a>
-    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 并联" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">电阻并联计算器_并联电阻计算器</span><span class="c">并联总阻值计算</span></span></a>
-    <a class="item" href="./geometry.html#trig" data-page="geometry.html" data-kw="反正切 arctan 反三角 三角函数" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-angle"/></svg></span><span class="t"><span class="n">反正切函数计算器_反正切函数计算器在线</span><span class="c">arctan 角度与弧度</span></span></a>
-    <a class="item" href="./game.html#schulte" data-page="game.html" data-kw="舒尔特 方格 注意力 专注力" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">舒尔特方格在线测试游戏</span><span class="c">注意力与专注力训练</span></span></a>
-    <a class="item" href="./number.html#daxie" data-page="number.html" data-kw="大写 金额大写 数字大写 人民币" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">大写转换器</span><span class="c">金额数字转人民币大写</span></span></a>
-    <a class="item" href="./game.html#sdk" data-page="game.html" data-kw="数独 sudoku" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">在线数独</span><span class="c">九宫格数独游戏</span></span></a>
-    <a class="item" href="./number.html#power" data-page="number.html" data-kw="次方 幂 开方 方根" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calc"/></svg></span><span class="t"><span class="n">N次方计算器</span><span class="c">幂运算与开方</span></span></a>
-    <a class="item" href="./number.html#divisor" data-page="number.html" data-kw="整除 因数 约数 因子" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-target"/></svg></span><span class="t"><span class="n">整除数计算器</span><span class="c">列出因数与约数</span></span></a>
-    <a class="item" href="./number.html#power" data-page="number.html" data-kw="开方 平方根 sqrt 根号" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-graph"/></svg></span><span class="t"><span class="n">开平方根计算器</span><span class="c">平方根与立方根</span></span></a>
-    <a class="item" href="./number.html#log" data-page="number.html" data-kw="log2 对数" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-graph"/></svg></span><span class="t"><span class="n">log2为底计算器</span><span class="c">以 2 为底的对数</span></span></a>
-    <a class="item" href="./text2.html#syn" data-page="text2.html" data-kw="同义词 近义词 替换 伪原创" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-book"/></svg></span><span class="t"><span class="n">同义词转换器</span><span class="c">近义词替换，降低重复度</span></span></a>
-    <a class="item" href="./text2.html#sens" data-page="text2.html" data-kw="敏感 敏感词 违禁词 敏感词检测" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">敏感词检测_在线敏感词检测</span><span class="c">文本违禁词一键排查</span></span></a>
+    <a class="item" href="./number.html#divide" data-page="number.html" data-kw="整除 除法 商 余数" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-target"/></svg></span><span class="t"><span class="n">整除计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#series" data-page="number.html" data-kw="等差 数列 求和 数列求和" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">等差数列求和公式计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#series" data-page="number.html" data-kw="等比 数列 求和 数列求和" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-sum"/></svg></span><span class="t"><span class="n">等比数列求和公式计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#bytes" data-page="number.html" data-kw="字节 字数 byte 大小统计" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span><span class="t"><span class="n">字节数统计在线计算工具</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="正方体 表面积 立方体" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">正方体表面积公式计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#plane" data-page="geometry.html" data-kw="面积 正方形 矩形 长方形 平行四边形" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">正方形面积公式计算器_矩形面积公式计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#plane" data-page="geometry.html" data-kw="梯形 周长 面积" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">梯形周长公式计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./text2.html#tidy" data-page="text2.html" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-paragraph"/></svg></span><span class="t"><span class="n">在线文字排版_文本排版工具</span><span class="c">文本处理</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="圆柱 表面积 圆柱体" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">圆柱体表面积公式计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#storage" data-page="number.html" data-kw="存储 单位换算 kb mb gb tb" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-layers"/></svg></span><span class="t"><span class="n">存储单位换算</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#log" data-page="number.html" data-kw="log 对数 log2 lg" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-graph"/></svg></span><span class="t"><span class="n">log计算器_log在线计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="圆锥 表面积 圆锥体" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">圆锥表面积公式计算</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#solid" data-page="geometry.html" data-kw="长方体 表面积" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shape"/></svg></span><span class="t"><span class="n">长方体表面积公式计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#trig" data-page="geometry.html" data-kw="正弦 正切 三角 sin cos tan" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-angle"/></svg></span><span class="t"><span class="n">正弦计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 并联 分流" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">并联电阻分流计算</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 分压 电压" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">电阻分压计算器_电阻分压计算公式</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 串联" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">串联电阻计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#res" data-page="geometry.html" data-kw="电阻 并联" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-bolt"/></svg></span><span class="t"><span class="n">电阻并联计算器_并联电阻计算器</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./geometry.html#trig" data-page="geometry.html" data-kw="反正切 arctan 反三角 三角函数" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-angle"/></svg></span><span class="t"><span class="n">反正切函数计算器_反正切函数计算器在线</span><span class="c">几何与电子计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#schulte" data-page="game.html" data-kw="舒尔特 方格 注意力 专注力" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">舒尔特方格在线测试游戏</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#daxie" data-page="number.html" data-kw="大写 金额大写 数字大写 人民币" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-text"/></svg></span><span class="t"><span class="n">大写转换器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#sdk" data-page="game.html" data-kw="数独 sudoku" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">在线数独</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#power" data-page="number.html" data-kw="次方 幂 开方 方根" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calc"/></svg></span><span class="t"><span class="n">N次方计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#divisor" data-page="number.html" data-kw="整除 因数 约数 因子" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-target"/></svg></span><span class="t"><span class="n">整除数计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#power" data-page="number.html" data-kw="开方 平方根 sqrt 根号" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-graph"/></svg></span><span class="t"><span class="n">开平方根计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#log" data-page="number.html" data-kw="log2 对数" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-graph"/></svg></span><span class="t"><span class="n">log2为底计算器</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./text2.html#syn" data-page="text2.html" data-kw="同义词 近义词 替换 伪原创" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-book"/></svg></span><span class="t"><span class="n">同义词转换器</span><span class="c">文本处理</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./text2.html#sens" data-page="text2.html" data-kw="敏感 敏感词 违禁词 敏感词检测" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-shield"/></svg></span><span class="t"><span class="n">敏感词检测_在线敏感词检测</span><span class="c">文本处理</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
   </div>
 </section>
 <section class="cat" id="cat-live">
   <div class="cat-hd">
-    <h2 id="h-cat-live">生活工具 <small>26 项</small></h2>
+    <h2>生活工具 <small>26 项</small></h2>
     <p>健康体征、财税、日期时间、图片与坐标</p>
   </div>
   <div class="items">
-    <a class="item" href="./holiday.html" data-page="holiday.html" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">2026年放假安排</span><span class="c">全年节假日与调休</span></span></a>
-    <a class="item" href="./holiday.html" data-page="holiday.html" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">2025年放假安排</span><span class="c">全年节假日与调休</span></span></a>
-    <a class="item" href="./finance.html#salary" data-page="finance.html" data-kw="个税 个税计算 工资 到手工资 个税专项" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">个人所得税计算器</span><span class="c">月薪到手工资测算</span></span></a>
-    <a class="item" href="./finance.html#bonus" data-page="finance.html" data-kw="年终奖 个税 奖金" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">年终奖计算器_年终奖个税计算器</span><span class="c">年终奖单独计税测算</span></span></a>
-    <a class="item" href="./media.html#ruler" data-page="media.html" data-kw="尺子 测量 长度 屏幕尺" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-ruler"/></svg></span><span class="t"><span class="n">在线尺子测量工具</span><span class="c">屏幕尺测长宽</span></span></a>
-    <a class="item" href="./clock.html#clock" data-page="clock.html" data-kw="时钟 毫秒 时间" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线毫秒时钟显示</span><span class="c">毫秒级实时时钟</span></span></a>
-    <a class="item" href="./health2.html#preg" data-page="health2.html" data-kw="胎儿 体重 孕检 胎儿体重" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">胎儿体重计算器在线</span><span class="c">按双顶径等孕检数据估算</span></span></a>
-    <a class="item" href="./health2.html#card" data-page="health2.html" data-kw="身份证 年龄 证件 校验" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-id"/></svg></span><span class="t"><span class="n">身份证号提取年龄</span><span class="c">从身份证号算年龄</span></span></a>
-    <a class="item" href="./health2.html#preg" data-page="health2.html" data-kw="预产期 怀孕 孕周" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">预产期计算器在线计算</span><span class="c">按末次月经推算预产期</span></span></a>
-    <a class="item" href="./life2.html#bond" data-page="life2.html" data-kw="国债 利息 收益率" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-coin"/></svg></span><span class="t"><span class="n">10万国债一年多少利息_国债收益率计算</span><span class="c">国债到期收益测算</span></span></a>
-    <a class="item" href="./health2.html#bmi" data-page="health2.html" data-kw="内衣 尺码 胸围 罩杯" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-tag"/></svg></span><span class="t"><span class="n">内衣尺码表_内衣尺码对照表</span><span class="c">下胸围与罩杯对照</span></span></a>
-    <a class="item" href="./health2.html#egfr" data-page="health2.html" data-kw="egfr 肾小球 肾功能 肌酐" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">egfr计算器_egfr计算公式</span><span class="c">肾小球滤过率估算</span></span></a>
-    <a class="item" href="./health2.html#name" data-page="health2.html" data-kw="百家姓 姓氏 排名" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-book"/></svg></span><span class="t"><span class="n">百家姓排名_百家姓</span><span class="c">姓氏来源与排名</span></span></a>
-    <a class="item" href="./finance.html#bmi" data-page="finance.html" data-kw="体脂 体脂率 体脂率计算" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">体脂率在线计算器</span><span class="c">按身高体重腰围估算</span></span></a>
-    <a class="item" href="./finance.html#bmr" data-page="finance.html" data-kw="基础代谢 bmr 代谢" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">基础代谢率计算器</span><span class="c">BMR 每日能耗估算</span></span></a>
-    <a class="item" href="./date.html#age" data-page="date.html" data-kw="年龄 周岁 生日" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">年龄计算器在线计算</span><span class="c">周岁虚岁与生日倒计时</span></span></a>
-    <a class="item" href="./life2.html#retire" data-page="life2.html" data-kw="退休 倒计时" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">退休倒计时计算器</span><span class="c">距退休还剩多少天</span></span></a>
-    <a class="item" href="./date.html#diff" data-page="date.html" data-kw="时间间隔 日期差 间隔天数" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">时间间隔计算器</span><span class="c">两个日期相差多少天</span></span></a>
-    <a class="item" href="./life2.html#retire" data-page="life2.html" data-kw="退休 退休年龄 延迟退休" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">退休年龄计算器</span><span class="c">延迟退休后的退休时点</span></span></a>
-    <a class="item" href="./life2.html#fuel" data-page="life2.html" data-kw="油耗 百公里油耗 耗油" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-flow"/></svg></span><span class="t"><span class="n">油耗计算器</span><span class="c">百公里油耗与油费</span></span></a>
-    <a class="item" href="./tax2.html#labor" data-page="tax2.html" data-kw="劳务报酬 劳务费 个税" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">劳务报酬所得税计算器</span><span class="c">劳务报酬个税测算</span></span></a>
-    <a class="item" href="./tax2.html#all" data-page="tax2.html" data-kw="税 税额 增值税 税金" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">税额计算器</span><span class="c">含税价与税额互算</span></span></a>
-    <a class="item" href="./life2.html#pension" data-page="life2.html" data-kw="退休金 养老金 退休工资" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-coin"/></svg></span><span class="t"><span class="n">退休金计算器</span><span class="c">账户总额与缴费年限测算</span></span></a>
-    <a class="item" href="./finance.html#salary" data-page="finance.html" data-kw="个税 专项扣除 专项附加扣除" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">个税专项扣除计算器</span><span class="c">专项附加扣除后个税</span></span></a>
-    <a class="item" href="./finance.html#bmi" data-page="finance.html" data-kw="bmi 体重指数 胖瘦" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">BMI计算器公式</span><span class="c">体重指数与胖瘦区间</span></span></a>
-    <a class="item" href="./media.html#gps" data-page="media.html" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-pin"/></svg></span><span class="t"><span class="n">经纬度拾取_高德经纬度拾取</span><span class="c">地图点选取经纬度</span></span></a>
+    <a class="item" href="./holiday.html" data-page="holiday.html" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">2026年放假安排</span><span class="c">放假安排</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./holiday.html" data-page="holiday.html" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">2025年放假安排</span><span class="c">放假安排</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./finance.html#salary" data-page="finance.html" data-kw="个税 个税计算 工资 到手工资 个税专项" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">个人所得税计算器</span><span class="c">财税与健康</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./finance.html#bonus" data-page="finance.html" data-kw="年终奖 个税 奖金" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">年终奖计算器_年终奖个税计算器</span><span class="c">财税与健康</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./media.html#ruler" data-page="media.html" data-kw="尺子 测量 长度 屏幕尺" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-ruler"/></svg></span><span class="t"><span class="n">在线尺子测量工具</span><span class="c">图片与坐标</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./clock.html#clock" data-page="clock.html" data-kw="时钟 毫秒 时间" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线毫秒时钟显示</span><span class="c">在线时钟</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./health2.html#preg" data-page="health2.html" data-kw="胎儿 体重 孕检 胎儿体重" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">胎儿体重计算器在线</span><span class="c">健康与证件</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./health2.html#card" data-page="health2.html" data-kw="身份证 年龄 证件 校验" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-id"/></svg></span><span class="t"><span class="n">身份证号提取年龄</span><span class="c">健康与证件</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./health2.html#preg" data-page="health2.html" data-kw="预产期 怀孕 孕周" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">预产期计算器在线计算</span><span class="c">健康与证件</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./life2.html#bond" data-page="life2.html" data-kw="国债 利息 收益率" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-coin"/></svg></span><span class="t"><span class="n">10万国债一年多少利息_国债收益率计算</span><span class="c">日常计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./health2.html#bmi" data-page="health2.html" data-kw="内衣 尺码 胸围 罩杯" style="--ic:#475569;--ic-bg:#eceff3"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-tag"/></svg></span><span class="t"><span class="n">内衣尺码表_内衣尺码对照表</span><span class="c">健康与证件</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./health2.html#egfr" data-page="health2.html" data-kw="egfr 肾小球 肾功能 肌酐" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">egfr计算器_egfr计算公式</span><span class="c">健康与证件</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./health2.html#name" data-page="health2.html" data-kw="百家姓 姓氏 排名" style="--ic:#0f8f74;--ic-bg:#e3f5f0"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-book"/></svg></span><span class="t"><span class="n">百家姓排名_百家姓</span><span class="c">健康与证件</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./finance.html#bmi" data-page="finance.html" data-kw="体脂 体脂率 体脂率计算" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">体脂率在线计算器</span><span class="c">财税与健康</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./finance.html#bmr" data-page="finance.html" data-kw="基础代谢 bmr 代谢" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">基础代谢率计算器</span><span class="c">财税与健康</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./date.html#age" data-page="date.html" data-kw="年龄 周岁 生日" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">年龄计算器在线计算</span><span class="c">日期与时间</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./life2.html#retire" data-page="life2.html" data-kw="退休 倒计时" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">退休倒计时计算器</span><span class="c">日常计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./date.html#diff" data-page="date.html" data-kw="时间间隔 日期差 间隔天数" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">时间间隔计算器</span><span class="c">日期与时间</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./life2.html#retire" data-page="life2.html" data-kw="退休 退休年龄 延迟退休" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">退休年龄计算器</span><span class="c">日常计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./life2.html#fuel" data-page="life2.html" data-kw="油耗 百公里油耗 耗油" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-flow"/></svg></span><span class="t"><span class="n">油耗计算器</span><span class="c">日常计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./tax2.html#labor" data-page="tax2.html" data-kw="劳务报酬 劳务费 个税" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">劳务报酬所得税计算器</span><span class="c">税额计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./tax2.html#all" data-page="tax2.html" data-kw="税 税额 增值税 税金" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">税额计算器</span><span class="c">税额计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./life2.html#pension" data-page="life2.html" data-kw="退休金 养老金 退休工资" style="--ic:#d97706;--ic-bg:#fdf1de"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-coin"/></svg></span><span class="t"><span class="n">退休金计算器</span><span class="c">日常计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./finance.html#salary" data-page="finance.html" data-kw="个税 专项扣除 专项附加扣除" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-percent"/></svg></span><span class="t"><span class="n">个税专项扣除计算器</span><span class="c">财税与健康</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./finance.html#bmi" data-page="finance.html" data-kw="bmi 体重指数 胖瘦" style="--ic:#e11d48;--ic-bg:#fde7ec"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-heart"/></svg></span><span class="t"><span class="n">BMI计算器公式</span><span class="c">财税与健康</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./media.html#gps" data-page="media.html" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-pin"/></svg></span><span class="t"><span class="n">经纬度拾取_高德经纬度拾取</span><span class="c">图片与坐标</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
   </div>
 </section>
 <section class="cat" id="cat-other">
   <div class="cat-hd">
-    <h2 id="h-cat-other">小工具 <small>19 项</small></h2>
+    <h2>小工具 <small>19 项</small></h2>
     <p>随机生成、图片处理、趣味测试</p>
   </div>
   <div class="items">
-    <a class="item" href="./hash.html#md5" data-page="hash.html" data-kw="md5 摘要 校验 文件校验" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-hash"/></svg></span><span class="t"><span class="n">文件md5计算</span><span class="c">文件或文本 MD5 校验</span></span></a>
-    <a class="item" href="./game.html#guess" data-page="game.html" data-kw="猜数字 小游戏 游戏" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">数字小游戏</span><span class="c">猜数字小游戏</span></span></a>
-    <a class="item" href="./media.html#zip" data-page="media.html" data-kw="图片 压缩 图片压缩 图片处理 水印" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-image"/></svg></span><span class="t"><span class="n">图片压缩_压缩图片在线工具</span><span class="c">本地压缩，图片不上传</span></span></a>
-    <a class="item" href="./random.html#roll" data-page="random.html" data-kw="点名 随机点名 抽人" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">在线学生随机点名器</span><span class="c">随机抽人，不重复</span></span></a>
-    <a class="item" href="./codec.html#qrread" data-page="codec.html" data-kw="二维码 扫码 识别 解析" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-qr"/></svg></span><span class="t"><span class="n">二维码识别_二维码在线识别</span><span class="c">从图片里读出二维码</span></span></a>
-    <a class="item" href="./random.html#pass" data-page="random.html" data-kw="密码 随机密码 密码生成" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-key"/></svg></span><span class="t"><span class="n">随机密码生成器_生成随机密码</span><span class="c">按长度与字符集生成</span></span></a>
-    <a class="item" href="./clock.html#stopwatch" data-page="clock.html" data-kw="秒表 计时 毫秒 计时器" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线秒表毫秒计时器</span><span class="c">毫秒级计时与计次</span></span></a>
-    <a class="item" href="./game.html#reaction" data-page="game.html" data-kw="反应 反应速度 反应测试" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">反应速度测试_测试反应速度</span><span class="c">测你的反应时间</span></span></a>
-    <a class="item" href="./random.html#num" data-page="random.html" data-kw="随机数 随机数字" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-dice"/></svg></span><span class="t"><span class="n">随机数生成器在线版</span><span class="c">指定范围随机取数</span></span></a>
-    <a class="item" href="./game.html#cps" data-page="game.html" data-kw="cps 手速 点击速度" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">CPS测试手速测试</span><span class="c">每秒点击次数测试</span></span></a>
-    <a class="item" href="./number.html#steel" data-page="number.html" data-kw="钢管 重量 钢材" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-scale"/></svg></span><span class="t"><span class="n">钢管重量计算器_计算公式</span><span class="c">按外径壁厚算每米重量</span></span></a>
-    <a class="item" href="./game.html#count" data-page="game.html" data-kw="计数器 计数" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">计数器在线</span><span class="c">手动加减计数</span></span></a>
-    <a class="item" href="./game.html#magnet" data-page="game.html" data-kw="种子 磁力 bt 磁力链接" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-dice"/></svg></span><span class="t"><span class="n">种子转磁力</span><span class="c">种子文件转磁力链接</span></span></a>
-    <a class="item" href="./date.html#week" data-page="date.html" data-kw="周 周数 第几周 星期" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">今天是第几周_今天第几周</span><span class="c">当前周数与星期</span></span></a>
-    <a class="item" href="./net.html#subnet" data-page="net.html" data-kw="子网掩码 子网 ip 网段" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-network"/></svg></span><span class="t"><span class="n">子网掩码计算器</span><span class="c">CIDR 与可用地址段</span></span></a>
-    <a class="item" href="./clock.html#stopwatch" data-page="clock.html" data-kw="秒表 计时" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线秒表</span><span class="c">计时与分段记录</span></span></a>
-    <a class="item" href="./codec.html#qr" data-page="codec.html" data-kw="二维码 生成 二维码生成" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-qr"/></svg></span><span class="t"><span class="n">二维码生成器</span><span class="c">文本 / 网址转二维码</span></span></a>
-    <a class="item" href="./codec.html#bar" data-page="codec.html" data-kw="条形码 条码 code128 ean upc" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-barcode"/></svg></span><span class="t"><span class="n">条形码生成器</span><span class="c">Code128 / EAN 条码生成</span></span></a>
-    <a class="item" href="./random.html#mac" data-page="random.html" data-kw="mac 物理地址 网卡地址" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-network"/></svg></span><span class="t"><span class="n">在线MAC地址生成器</span><span class="c">随机或按前缀生成</span></span></a>
+    <a class="item" href="./hash.html#md5" data-page="hash.html" data-kw="md5 摘要 校验 文件校验" style="--ic:#c2410c;--ic-bg:#fdeee5"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-hash"/></svg></span><span class="t"><span class="n">文件md5计算</span><span class="c">哈希与摘要</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#guess" data-page="game.html" data-kw="猜数字 小游戏 游戏" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">数字小游戏</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./media.html#zip" data-page="media.html" data-kw="图片 压缩 图片压缩 图片处理 水印" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-image"/></svg></span><span class="t"><span class="n">图片压缩_压缩图片在线工具</span><span class="c">图片与坐标</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./random.html#roll" data-page="random.html" data-kw="点名 随机点名 抽人" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">在线学生随机点名器</span><span class="c">随机生成</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./codec.html#qrread" data-page="codec.html" data-kw="二维码 扫码 识别 解析" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-qr"/></svg></span><span class="t"><span class="n">二维码识别_二维码在线识别</span><span class="c">二维码与条形码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./random.html#pass" data-page="random.html" data-kw="密码 随机密码 密码生成" style="--ic:#6b4fd8;--ic-bg:#eee9fb"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-key"/></svg></span><span class="t"><span class="n">随机密码生成器_生成随机密码</span><span class="c">随机生成</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./clock.html#stopwatch" data-page="clock.html" data-kw="秒表 计时 毫秒 计时器" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线秒表毫秒计时器</span><span class="c">在线时钟</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#reaction" data-page="game.html" data-kw="反应 反应速度 反应测试" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">反应速度测试_测试反应速度</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./random.html#num" data-page="random.html" data-kw="随机数 随机数字" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-dice"/></svg></span><span class="t"><span class="n">随机数生成器在线版</span><span class="c">随机生成</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#cps" data-page="game.html" data-kw="cps 手速 点击速度" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">CPS测试手速测试</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./number.html#steel" data-page="number.html" data-kw="钢管 重量 钢材" style="--ic:#0891b2;--ic-bg:#e0f4f9"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-scale"/></svg></span><span class="t"><span class="n">钢管重量计算器_计算公式</span><span class="c">数字与单位</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#count" data-page="game.html" data-kw="计数器 计数" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-game"/></svg></span><span class="t"><span class="n">计数器在线</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./game.html#magnet" data-page="game.html" data-kw="种子 磁力 bt 磁力链接" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-dice"/></svg></span><span class="t"><span class="n">种子转磁力</span><span class="c">趣味测试</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./date.html#week" data-page="date.html" data-kw="周 周数 第几周 星期" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-calendar"/></svg></span><span class="t"><span class="n">今天是第几周_今天第几周</span><span class="c">日期与时间</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./net.html#subnet" data-page="net.html" data-kw="子网掩码 子网 ip 网段" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-network"/></svg></span><span class="t"><span class="n">子网掩码计算器</span><span class="c">网络计算</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./clock.html#stopwatch" data-page="clock.html" data-kw="秒表 计时" style="--ic:#7c3aed;--ic-bg:#f0e9fe"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-clock"/></svg></span><span class="t"><span class="n">在线秒表</span><span class="c">在线时钟</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./codec.html#qr" data-page="codec.html" data-kw="二维码 生成 二维码生成" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-qr"/></svg></span><span class="t"><span class="n">二维码生成器</span><span class="c">二维码与条形码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./codec.html#bar" data-page="codec.html" data-kw="条形码 条码 code128 ean upc" style="--ic:#db2777;--ic-bg:#fde8f1"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-barcode"/></svg></span><span class="t"><span class="n">条形码生成器</span><span class="c">二维码与条形码</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
+    <a class="item" href="./random.html#mac" data-page="random.html" data-kw="mac 物理地址 网卡地址" style="--ic:#1668dc;--ic-bg:#e8f1fd"><span class="thumb"><svg class="ico" aria-hidden="true"><use href="#ic-network"/></svg></span><span class="t"><span class="n">在线MAC地址生成器</span><span class="c">随机生成</span></span><span class="go" aria-hidden="true"><svg class="ico"><use href="#ic-arrow"/></svg></span></a>
   </div>
 </section>
-  </div>
+    </div>
 
-  <footer>
-    全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。
-  </footer>
+    <footer>
+      <p>全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。</p>
+      <p class="dim">站点名与官网无关，页面实现均为本仓库自写。</p>
+    </footer>
+  </div>
 </main>
 
 <script>
 (function () {
   'use strict';
   var items = [].slice.call(document.querySelectorAll('.item'));
-  var groups = [].slice.call(document.querySelectorAll('.cat, .cats'));
+  var cats = [].slice.call(document.querySelectorAll('.cat'));
+  var navs = [].slice.call(document.querySelectorAll('.cats .nav'));
   var q = document.getElementById('q');
   var empty = document.getElementById('empty');
+  var nav = document.querySelector('.cats');
 
+  // 搜索：命中就只留命中的条目本身，分类导航与空分类一并收起
   function apply() {
     var kw = q.value.trim().toLowerCase();
-    var hits = 0;
+    var hits = 0, catsOn = {};
     items.forEach(function (a) {
-      // 只按本条目自己的文字判定，命中即单独显示这一条。
-      // 名称与副标题之外，再看 data-kw 里为搜索专写的别名。
+      // 只按本条目自己的文字判定；名称与副标题之外，再看 data-kw 里为搜索专写的别名。
       var hit = !kw || ((a.textContent + ' ' + (a.getAttribute('data-kw') || ''))
         .toLowerCase().indexOf(kw) >= 0);
       a.hidden = !hit;
-      if (hit) hits++;
-    });
-    // 搜索时收起分类导航与未命中的分类，只留命中的条目本身
-    groups.forEach(function (g) {
-      if (g.classList.contains('cats')) {
-        g.hidden = !!kw;
-      } else {
-        g.hidden = !g.querySelector('.item:not([hidden])');
+      if (hit) {
+        hits++;
+        catsOn[a.closest('.cat').id] = 1;
       }
     });
+    cats.forEach(function (c) { c.hidden = !catsOn[c.id]; });
+    nav.hidden = !!kw;
+    navs.forEach(function (a) { a.hidden = !catsOn[a.getAttribute('href').slice(1)]; });
     empty.hidden = hits > 0;
   }
 
   q.addEventListener('input', apply);
+  // 手机上敲完就收起键盘，别挡住下面刚筛出来的条目
+  q.addEventListener('change', function () { q.blur(); });
+
+  // 深浅色：跟随系统，手动切过就记住（离线打开时 localStorage 可能不可用，忽略异常）
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem('theme');
+    if (saved) root.setAttribute('data-theme', saved);
+  } catch (e) {}
+  document.getElementById('theme').addEventListener('click', function () {
+    var now = root.getAttribute('data-theme');
+    if (!now) {
+      now = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var next = now === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+  });
+
+  // 分类导航横滑时把当前分类的胶囊滚进视野，省得滑到一半不知道在哪
+  var catBox = document.querySelector('#list');
+  if (catBox && 'IntersectionObserver' in window) {
+    var pick = new IntersectionObserver(function (rows) {
+      var on = null;
+      rows.forEach(function (r) { if (r.isIntersecting) on = r.target.id; });
+      if (!on) return;
+      navs.forEach(function (a) {
+        var cur = a.getAttribute('href') === '#' + on;
+        a.classList.toggle('on', cur);
+        if (cur && a.scrollIntoView) {
+          a.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+      });
+    }, { rootMargin: '-72px 0px -70% 0px' });
+    cats.forEach(function (c) { if (c.id !== 'cat-special') pick.observe(c); });
+  }
 })();
 </script>
 </body>

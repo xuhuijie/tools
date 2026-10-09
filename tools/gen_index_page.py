@@ -27,9 +27,17 @@ CATEGORIES = [
     ('other', '小工具', '随机生成、图片处理、趣味测试'),
 ]
 
+# 分类导航胶囊的图标：按分类语义挑一个，跟条目的图标集同一套
+CAT_ICONS = {
+    'master': 'browser',
+    'code': 'code',
+    'learn': 'graph',
+    'live': 'heart',
+    'other': 'dice',
+}
+
 # 每条工具的副标题：一句话说清「它是干什么的」，写死在这里而不是抓清单描述。
 # 清单描述是给搜索引擎看的（「在线XX工具，可对...」），句长、重复名称，铺在首页等于没写。
-# 拿不到副标题的条目会退回 PAGE_NAMES[page]（页面名），仅作兜底——正常不该走到。
 ENTRY_SUBS = json.loads((HERE / 'entry_subs.json').read_text(encoding='utf-8'))
 
 
@@ -509,20 +517,25 @@ def icon_svg(key, cls='ico'):
     return '<svg class="%s" aria-hidden="true"><use href="#ic-%s"/></svg>' % (cls, key)
 
 
-def item_html(href, name, sub, icon_key, tab=None, keywords=''):
+def item_html(href, name, sub, icon_key, tab=None, keywords='', badge=None):
     """带图标的工具条目：左侧色块图标，右侧名称与副标题。
 
     带 tab 时链接写成 ./page.html#tab，点开直达该条工具自己的页签。
     keywords 写进 data-kw，搜索时一并匹配——别名只给搜索用，不占版面。
+    badge 是条目右上角的角标（专项工具用「自研」这类，提醒它不是清单里的搬运项）。
     """
     color, soft = index_icons.color_of(icon_key)
     url = href + ('#' + tab if tab else '')
     kw = (' data-kw="%s"' % esc(keywords)) if keywords else ''
+    tag = ('<span class="badge">%s</span>' % esc(badge)) if badge else ''
     return (
         '<a class="item" href="./%s" data-page="%s"%s style="--ic:%s;--ic-bg:%s">'
         '<span class="thumb">%s</span>'
-        '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>'
-        '</a>' % (esc(url), esc(href), kw, color, soft, icon_svg(icon_key), esc(name), esc(sub))
+        '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>%s'
+        '<span class="go" aria-hidden="true">'
+        '<svg class="ico"><use href="#ic-arrow"/></svg></span>'
+        '</a>' % (esc(url), esc(href), kw, color, soft, icon_svg(icon_key),
+                  esc(name), esc(sub), tag)
     )
 
 
@@ -541,36 +554,36 @@ def main():
         items = catalog[key]
         total += len(items)
         rows = []
-        pages = []
         for url, meta in items:
             page = local.get(url)
             if not page:
                 raise SystemExit('条目缺少本地实现映射：' + url)
-            if page not in pages:
-                pages.append(page)
             rows.append(item_html(page, meta['name'],
                                   ENTRY_SUBS.get(meta['name'], PAGE_NAMES[page]),
                                   index_icons.icon_of(meta['name']),
                                   ENTRY_TABS.get(meta['name']),
                                   SEARCH_ALIAS.get(meta['name'], '')))
+        icon = CAT_ICONS.get(key, 'wrench')
         navs.append(
-            '<a class="nav" href="#cat-%s">%s<span>%d</span></a>'
-            % (key, esc(title), len(items))
+            '<a class="nav" href="#cat-%s" style="--ic:%s">'
+            '<svg class="ico"><use href="#ic-%s"/></svg>'
+            '<b>%s</b><span>%d 项</span></a>'
+            % (key, index_icons.color_of(icon)[0], icon, esc(title), len(items))
         )
         sections.append(
             '<section class="cat" id="cat-%s">\n'
             '  <div class="cat-hd">\n'
-            '    <h2 id="h-cat-%s">%s <small>%d 项</small></h2>\n'
+            '    <h2>%s <small>%d 项</small></h2>\n'
             '    <p>%s</p>\n'
             '  </div>\n'
             '  <div class="items">\n    %s\n  </div>\n'
-            '</section>' % (key, key, esc(title), len(items),
+            '</section>' % (key, esc(title), len(items),
                             esc(subtitle), '\n    '.join(rows))
         )
 
     specials = '\n      '.join(
-        item_html(page, name, desc, icon_key,
-                  keywords=SEARCH_ALIAS.get(name, ''))
+        item_html(page, name, desc, icon_key, keywords=SEARCH_ALIAS.get(name, ''),
+                  badge='自研')
         for page, name, desc, icon_key in SPECIAL
     )
 
@@ -580,90 +593,148 @@ def main():
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
-<title>工具合集</title>
+<title>工具合集 · 离线可用的中文小工具</title>
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
 %s
 
-<header>
-  <div class="wrap">
-    <h1><span class="logo">%s</span>工具合集</h1>
-    <p>全离线可用的浏览器端工具集，打开即算，数据不出本机</p>
-    <div class="stats">
-      <span><b>%d</b>个工具</span>
-      <span><b>%d</b>个分类</span>
-      <span><b>0</b>依赖联网</span>
+<header class="hd">
+  <div class="wrap hd-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg class="ico"><use href="#ic-grid"/></svg></span>
+      <span class="bt">
+        <h1>工具合集</h1>
+        <p>中文小工具，打开即用</p>
+      </span>
+    </div>
+    <div class="hd-side">
+      <span class="tagline">纯浏览器计算 · 数据不出本机</span>
+      <button id="theme" type="button" aria-label="切换深浅色">
+        <svg class="ico moon" aria-hidden="true"><use href="#ic-moon"/></svg>
+        <svg class="ico sun" aria-hidden="true"><use href="#ic-sun"/></svg>
+      </button>
     </div>
   </div>
 </header>
 
 <main>
-  <div class="search-row">
-    <input id="q" type="search" placeholder="搜索工具，如 编码 / 二维码 / 面积">
-  </div>
-
-  <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
-
-  <section class="cat" id="cat-special">
-    <div class="cat-hd">
-      <h2>专项工具 <small>%d 项</small></h2>
-    </div>
-    <div class="items">
-      %s
+  <section class="hero">
+    <div class="wrap">
+      <div class="stats">
+        <span class="stat"><b>%d</b> 个工具</span>
+        <span class="stat"><b>%d</b> 个页面</span>
+        <span class="stat"><b>%d</b> 个分类</span>
+      </div>
+      <div class="search-row">
+        <svg class="ico" aria-hidden="true"><use href="#ic-search"/></svg>
+        <input id="q" type="search" placeholder="搜索工具，如 编码 / 二维码 / 面积 / 个税">
+        <span class="kbd">/</span>
+      </div>
     </div>
   </section>
 
-  <nav class="cats">
-    %s
-  </nav>
+  <div class="wrap">
+    <nav class="cats" aria-label="分类导航">
+      %s
+    </nav>
 
-  <div id="list">
+    <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
+
+    <section class="cat" id="cat-special">
+      <div class="cat-hd">
+        <h2>专项工具 <small>%d 项</small></h2>
+        <p>本仓库自研，清单里没有对应款</p>
+      </div>
+      <div class="items">
+      %s
+      </div>
+    </section>
+
+    <div id="list">
 %s
-  </div>
+    </div>
 
-  <footer>
-    全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。
-  </footer>
+    <footer>
+      <p>全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。</p>
+      <p class="dim">站点名与官网无关，页面实现均为本仓库自写。</p>
+    </footer>
+  </div>
 </main>
 
 <script>
 (function () {
   'use strict';
   var items = [].slice.call(document.querySelectorAll('.item'));
-  var groups = [].slice.call(document.querySelectorAll('.cat, .cats'));
+  var cats = [].slice.call(document.querySelectorAll('.cat'));
+  var navs = [].slice.call(document.querySelectorAll('.cats .nav'));
   var q = document.getElementById('q');
   var empty = document.getElementById('empty');
+  var nav = document.querySelector('.cats');
 
+  // 搜索：命中就只留命中的条目本身，分类导航与空分类一并收起
   function apply() {
     var kw = q.value.trim().toLowerCase();
-    var hits = 0;
+    var hits = 0, catsOn = {};
     items.forEach(function (a) {
-      // 只按本条目自己的文字判定，命中即单独显示这一条。
-      // 名称与副标题之外，再看 data-kw 里为搜索专写的别名。
+      // 只按本条目自己的文字判定；名称与副标题之外，再看 data-kw 里为搜索专写的别名。
       var hit = !kw || ((a.textContent + ' ' + (a.getAttribute('data-kw') || ''))
         .toLowerCase().indexOf(kw) >= 0);
       a.hidden = !hit;
-      if (hit) hits++;
-    });
-    // 搜索时收起分类导航与未命中的分类，只留命中的条目本身
-    groups.forEach(function (g) {
-      if (g.classList.contains('cats')) {
-        g.hidden = !!kw;
-      } else {
-        g.hidden = !g.querySelector('.item:not([hidden])');
+      if (hit) {
+        hits++;
+        catsOn[a.closest('.cat').id] = 1;
       }
     });
+    cats.forEach(function (c) { c.hidden = !catsOn[c.id]; });
+    nav.hidden = !!kw;
+    navs.forEach(function (a) { a.hidden = !catsOn[a.getAttribute('href').slice(1)]; });
     empty.hidden = hits > 0;
   }
 
   q.addEventListener('input', apply);
+  // 手机上敲完就收起键盘，别挡住下面刚筛出来的条目
+  q.addEventListener('change', function () { q.blur(); });
+
+  // 深浅色：跟随系统，手动切过就记住（离线打开时 localStorage 可能不可用，忽略异常）
+  var root = document.documentElement;
+  try {
+    var saved = localStorage.getItem('theme');
+    if (saved) root.setAttribute('data-theme', saved);
+  } catch (e) {}
+  document.getElementById('theme').addEventListener('click', function () {
+    var now = root.getAttribute('data-theme');
+    if (!now) {
+      now = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var next = now === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+  });
+
+  // 分类导航横滑时把当前分类的胶囊滚进视野，省得滑到一半不知道在哪
+  var catBox = document.querySelector('#list');
+  if (catBox && 'IntersectionObserver' in window) {
+    var pick = new IntersectionObserver(function (rows) {
+      var on = null;
+      rows.forEach(function (r) { if (r.isIntersecting) on = r.target.id; });
+      if (!on) return;
+      navs.forEach(function (a) {
+        var cur = a.getAttribute('href') === '#' + on;
+        a.classList.toggle('on', cur);
+        if (cur && a.scrollIntoView) {
+          a.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+      });
+    }, { rootMargin: '-72px 0px -70%% 0px' });
+    cats.forEach(function (c) { if (c.id !== 'cat-special') pick.observe(c); });
+  }
 })();
 </script>
 </body>
 </html>
-''' % (index_icons.sprite(), icon_svg('layers'), total, len(CATEGORIES),
-        len(SPECIAL), specials, '\n    '.join(navs), '\n'.join(sections))
+''' % (index_icons.sprite(), total, len(PAGE_NAMES), len(CATEGORIES),
+            '\n      '.join(navs), len(SPECIAL), specials, '\n'.join(sections))
 
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
     print('wrote docs/index.html', len(page), 'bytes;', total,
