@@ -593,7 +593,7 @@ def main():
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
-<title>工具合集 · 离线可用的中文小工具</title>
+<title>工具合集 · 打开即用的中文小工具</title>
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
@@ -609,7 +609,7 @@ def main():
       </span>
     </div>
     <div class="hd-side">
-      <span class="tagline">纯浏览器计算 · 数据不出本机</span>
+      <span class="tagline">纯浏览器计算 · 打开即用</span>
       <button id="theme" type="button" aria-label="切换深浅色">
         <svg class="ico moon" aria-hidden="true"><use href="#ic-moon"/></svg>
         <svg class="ico sun" aria-hidden="true"><use href="#ic-sun"/></svg>
@@ -656,7 +656,7 @@ def main():
     </div>
 
     <footer>
-      <p>全部页面为浏览器端离线计算，打开 html 即可使用，不上传数据。</p>
+      <p>全部页面为浏览器端计算，打开 html 即可使用。</p>
       <p class="dim">站点名与官网无关，页面实现均为本仓库自写。</p>
     </footer>
   </div>
