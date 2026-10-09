@@ -70,7 +70,24 @@ main{max-width:1440px;margin:0 auto;padding:0 16px 0}
   :root:not([data-theme=light]) #theme .moon{display:block}
   :root:not([data-theme=light]) #theme .sun{display:none}
 }
-@media(max-width:520px){.tagline{display:none}}
+/* 更新按钮：与主题键同款外形，多一个文字标签承载状态（检查中/已是最新/失败） */
+#update{-webkit-appearance:none;appearance:none;cursor:pointer;color:#fff;
+  height:32px;border-radius:10px;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.24);display:flex;align-items:center;gap:5px;
+  padding:0 10px 0 8px;font:inherit;font-size:12.5px;white-space:nowrap;
+  transition:background .15s}
+#update:active{background:rgba(255,255,255,.26)}
+#update:disabled{cursor:default;opacity:.72}
+#update .ico{width:15px;height:15px}
+#update[data-state=busy] .ico{animation:up-spin .9s linear infinite}
+#update[data-state=ok]{background:rgba(120,230,170,.22);border-color:rgba(120,230,170,.5)}
+#update[data-state=err]{background:rgba(255,140,140,.22);border-color:rgba(255,140,140,.5)}
+@keyframes up-spin{to{transform:rotate(360deg)}}
+@media(max-width:520px){
+  .tagline{display:none}
+  #update{padding:0 8px;gap:4px}
+  #update .ico{width:14px;height:14px}
+}
 
 /* ---- 首屏：统计 + 搜索 ---- */
 .hero{padding:14px 0 2px}

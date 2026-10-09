@@ -12,10 +12,16 @@ import html
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).parent
 DOCS = HERE.parent / 'docs'
+
+# 「更新」按钮的取数地址：用户部署的站点（Cloudflare 静态托管 docs/ 目录）。
+# 站点把 *.html 重定向成无扩展名，整站单文件 all.html 对应 /all。
+# 不写死仓库 raw 地址：仓库是私有的，匿名读不到，只有这个公开站点能匿名拉。
+UPDATE_SITE = 'https://tools.bainuli.dpdns.org/all'
 sys.path.insert(0, str(HERE))
 import index_icons  # noqa: E402
 
@@ -539,6 +545,78 @@ def item_html(href, name, sub, icon_key, tab=None, keywords='', badge=None):
     )
 
 
+def update_script() -> str:
+    """「更新」按钮的脚本：从部署站点拉最新整站单文件，直接换掉当前文档。
+
+    单独成块（不并进首页那段 IIFE）：整站单文件 all.html 里页头会被去掉，
+    按钮挂在导航条上，脚本也得提到文档顶层才对所有页生效——见 tools/bundle_site.py。
+    """
+    return r"""<script id="update-js">
+(function () {
+  'use strict';
+  var btn = document.getElementById('update');
+  if (!btn) return;
+  var txt = btn.querySelector('.up-txt');
+  var SITE = '__SITE__';
+
+  function state(text, kind) { txt.textContent = text; btn.setAttribute('data-state', kind || ''); }
+  function restore() { setTimeout(function () { state('更新', ''); }, 2400); }
+  // 站点上的页面自带 data-ver（打包时写进 <html>），拿它比本页这版新不新
+  function siteVer(html) {
+    var m = /<html[^>]*\sdata-ver="([^"]+)"/.exec(html);
+    return m ? m[1] : '';
+  }
+
+  btn.addEventListener('click', function () {
+    if (btn.disabled) return;
+    if (location.protocol === 'file:') {
+      // 文件管理器打开时是 null 源，跨域 fetch 必被拦，别让用户白等
+      btn.title = '本地打开无法联网更新：请访问线上站点，或重新下载最新页面';
+      state('需联网', 'err');
+      restore();
+      return;
+    }
+    btn.disabled = true;
+    state('检查中…', 'busy');
+    fetch(SITE, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (html) {
+        var mine = document.documentElement.getAttribute('data-ver') || '';
+        if (siteVer(html) && mine && siteVer(html) === mine) {
+          state('已是最新', 'ok'); restore(); btn.disabled = false; return;
+        }
+        state('更新中…', 'busy');
+        // 拿到的是完整单文件，直接替换当前文档，省得手动重下
+        document.open(); document.write(html); document.close();
+      })
+      .catch(function (e) {
+        state('更新失败', 'err');
+        btn.title = '拉取失败：' + e.message + '（可稍后重试，或直接访问 ' + SITE + '）';
+        restore(); btn.disabled = false;
+      });
+  });
+})();
+</script>""".replace('__SITE__', UPDATE_SITE)
+
+
+def build_version() -> str:
+    """页面自报的版本号：优先取当前 git 提交的短 hash。
+
+    更新按钮拿它和站点上的版本比，一致就说「已是最新」。
+    取不到 git（比如在没装 git 的环境里打包）就回落到时间戳——仍是唯一的串，
+    只是「同版本」的判定会退化，不会误报成最新。
+    """
+    try:
+        out = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=HERE,
+                             capture_output=True, text=True, timeout=5)
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except Exception:
+        pass
+    import time
+    return 't' + str(int(time.time()))
+
+
 def main():
     catalog = json.loads((HERE / 'catalog.json').read_text(encoding='utf-8'))
     local = json.loads((HERE / 'local_pages.json').read_text(encoding='utf-8'))
@@ -547,6 +625,8 @@ def main():
     check_search_alias(catalog)
     check_entry_tabs(catalog, local)
     check_entry_subs(catalog)
+
+    ver = build_version()
 
     sections, navs = [], []
     total = 0
@@ -588,7 +668,7 @@ def main():
     )
 
     page = '''<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-ver="%s">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -610,6 +690,10 @@ def main():
     </div>
     <div class="hd-side">
       <span class="tagline">纯浏览器计算 · 数据不出本机</span>
+      <button id="update" type="button" title="从站点拉取最新版本" aria-label="更新到最新版本">
+        <svg class="ico" aria-hidden="true"><use href="#ic-refresh"/></svg>
+        <span class="up-txt">更新</span>
+      </button>
       <button id="theme" type="button" aria-label="切换深浅色">
         <svg class="ico moon" aria-hidden="true"><use href="#ic-moon"/></svg>
         <svg class="ico sun" aria-hidden="true"><use href="#ic-sun"/></svg>
@@ -731,10 +815,12 @@ def main():
   }
 })();
 </script>
+__UPDATE_JS__
 </body>
 </html>
-''' % (index_icons.sprite(), total, len(PAGE_NAMES), len(CATEGORIES),
+''' % (ver, index_icons.sprite(), total, len(PAGE_NAMES), len(CATEGORIES),
             '\n      '.join(navs), len(SPECIAL), specials, '\n'.join(sections))
+    page = page.replace('__UPDATE_JS__', update_script())
 
     (DOCS / 'index.html').write_text(page, encoding='utf-8')
     print('wrote docs/index.html', len(page), 'bytes;', total,
