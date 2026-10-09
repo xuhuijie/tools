@@ -46,6 +46,19 @@ def scope_dollar(code: str) -> str:
     return OWN_DOLLAR_RE.sub(SCOPED_DOLLAR, code)
 
 
+def guard_script(code: str, where: str) -> str:
+    """页内脚本里若出现字面量 </script>，合成的 <script> 会被浏览器当场截断，整页 JS 全废。
+
+    内联单文件（inline_pages.py）早就防了这一手，直接输出成品页时没人防：页面里的
+    字符串一旦写成 '<script>…</script>'（web.js 的 XSS 演示模板就是一例），合成就把
+    后面所有脚本都吃掉，首页成了没脚本的裸页。这里转义成 <\/script>，语义不变。
+    """
+    if '</script' in code:
+        print('  %s：脚本里有字面量 </script>，已转义' % where)
+        code = code.replace('</script', '<\\/script')
+    return code
+
+
 def split(name: str) -> dict:
     """把一份页面拆成 head 样式、正文、页内脚本。"""
     text = (DOCS / name).read_text(encoding='utf-8')
@@ -62,7 +75,7 @@ def split(name: str) -> dict:
         return ''
 
     inner = SCRIPT_RE.sub(pull, inner)
-    own_scripts = [scope_dollar(c) for c in own_scripts]
+    own_scripts = [guard_script(scope_dollar(c), name) for c in own_scripts]
     # 页头 / 页脚由文档统一处理
     inner = re.sub(r'<footer>.*?</footer>', '', inner, flags=re.S)
     inner = re.sub(r'<header>.*?</header>', '', inner, count=1, flags=re.S)
@@ -79,6 +92,7 @@ def is_app_js(code: str) -> bool:
 def main() -> int:
     # app.js 的代码来自 _src 引用的 docs/app.js（已内联进各页，这里单独取原文）
     app_js = (DOCS / SHARED).read_text(encoding='utf-8').strip('\n')
+    app_js = guard_script(app_js, SHARED)
 
     names = sorted(p.name for p in DOCS.glob('*.html') if p.name != 'all.html')
     names.sort(key=lambda n: (n != 'index.html', n))
@@ -109,6 +123,8 @@ def main() -> int:
            '<meta charset="UTF-8">', viewport,
            '<meta name="theme-color" content="#1668dc">',
            '<title>工具合集</title>',
+           '<link rel="icon" href="./favicon.svg" type="image/svg+xml">',
+           '<link rel="apple-touch-icon" href="./apple-touch-icon.png">',
            '<style>\n%s\n\n%s\n\n%s\n</style>' % (shared_css, index_css, '\n\n'.join(styles)),
            '</head>', '<body>',
            '<nav id="site-nav"><a href="#" data-page="index.html">首页</a></nav>',
@@ -120,6 +136,22 @@ def main() -> int:
     got = OUT.read_text(encoding='utf-8').count('<section class="page" data-name=')
     if got != len(pages):
         raise SystemExit('自检失败：section %d 个，页面 %d 个' % (got, len(pages)))
+
+    # 自检：<script> 必须成对。少了就是某段 JS 里漏了字面量 </script>，合成页会当场截断，
+    # 后面全部脚本不执行——首页只剩静态文字，浏览器再去要 favicon 就露在报错里。
+    html = OUT.read_text(encoding='utf-8')
+    n_open, n_close = 0, 0
+    i = 0
+    while True:
+        i = html.find('<script', i)
+        if i < 0:
+            break
+        n_open += 1
+        i += 1
+    n_close = html.count('</script')
+    if n_open != n_close:
+        raise SystemExit('自检失败：<script> %d 个，</script> %d 个，被截断了' % (n_open, n_close))
+
     print('wrote docs/all.html（%d 个页面，%.0f KB）' % (len(pages), OUT.stat().st_size / 1024))
     return 0
 
