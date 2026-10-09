@@ -36,6 +36,11 @@ CAT_ICONS = {
     'other': 'dice',
 }
 
+# 每条工具的副标题：一句话说清「它是干什么的」，写死在这里而不是抓清单描述。
+# 清单描述是给搜索引擎看的（「在线XX工具，可对...」），句长、重复名称，铺在首页等于没写。
+ENTRY_SUBS = json.loads((HERE / 'entry_subs.json').read_text(encoding='utf-8'))
+
+
 PAGE_NAMES = {
     'base.html': '编码解码',
     'cipher.html': '古典密码',
@@ -172,6 +177,22 @@ def check_entry_tabs(catalog, local):
     unused = set(ENTRY_TABS) - seen
     if unused:
         raise SystemExit('映射里的条目已不在清单：' + '、'.join(sorted(unused)))
+
+
+def check_entry_subs(catalog):
+    """每条工具的副标题都必须写过，否则首页会显示成页面名（「编码解码」），等于没说。
+
+    清单里改名、去重后新留下的条目，都会在这里当场露出来，不会悄悄退回兜底文案。
+    """
+    missing = [m['name'] for items in catalog.values() for _, m in items
+               if m['name'] not in ENTRY_SUBS and m['name'] not in {t[1] for t in SPECIAL}]
+    if missing:
+        raise SystemExit('这些条目还没有副标题（补进 entry_subs.json）：' + '、'.join(missing))
+    stale = [n for n in ENTRY_SUBS
+             if n not in {m['name'] for items in catalog.values() for _, m in items}
+             and n not in {t[1] for t in SPECIAL}]
+    if stale:
+        raise SystemExit('副标题表里的条目已不在首页：' + '、'.join(stale))
 
 
 def move_entries(catalog):
@@ -525,6 +546,7 @@ def main():
     catalog, moved = move_entries(catalog)
     check_search_alias(catalog)
     check_entry_tabs(catalog, local)
+    check_entry_subs(catalog)
 
     sections, navs = [], []
     total = 0
@@ -536,7 +558,8 @@ def main():
             page = local.get(url)
             if not page:
                 raise SystemExit('条目缺少本地实现映射：' + url)
-            rows.append(item_html(page, meta['name'], PAGE_NAMES[page],
+            rows.append(item_html(page, meta['name'],
+                                  ENTRY_SUBS.get(meta['name'], PAGE_NAMES[page]),
                                   index_icons.icon_of(meta['name']),
                                   ENTRY_TABS.get(meta['name']),
                                   SEARCH_ALIAS.get(meta['name'], '')))
