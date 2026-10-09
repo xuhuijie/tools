@@ -40,6 +40,24 @@ main{max-width:1440px;margin:0 auto;padding:0 16px 0}
 .ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;
   stroke-linecap:round;stroke-linejoin:round;flex:none}
 
+/* ---- 整站导航：合成单文件里页内页头统一换成这条，左上角是「首页」入口 ---- */
+#site-nav{position:sticky;top:0;z-index:30;display:flex;align-items:center;
+  gap:8px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  -webkit-backdrop-filter:saturate(180%%) blur(10px);backdrop-filter:saturate(180%%) blur(10px);
+  border-bottom:1px solid var(--line)}
+/* 首页自己在最上面，这条入口只在别的页面上出现；JS 里再兜一层，老浏览器也不至于看到死链 */
+#site-nav.on-home{display:none}
+#site-nav a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+  font-size:13.5px;font-weight:600;line-height:1;color:var(--text);
+  background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:7px 13px 7px 10px;box-shadow:var(--shadow);
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease,border-color .12s ease,color .12s ease}
+#site-nav a .ico{width:16px;height:16px;color:var(--primary);stroke-width:1.8}
+#site-nav a:active{transform:scale(.96);border-color:var(--soft-line);color:var(--primary)}
+@media(hover:hover){#site-nav a:hover{border-color:var(--soft-line);color:var(--primary)}}
+
 /* ---- 头部：品牌 + 主题切换，滚动时一直挂着 ---- */
 .hd{position:sticky;top:0;z-index:20;background:var(--hd);color:#fff;
   box-shadow:var(--shadow-hd)}
@@ -160,6 +178,11 @@ main{max-width:1440px;margin:0 auto;padding:0 16px 0}
   transition:opacity .12s,transform .12s;display:none}
 .go .ico{width:16px;height:16px}
 @media(min-width:768px){.go{display:block}}
+
+/* 专项工具：只有三条，用自适应列宽铺开，不做固定列数的空网格 */
+#cat-special{margin-bottom:16px}
+#cat-special .items{grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+#cat-special .item{background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--card) 88%,var(--primary)))}
 
 .empty{font-size:13px;color:var(--sub);text-align:center;padding:28px 0}
 .empty[hidden]{display:none}
