@@ -109,7 +109,7 @@
     ].join('\n'),
     xss: [
       '## XSS 载荷（应被全部剥掉）', '',
-      '<script>alert("script 标签")</script>', '',
+      '<scr'+'ipt>alert("script 标签")</scr'+'ipt>', '',
       '<img src=x onerror="alert(\'onerror\')">', '',
       '<a href="javascript:alert(\'href\')">javascript: 链接</a>', '',
       '<iframe src="https://example.com"></iframe>', '',
