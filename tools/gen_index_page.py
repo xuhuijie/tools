@@ -517,25 +517,23 @@ def icon_svg(key, cls='ico'):
     return '<svg class="%s" aria-hidden="true"><use href="#ic-%s"/></svg>' % (cls, key)
 
 
-def item_html(href, name, sub, icon_key, tab=None, keywords='', badge=None):
+def item_html(href, name, sub, icon_key, tab=None, keywords=''):
     """带图标的工具条目：左侧色块图标，右侧名称与副标题。
 
     带 tab 时链接写成 ./page.html#tab，点开直达该条工具自己的页签。
     keywords 写进 data-kw，搜索时一并匹配——别名只给搜索用，不占版面。
-    badge 是条目右上角的角标（专项工具用「自研」这类，提醒它不是清单里的搬运项）。
     """
     color, soft = index_icons.color_of(icon_key)
     url = href + ('#' + tab if tab else '')
     kw = (' data-kw="%s"' % esc(keywords)) if keywords else ''
-    tag = ('<span class="badge">%s</span>' % esc(badge)) if badge else ''
     return (
         '<a class="item" href="./%s" data-page="%s"%s style="--ic:%s;--ic-bg:%s">'
         '<span class="thumb">%s</span>'
-        '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>%s'
+        '<span class="t"><span class="n">%s</span><span class="c">%s</span></span>'
         '<span class="go" aria-hidden="true">'
         '<svg class="ico"><use href="#ic-arrow"/></svg></span>'
         '</a>' % (esc(url), esc(href), kw, color, soft, icon_svg(icon_key),
-                  esc(name), esc(sub), tag)
+                  esc(name), esc(sub))
     )
 
 
@@ -582,8 +580,7 @@ def main():
         )
 
     specials = '\n      '.join(
-        item_html(page, name, desc, icon_key, keywords=SEARCH_ALIAS.get(name, ''),
-                  badge='自研')
+        item_html(page, name, desc, icon_key, keywords=SEARCH_ALIAS.get(name, ''))
         for page, name, desc, icon_key in SPECIAL
     )
 
