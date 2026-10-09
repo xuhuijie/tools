@@ -2,17 +2,19 @@
 
 工具合集 H5 页面集合，直接用浏览器打开即可使用。
 
-**不依赖构建，每个页面都是自带全部样式与脚本的单文件。** 页面用到的第三方库
-（放在 `docs/lib/`，随仓库提交）在打包时被内联进 HTML，运行时没有任何相对子资源请求——
-这样手机浏览器（如 Edge / 微信）从「下载 / 文件管理器」打开本地 HTML 时也能完整渲染，
-不会出现「静态样式丢失、脚本不跑」的裸页。首页把全部工具按分类铺开，顶部可搜索，
-输入关键词直接命中单项工具。
+**不依赖构建，页面都是自带全部样式与脚本的单文件。** 页面用到的第三方库
+（放在 `docs/lib/`，随仓库提交）在打包时被内联进 HTML，运行时没有任何相对子资源请求，
+手机浏览器（如 Edge / 微信）从「下载 / 文件管理器」打开本地 HTML 也能完整渲染，
+不会出现「静态样式丢失、脚本不跑」的裸页。
+
+分发时给 `docs/index.html` 一个文件就够：它是把全部 30 个页面合成一份的整站单文件，
+点链接在文档内切页，不走文件跳转，离线整站可用。
 
 ## 页面清单
 
 | 页面 | 内容 |
 | --- | --- |
-| `docs/index.html` | 首页：头部 + 统计 + 搜索 + 分类胶囊条 + 专项工具 + 5 个分类，附图标与配色，支持深浅色 |
+| `docs/index.html` | 首页，也是整站单文件：头部 + 统计 + 搜索 + 分类胶囊条 + 5 个分类，含全部页面，附图标与配色，支持深浅色 |
 | `docs/index.css` | 首页样式（手机单列，宽屏按容器宽度自适应多列，深浅两套变量） |
 | `docs/calibration.html` | 电磁水表流量点校准计算 |
 | `docs/gold.html` | 黄金价格换算与斐波那契回调计算 |
@@ -262,7 +264,7 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 ## 首页与工具清单
 
 `docs/index.html` 是唯一入口：全部工具分站长 / 开发 / 学习 / 生活 / 小工具五类铺在首页。
-页面自上而下是**头部（站名 + 深浅色切换）→ 统计与搜索 → 分类胶囊条 → 专项工具 → 五个分类**，
+页面自上而下是**头部（站名 + 深浅色切换）→ 统计与搜索 → 分类胶囊条 → 五个分类**，
 桌面按容器宽度自适应多列铺满，手机单列，点任意条目直接进本地实现页。
 整站没有外链，标签页里也不出现外部站点名。
 
@@ -279,7 +281,8 @@ CRC-16/MODBUS = 0xCDC5      校验字节 C5 CD（低字节先发）
 不会再出现「搜一项、冒一整个大类」的情况。
 
 本仓库自有的 3 个计算页（**电磁水表流量点校准**、**黄金价格换算**、**瞬时流量与流速换算**）
-自成一组，排在搜索栏正下方。改动见 `tools/gen_index_page.py` 的 `SPECIAL`。
+清单里没有对应款，按功能插进各自的分类，跟同类清单条目做邻居（校准与流量跟在「存储单位换算」后、
+金价跟在「个税专项扣除计算器」后）。改动见 `tools/gen_index_page.py` 的 `OWN_PAGES`。
 
 **入页前先去掉重复入口。** 清单里同一个功能常有多条并列条目，全铺上只会让人多点一次，
 因此 `tools/gen_index_page.py` 的 `DUP_ENTRIES` 按「同一页面 + 同一功能」把冗余入口收掉：
@@ -292,7 +295,7 @@ URL 编解码三条、Base 编解码成对条目、正切与正弦、平行四�
 同一功能域用同一组「主色 + 浅底色」，视觉上分层。图标是内联 SVG（`<symbol>` + `<use>`），
 不引外部图标库，断网可用；映射表在 `tools/index_icons.py`，改完重跑 `tools/gen_index_page.py` 即可。
 
-清单条目按主题合并进 25 个实现页，参数与结果都附代入过程便于复核：
+清单条目按主题合并进 25 个实现页（加上 3 个自有页共 28 页），参数与结果都附代入过程便于复核：
 
 | 页面 | 覆盖的工具 |
 | --- | --- |
@@ -393,29 +396,31 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 ## 使用
 
-直接用浏览器打开 `docs/index.html`：全部工具按分类铺在首页，顶部搜索直达单项，点击即进对应计算页。
-也可以直接打开任意页面，或通过静态托管发布（如仓库 Pages / 云原生构建）。
+直接用浏览器打开 `docs/index.html`：它一份就含全部页面，从首页点进去即可，断网可用。
+也可以单独打开 `docs/<页名>.html`，或通过静态托管发布（如仓库 Pages / 云原生构建）。
 
-不需要构建、不需要装依赖、不需要起服务。**派发出去的 `docs/*.html` 都是自包含的单文件**：
+不需要构建、不需要装依赖、不需要起服务。**派发出去的页面都自带全部样式与脚本**：
 页面共用的样式与工具函数（`docs/app.css`、`docs/app.js`）、各页自己的脚本、以及第三方库
-（`docs/lib/`，见该目录 README）在打包时已全部内联，打开时不再请求任何相对资源，断网可用。
+（`docs/lib/`，见该目录 README）在打包时已全部内联，打开时不再请求任何相对资源。
 
 可编辑的源在 `docs/_src/*.html`：里面仍写 `<link href="./app.css">`、`<script src="./app.js">`
-这类引用，改完跑一次 `python3 tools/inline_pages.py`，把资源内联后输出到 `docs/*.html`。
+这类引用。注意首页的源也是 `docs/_src/index.html`——`docs/index.html` 这个路径上放的是
+合成产物，`gen_index_page.py` 因此写进 `_src`。改完依次跑两个脚本：
+`python3 tools/inline_pages.py` 把资源内联成各页单文件，`python3 tools/bundle_index.py`
+再把它们合成整站单文件。
+
 之所以这一层内联不能省：手机版 Edge 从 `content://`（下载 / 文件管理器）打开页面时，
 浏览器会渲染主文档却拦掉相对子资源，页面的样式与脚本全丢，只剩一坨裸文字。
 把资源内联进 HTML 后就没有可拦的子资源，问题不再出现。
 
-### 整站单文件 `docs/all.html`
+### 整站单文件 `docs/index.html`
 
-内联只解决了 css/js 这类子资源；从 `content://` 打开时，页面里 `./page.html` 这种
-「跳到另一个文件」的链接同样会被拦，报「文件找不到」——单独打开某个 html 正常，
-从首页点链接进去就进不去，就是这么来的。
+一个页面一个好分发，30 个页面就不好给了。`tools/bundle_index.py` 把它们合成一份，
+给出一个 html 就是给出全部工具，远程访问与本地打开都不必再点着文件名找。
 
-`python3 tools/bundle_site.py` 把全部 30 个页面合成一份自包含的 `docs/all.html`：
-每页一个 `<section class="page" data-name="xxx.html">`，页内脚本收在 section 里、
-首次切到时才执行；`app.js` 见到这种结构就接管导航，点链接改成文档内切 section，
-不走任何文件跳转，离线也整站可用。分发时给这一个文件就够。
+合成的 `docs/index.html` 里每页一个 `<section class="page" data-name="xxx.html">`，
+页内脚本收在 section 里、首次切到时才执行；`app.js` 见到这种结构就接管导航，
+点链接改成文档内切 section，不走任何文件跳转，离线也整站可用。
 
 各页原本共用同一套 id（`tabs` / `input` / `output`…），合到一份文档里会互相抢，
 所以 `T.$` 只在当前活动页里找；页内自带的 `$` 定义在打包时改写成走 `T.$`，
@@ -431,7 +436,8 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 单文件里 `syncHash` 是 no-op，`firstTab` 也要求「本页真有这个页签」才认——
 否则上一页留下的 `#ssl` 会把这一页顶到默认页签。
 
-散装单页不受影响：`app.js` 里没有 `section.page` 时一切照旧，`docs/*.html` 仍可单独打开。
+散装单页不受影响：`app.js` 里没有 `section.page` 时一切照旧，`docs/*.html` 仍可单独打开
+（`docs/index.html` 除外，那个路径上放的就是合成产物）。
 
 ### 图标与站点杂项
 
@@ -446,7 +452,8 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 页面内**不带自动更新**：分发出去的每一份都是当次打包产物，不自查版本、不联外网。
 
-- 改完页面：`python3 tools/gen_index_page.py` → `python3 tools/bundle_site.py` 重跑产物
+- 改完页面：`python3 tools/gen_index_page.py`（动过首页或清单时）→ `python3 tools/inline_pages.py`
+  → `python3 tools/bundle_index.py`，三者按序跑，`inline_pages.py` 不跑则整站单文件还是旧页
 - 部署：把 `docs/` 目录重新上传到站点（如 Cloudflare），由维护者手动完成
 - 拿到旧版的读者：重新下载 / 重新访问站点即可，页面自己不会去拉新版本
 
@@ -454,7 +461,7 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 ```bash
 python3 -m http.server 8899 --directory docs
-# 首页（全部分类） http://127.0.0.1:8899/index.html
+# 首页（全部分类，也是整站单文件） http://127.0.0.1:8899/index.html
 # 校准页   http://127.0.0.1:8899/calibration.html
 # 黄金页   http://127.0.0.1:8899/gold.html
 # 流量页   http://127.0.0.1:8899/flow.html
@@ -499,16 +506,16 @@ CRC-64/XZ      = 0x995DC9BBDF1939FA（对标准串 "123456789"）
 
 ## 结构
 
-- `docs/*.html` — 派发用的页面，全部自包含（样式与脚本已内联，无相对子资源请求）
+- `docs/index.html` — 派发用的整站单文件（含全部页面）；其余 `docs/*.html` 是各页的内联产物
 - `docs/_src/*.html` — 页面的可编辑源，仍以 `<link>` / `<script src>` 引用同目录资源
 - `docs/index.css`、`docs/app.css`、`docs/app.js`、`docs/*.js` — 各页样式与脚本的源文件
 - `docs/lib/` — 随仓库携带的第三方库（二维码、条码、证书、Markdown 净化），见该目录的 README
-- `tools/inline_pages.py` — 把 `docs/_src/*.html` 里的相对资源内联，产出 `docs/*.html`（幂等）
-- `tools/bundle_site.py` — 把 `docs/*.html` 合成整站单文件 `docs/all.html`（幂等）
-- `tools/smoke_all.py` — 无头 Chrome 过一遍 `docs/all.html` 的每页与每个首页入口
+- `tools/inline_pages.py` — 把 `docs/_src/*.html` 里的相对资源内联，产出 `docs/*.html`（幂等；首页写回 `_src`，`docs/index.html` 留给下面那个）
+- `tools/bundle_index.py` — 把 `docs/*.html` 合成整站单文件 `docs/index.html`（幂等）
+- `tools/smoke_index.py` — 无头 Chrome 过一遍 `docs/index.html` 的每页与每个首页入口
 - `tools/gen_catalog.py` — 一次性导入工具清单，产出 `tools/catalog.json`（日常不需要跑）
 - `tools/index_icons.py` — 首页条目的图标（内联 SVG）与配色映射
-- `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/index.html`，并做重复入口收敛
+- `tools/gen_index_page.py` — 由 catalog、本地映射与图标映射渲染出 `docs/_src/index.html`，并做重复入口收敛
 - `tools/entry_subs.json` — 首页每条工具的一句话副标题（`gen_index_page.py` 会校验一条都不缺）
 - `tools/check_algos.mjs` — 各工具页核心算法的测试向量校验（815 条断言）
 - `tools/smoke.py` — 无头 Chrome 逐页点遍按钮，收集 JS 报错
