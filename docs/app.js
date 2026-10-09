@@ -177,7 +177,7 @@
     document.title = (want.dataset.title || name) + ' · 工具合集';
     applyPageHash(name);
     global.scrollTo(0, 0);
-    // 本页脚本在合成时收进了 <script type="text/x-page-init">，首访才按顺序逐条执行：
+    // 本页脚本在合成时收进了 type 非 JS 的 script 标签，首访才按顺序逐条执行：
     // 不执行的话，页里那些 document.getElementById 会先撞上别页的同名元素。
     // 注意是「逐条」：随页面内联进来的第三方库（DOMPurify、marked、bwip-js）在本页脚本
     // 之前各占一条，只跑第一条的话，本页脚本永远轮不到，按钮点了没反应、页签也切不动。

@@ -433,6 +433,15 @@ SHA 系列走原生 `crypto.subtle`，因此 SHA 需要 https 或 localhost 环�
 
 散装单页不受影响：`app.js` 里没有 `section.page` 时一切照旧，`docs/*.html` 仍可单独打开。
 
+### 图标与站点杂项
+
+- `docs/favicon.svg` / `docs/apple-touch-icon.png`：站点图标，各页 `<head>` 里都引了一份
+- `docs/robots.txt`：允许全站抓取，免掉「不存在的路径也回 500」这类噪声
+
+站点是纯静态托管（如 Cloudflare Pages），**目录下没有的文件一律不回落到首页**。
+所以除了仓库里这几个，别再让页面去要别的根路径文件：浏览器对 `/favicon.ico` 的自动请求
+只会拿到 500，并在控制台留下 `GET /favicon.ico 500 (Internal Server Error)` 这一条。
+
 ### 更新与部署
 
 页面内**不带自动更新**：分发出去的每一份都是当次打包产物，不自查版本、不联外网。

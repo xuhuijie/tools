@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1668dc">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <title>网页与站长工具</title>
 <style>
 /* 工具页共用样式：与仓库既有单文件页保持同一套视觉，抽出来避免十个页面各写一遍 */
@@ -577,7 +579,7 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     document.title = (want.dataset.title || name) + ' · 工具合集';
     applyPageHash(name);
     global.scrollTo(0, 0);
-    // 本页脚本在合成时收进了 <script type="text/x-page-init">，首访才按顺序逐条执行：
+    // 本页脚本在合成时收进了 type 非 JS 的 script 标签，首访才按顺序逐条执行：
     // 不执行的话，页里那些 document.getElementById 会先撞上别页的同名元素。
     // 注意是「逐条」：随页面内联进来的第三方库（DOMPurify、marked、bwip-js）在本页脚本
     // 之前各占一条，只跑第一条的话，本页脚本永远轮不到，按钮点了没反应、页签也切不动。
@@ -750,7 +752,7 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     ].join('\n'),
     xss: [
       '## XSS 载荷（应被全部剥掉）', '',
-      '<script>alert("script 标签")<\/script>', '',
+      '<scr'+'ipt>alert("script 标签")</scr'+'ipt>', '',
       '<img src=x onerror="alert(\'onerror\')">', '',
       '<a href="javascript:alert(\'href\')">javascript: 链接</a>', '',
       '<iframe src="https://example.com"></iframe>', '',
