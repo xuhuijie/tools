@@ -416,6 +416,9 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
     global.__PAGE__ = want;
     document.title = (want.dataset.title || name) + ' · 工具合集';
     applyPageHash(name);
+    // 左上角的「首页」入口：首页自己在最上面，这一条只在别的页面上出现
+    var homeNav = document.getElementById('site-nav');
+    if (homeNav) homeNav.className = name === 'index.html' ? 'on-home' : '';
     global.scrollTo(0, 0);
     // 本页脚本在合成时收进了 type 非 JS 的 script 标签，首访才按顺序逐条执行：
     // 不执行的话，页里那些 document.getElementById 会先撞上别页的同名元素。
@@ -448,6 +451,9 @@ footer a{color:var(--primary);text-decoration:none;margin:0 6px}
   // 首屏落首页：单文件里没有「外部直接进来」的入口，一律从首页开始
   function boot() {
     if (!isHost()) return;
+    // 整站导航的「首页」入口：没有 JS 也能回首页，这里只是把首页自己那一屏的它收起来
+    var nav = document.getElementById('site-nav');
+    if (nav && !document.querySelector(PAGE_SEL + ':not([hidden])')) nav.className = 'on-home';
     if (global.__PAGE__) return;            // 已有活动页，别覆盖
     var want = hashPage();
     if (!want || !pageEl(want)) want = pageEl('index.html') ? 'index.html'

@@ -130,7 +130,10 @@ def main() -> int:
            '<link rel="apple-touch-icon" href="./apple-touch-icon.png">',
            '<style>\n%s\n\n%s\n\n%s\n</style>' % (shared_css, index_css, '\n\n'.join(styles)),
            '</head>', '<body>',
-           '<nav id="site-nav"><a href="#" data-page="index.html">首页</a></nav>',
+           # 页内页头被去掉后，左上角靠这条回首页；带图标与胶囊底，别让它像一行裸文字
+           '<nav id="site-nav"><a href="#" data-page="index.html">'
+           '<svg class="ico" aria-hidden="true"><use href="#ic-home"/></svg>'
+           '<span>首页</span></a></nav>',
            '<main>'] + secs + ['</main>',
            '<script>\n%s\n</script>' % app_js,
            '</body>', '</html>', '']

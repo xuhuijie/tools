@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""渲染 docs/index.html：全部工具按分类铺在首页。
+"""渲染 docs/_src/index.html：搜索栏下方为专项工具，随后全部工具按分类铺在首页。
 
 数据来源 tools/catalog.json（条目与说明）、tools/local_pages.json（条目 → 本地页）
 与 tools/index_icons.py（图标与配色）。条目本身不带外链，点击即进本地实现页。
@@ -155,7 +155,7 @@ def check_search_alias(catalog):
         for url, meta in items:
             names.add(meta['name'])
     for name in SEARCH_ALIAS:
-        if name not in names and name not in OWN_PAGES:
+        if name not in names and name not in {t[1] for t in SPECIAL}:
             raise SystemExit('搜索别名指向的条目已不在清单：' + name)
 
 
@@ -187,12 +187,12 @@ def check_entry_subs(catalog):
     清单里改名、去重后新留下的条目，都会在这里当场露出来，不会悄悄退回兜底文案。
     """
     missing = [m['name'] for items in catalog.values() for _, m in items
-               if m['name'] not in ENTRY_SUBS and m['name'] not in OWN_PAGES]
+               if m['name'] not in ENTRY_SUBS and m['name'] not in {t[1] for t in SPECIAL}]
     if missing:
         raise SystemExit('这些条目还没有副标题（补进 entry_subs.json）：' + '、'.join(missing))
     stale = [n for n in ENTRY_SUBS
              if n not in {m['name'] for items in catalog.values() for _, m in items}
-             and n not in OWN_PAGES]
+             and n not in {t[1] for t in SPECIAL}]
     if stale:
         raise SystemExit('副标题表里的条目已不在首页：' + '、'.join(stale))
 
@@ -250,14 +250,12 @@ def collapse(catalog):
     return out, dropped
 
 
-# 本仓库自有的三个计算页（清单里没有对应款），按功能归进各自的分类，与清单条目同列。
-# 键为条目名；值为页面与图标，以及「插在哪条清单条目后面」——那一条本身就是同类功能，
-# 没有它自有页就落到分类末尾，跟同类工具隔开一屏。
-OWN_PAGES = {
-    '电磁水表流量点校准': ('calibration.html', 'target', '存储单位换算'),
-    '瞬时流量与流速换算': ('flow.html', 'flow', '存储单位换算'),
-    '黄金价格换算': ('gold.html', 'coin', '个税专项扣除计算器'),
-}
+# 本仓库自有的专项工具，不属清单内条目；不标来源，单独一组排在搜索栏下方。
+SPECIAL = [
+    ('calibration.html', '电磁水表流量点校准', '按零点与误差百分比换算各流量点校正值', 'target'),
+    ('gold.html', '黄金价格换算', '美元/盎司 ↔ 人民币/克 双向换算，附斐波那契回调价位', 'coin'),
+    ('flow.html', '瞬时流量与流速换算', 'm³/h ↔ m/s 双向换算，按口径与有效内径占比折算', 'flow'),
+]
 
 # 清单条目 → 目标页面里的页签（data-tab）。
 # 同一张页面装了多个工具，条目不带页签就永远落回页面默认页签——比如「整除计算器」
@@ -513,17 +511,6 @@ SEARCH_ALIAS = {
 }
 
 
-def add_entry(items, name, after):
-    """把自有页作为一个条目插进 after 那条清单条目后面。
-
-    URL 留空：自有页没有对应的清单外链，首页也不该出现外链。
-    """
-    at = next((i for i, (_, m) in enumerate(items) if m['name'] == after), None)
-    if at is None:
-        raise SystemExit('自有页要靠的清单条目不在分类里：' + after)
-    return items[:at + 1] + [('', {'name': name, 'desc': ''})] + items[at + 1:]
-
-
 def esc(s):
     return html.escape(s, quote=True)
 
@@ -562,12 +549,6 @@ def main():
     check_entry_tabs(catalog, local)
     check_entry_subs(catalog)
 
-    # 自有页按功能插进分类（跟各自那条同类清单条目做邻居）
-    for name, (_, _, after) in OWN_PAGES.items():
-        key = next(k for k, items in catalog.items()
-                   if any(m['name'] == after for _, m in items))
-        catalog[key] = add_entry(catalog[key], name, after)
-
     sections, navs = [], []
     total = 0
     for key, title, subtitle in CATEGORIES:
@@ -575,16 +556,12 @@ def main():
         total += len(items)
         rows = []
         for url, meta in items:
-            if meta['name'] in OWN_PAGES:
-                page, icon = OWN_PAGES[meta['name']][:2]
-            else:
-                page = local.get(url)
-                if not page:
-                    raise SystemExit('条目缺少本地实现映射：' + url)
-                icon = index_icons.icon_of(meta['name'])
+            page = local.get(url)
+            if not page:
+                raise SystemExit('条目缺少本地实现映射：' + url)
             rows.append(item_html(page, meta['name'],
                                   ENTRY_SUBS.get(meta['name'], PAGE_NAMES[page]),
-                                  icon,
+                                  index_icons.icon_of(meta['name']),
                                   ENTRY_TABS.get(meta['name']),
                                   SEARCH_ALIAS.get(meta['name'], '')))
         icon = CAT_ICONS.get(key, 'wrench')
@@ -604,6 +581,11 @@ def main():
             '</section>' % (key, esc(title), len(items),
                             esc(subtitle), '\n    '.join(rows))
         )
+
+    specials = '\n      '.join(
+        item_html(page, name, desc, icon_key, keywords=SEARCH_ALIAS.get(name, ''))
+        for page, name, desc, icon_key in SPECIAL
+    )
 
     page = '''<!DOCTYPE html>
 <html lang="zh-CN">
@@ -642,7 +624,7 @@ def main():
       <div class="stats">
         <span class="stat"><b>%d</b> 个工具</span>
         <span class="stat"><b>%d</b> 个页面</span>
-        <span class="stat"><b>%d</b> 个自有页面</span>
+        <span class="stat"><b>%d</b> 个分类</span>
       </div>
       <div class="search-row">
         <svg class="ico" aria-hidden="true"><use href="#ic-search"/></svg>
@@ -658,6 +640,16 @@ def main():
     </nav>
 
     <p class="empty" id="empty" hidden>没有匹配的工具，换个关键词试试。</p>
+
+    <section class="cat" id="cat-special">
+      <div class="cat-hd">
+        <h2>专项工具 <small>%d 项</small></h2>
+        <p>清单里没有对应款，由本仓库单独实现</p>
+      </div>
+      <div class="items">
+      %s
+      </div>
+    </section>
 
     <div id="list">
 %s
@@ -735,14 +727,14 @@ def main():
         }
       });
     }, { rootMargin: '-72px 0px -70%% 0px' });
-    cats.forEach(function (c) { pick.observe(c); });
+    cats.forEach(function (c) { if (c.id !== 'cat-special') pick.observe(c); });
   }
 })();
 </script>
 </body>
 </html>
-''' % (index_icons.sprite(), total, len(PAGE_NAMES), len(OWN_PAGES),
-            '\n      '.join(navs), '\n'.join(sections))
+''' % (index_icons.sprite(), total, len(PAGE_NAMES), len(CATEGORIES),
+            '\n      '.join(navs), len(SPECIAL), specials, '\n'.join(sections))
 
     # 写进 _src：docs/index.html 这个位置留给 bundle_index.py 的整站单文件
     out = DOCS / '_src' / 'index.html'
