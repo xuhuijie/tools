@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""all.html 整站单文件的冒烟：逐个 section 切页，点遍按钮，收集报错。
+"""index.html 整站单文件的冒烟：逐个 section 切页，点遍按钮，收集报错。
 
 用法：
-    python3 tools/smoke_all.py
+    python3 tools/smoke_index.py
 """
 import pathlib
 import re
@@ -15,8 +15,8 @@ CHROME = '/usr/local/bin/chromium'
 
 
 def pages():
-    """从 all.html 里取全部页面名：只认 section 起始标记，不进正文。"""
-    html = (DOCS / 'all.html').read_text(encoding='utf-8')
+    """从 index.html 里取全部页面名：只认 section 起始标记，不进正文。"""
+    html = (DOCS / 'index.html').read_text(encoding='utf-8')
     return re.findall(r'<section class="page" data-name="([^"]+)"', html)
 
 
@@ -31,7 +31,7 @@ def main() -> int:
         page.on('pageerror', lambda e: errors.append('pageerror: ' + str(e)))
         page.on('console', lambda m: errors.append('console: ' + m.text)
                 if m.type == 'error' else None)
-        page.goto((DOCS / 'all.html').as_uri(), wait_until='load')
+        page.goto((DOCS / 'index.html').as_uri(), wait_until='load')
         page.wait_for_timeout(300)
         if errors:
             bad.append(('首屏', errors[0][:120]))
