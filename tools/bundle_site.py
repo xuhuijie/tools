@@ -19,6 +19,7 @@
 """
 import pathlib
 import re
+import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOCS = ROOT / 'docs'
@@ -46,6 +47,36 @@ def scope_dollar(code: str) -> str:
     return OWN_DOLLAR_RE.sub(SCOPED_DOLLAR, code)
 
 
+# 首页头部的「更新」按钮：整站单文件里页头被去掉，导航条是唯一常驻的顶栏，
+# 所以把这颗按钮挪到导航条上，否则 all.html 里就再也没有更新入口——
+# 而 all.html 恰恰是分发的那一份。
+UPDATE_BTN_RE = re.compile(r'<button[^>]*id="update"[^>]*>.*?</button>', re.S)
+
+
+def update_button() -> str:
+    text = (DOCS / 'index.html').read_text(encoding='utf-8')
+    m = UPDATE_BTN_RE.search(text)
+    if not m:
+        raise SystemExit('docs/index.html 里找不到更新按钮（id="update"）')
+    return m.group(0)
+
+
+def build_version() -> str:
+    """整站单文件自报的版本号：与首页同一套取法（当前 git 提交短 hash）。
+
+    拉取站点文件做更新比对时要有它，否则 all.html 分发出的那份永远不知道自己新旧。
+    """
+    try:
+        out = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=ROOT,
+                             capture_output=True, text=True, timeout=5)
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except Exception:
+        pass
+    import time
+    return 't' + str(int(time.time()))
+
+
 def split(name: str) -> dict:
     """把一份页面拆成 head 样式、正文、页内脚本。"""
     text = (DOCS / name).read_text(encoding='utf-8')
@@ -66,6 +97,9 @@ def split(name: str) -> dict:
     # 页头 / 页脚由文档统一处理
     inner = re.sub(r'<footer>.*?</footer>', '', inner, flags=re.S)
     inner = re.sub(r'<header>.*?</header>', '', inner, count=1, flags=re.S)
+    # 更新按钮随页头一起去掉：导航条上单独挂一颗（见 update_button），
+    # 否则文档里会出现两个 id="update"
+    inner = UPDATE_BTN_RE.sub('', inner)
     styles = [m.group(1).strip('\n') for m in STYLE_RE.finditer(head.group(1) if head else '')]
     return {'name': name, 'title': (t.group(1).strip() if t else name),
             'body': inner.strip(), 'styles': styles, 'scripts': own_scripts}
@@ -105,13 +139,14 @@ def main() -> int:
             secs.append('<script type="text/x-page-init">%s</script>' % code)
         secs.append('</section>\n')
 
-    doc = ['<!DOCTYPE html>', '<html lang="zh-CN">', '<head>',
+    doc = ['<!DOCTYPE html>', '<html lang="zh-CN" data-ver="%s">' % build_version(), '<head>',
            '<meta charset="UTF-8">', viewport,
            '<meta name="theme-color" content="#1668dc">',
            '<title>工具合集</title>',
            '<style>\n%s\n\n%s\n\n%s\n</style>' % (shared_css, index_css, '\n\n'.join(styles)),
            '</head>', '<body>',
-           '<nav id="site-nav"><a href="#" data-page="index.html">首页</a></nav>',
+           '<nav id="site-nav"><a href="#" data-page="index.html">首页</a>'
+           + update_button() + '</nav>',
            '<main>'] + secs + ['</main>',
            '<script>\n%s\n</script>' % app_js,
            '</body>', '</html>', '']
