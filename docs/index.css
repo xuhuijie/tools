@@ -160,10 +160,6 @@ main{max-width:1440px;margin:0 auto;padding:0 16px 0}
   transition:opacity .12s,transform .12s;display:none}
 .go .ico{width:16px;height:16px}
 @media(min-width:768px){.go{display:block}}
-.badge{position:absolute;top:-1px;right:-1px;font-size:10px;line-height:1;
-  padding:4px 7px;border-radius:0 var(--radius) 0 8px;
-  color:var(--primary);background:var(--soft);border-left:1px solid var(--soft-line);
-  border-bottom:1px solid var(--soft-line)}
 
 /* 专项工具：只有三条，用自适应列宽铺开，不做固定列数的空网格 */
 #cat-special{margin-bottom:16px}
