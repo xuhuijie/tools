@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""把 docs/*.html 合成一份自包含的整站单文件 docs/all.html。
+"""把 docs/*.html 合成整站单文件 docs/index.html。
 
-为什么需要：内联（tools/inline_pages.py）只解决了 css/js 这类子资源；手机从「下载 /
-文件管理器」打开时走 content:// URI，页面里 ./xxx.html 这种「跳到另一个文件」的链接
-仍会被拦，报「文件找不到」。把全部页面装进同一个文档，跨页跳转变成文档内切 section，
-整站才真正离线可用。
+为什么需要：一个页面一个好分发，30 个页面就不好给了。把全部页面装进同一个文档，
+跨页跳转变成文档内切 section，给出一个 html 就是给出全部工具，离线也整站可用。
 
 形态：每个页面一个
     <section class="page" data-name="<文件名>.html" data-title="…" hidden> …该页正文… </section>
@@ -22,7 +20,9 @@ import re
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOCS = ROOT / 'docs'
-OUT = DOCS / 'all.html'
+OUT = DOCS / 'index.html'
+# 首页的可编辑源：docs/index.html 在磁盘上放的是本脚本的产物，拿不到散装首页
+PLAIN_INDEX = DOCS / '_src' / 'index.html'
 
 HEAD_RE = re.compile(r'<head>(.*?)</head>', re.S | re.I)
 BODY_RE = re.compile(r'<body>(.*)</body>', re.S | re.I)
@@ -59,9 +59,10 @@ def guard_script(code: str, where: str) -> str:
     return code
 
 
-def split(name: str) -> dict:
-    """把一份页面拆成 head 样式、正文、页内脚本。"""
-    text = (DOCS / name).read_text(encoding='utf-8')
+def split(name: str, text: str = None) -> dict:
+    """把一份页面拆成 head 样式、正文、页内脚本。text 给源码，供首页用。"""
+    if text is None:
+        text = (DOCS / name).read_text(encoding='utf-8')
     head = HEAD_RE.search(text)
     body = BODY_RE.search(text)
     if not body:
@@ -90,13 +91,18 @@ def is_app_js(code: str) -> bool:
 
 
 def main() -> int:
+    # 首页的散装形态只存在于 _src：docs/index.html 这个位置放的是本脚本上一轮的产物。
+    plain = PLAIN_INDEX.read_text(encoding='utf-8')
+    head = HEAD_RE.search(plain).group(1)
+    viewport = next((m for m in re.findall(r'<meta[^>]*>', head) if 'viewport' in m), '')
+
+    pages = [split('index.html', plain)]
+    pages += [split(p.name) for p in sorted(DOCS.glob('*.html')) if p.name != OUT.name]
+    pages.sort(key=lambda p: (p['name'] != 'index.html', p['name']))
+
     # app.js 的代码来自 _src 引用的 docs/app.js（已内联进各页，这里单独取原文）
     app_js = (DOCS / SHARED).read_text(encoding='utf-8').strip('\n')
     app_js = guard_script(app_js, SHARED)
-
-    names = sorted(p.name for p in DOCS.glob('*.html') if p.name != 'all.html')
-    names.sort(key=lambda n: (n != 'index.html', n))
-    pages = [split(n) for n in names]
 
     styles, first_page_scripts = [], []
     for p in pages:
@@ -105,9 +111,6 @@ def main() -> int:
         p['scripts'] = [c for c in p['scripts'] if not is_app_js(c)]
     shared_css = (DOCS / 'app.css').read_text(encoding='utf-8').strip('\n')
     index_css = (DOCS / 'index.css').read_text(encoding='utf-8').strip('\n')
-
-    viewport = next((m for m in re.findall(r'<meta[^>]*>', HEAD_RE.search(
-        (DOCS / 'index.html').read_text(encoding='utf-8')).group(1)) if 'viewport' in m), '')
 
     secs = []
     for p in pages:
@@ -152,7 +155,7 @@ def main() -> int:
     if n_open != n_close:
         raise SystemExit('自检失败：<script> %d 个，</script> %d 个，被截断了' % (n_open, n_close))
 
-    print('wrote docs/all.html（%d 个页面，%.0f KB）' % (len(pages), OUT.stat().st_size / 1024))
+    print('wrote docs/index.html（%d 个页面，%.0f KB）' % (len(pages), OUT.stat().st_size / 1024))
     return 0
 
 
