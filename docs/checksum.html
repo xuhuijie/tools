@@ -739,23 +739,22 @@
 </script>
 
 <!-- Cloudflare Turnstile 人机验证（展示型，纯前端验证结果不校验） -->
-<div id="cf-turnstile" style="margin:16px auto;max-width:300px;"></div>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<div class="cf-turnstile-wrap" style="margin:16px auto;max-width:300px;"></div>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=cfTurnstileInit" async defer></script>
 <script>
-(function () {
-  var el = document.getElementById('cf-turnstile');
-  if (!el || !window.turnstile) return;
-  el.innerHTML = '';
-  window.turnstile.render(el, {
-    sitekey: '0x4AAAAAAFS1uSnQE68OQjFY',
-    theme: 'auto',
-    refreshExpired: true,
-    callback: function (token) {
-      // 展示型：仅记录，不上送校验
-      console.log('[Turnstile] verified (display-only):', token ? 'ok' : 'empty');
-    }
-  });
-})();
+function cfTurnstileInit() {
+  var el = document.querySelector('.cf-turnstile-wrap');
+  if (el) {
+    turnstile.render(el, {
+      sitekey: '0x4AAAAAAFS1uSnQE68OQjFY',
+      theme: 'auto',
+      refreshExpired: true,
+      callback: function (token) {
+        console.log('[Turnstile] verified (display-only):', token ? 'ok' : 'empty');
+      }
+    });
+  }
+}
 </script>
 
 </body>
